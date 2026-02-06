@@ -1,3 +1,4 @@
+import { Location } from "@/helpers/types";
 import { BaseDirectory, exists, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import z, { type ZodType } from "zod";
 
@@ -7,11 +8,20 @@ const baseConfig = {
   orientation: z.enum(["portrait", "landscape"]).catch("landscape"),
 };
 
-export const loadConfig = async () => {
+const emptyLocations = { main: [], sidebar: [], calendar: [], floating: [] };
+
+export default async () => {
   const modules = import.meta.glob("../widgets/*/index.tsx", { eager: true }) as Record<string, any>;
 
   const widgetSchemas: Record<string, ZodType> = {};
   const defaultWidgetConfig: Record<string, any> = {};
+
+  const widgetAllowedLocations: Record<Location, Set<string>> = {
+    main: new Set(),
+    sidebar: new Set(),
+    calendar: new Set(),
+    floating: new Set(),
+  };
 
   for (const [path, mod] of Object.entries(modules)) {
     const Name: unknown = mod && mod.Name;
@@ -31,12 +41,24 @@ export const loadConfig = async () => {
 
     widgetSchemas[Name] = Schema as ZodType;
     defaultWidgetConfig[Name] = (Schema as ZodType).parse({});
+
+    for (const location of mod.AllowedLocations as Location[]) {
+      widgetAllowedLocations[location].add(mod.Name);
+    }
   }
 
   const configSchema = z.object({
     $schema: z.literal("./schema.json").catch("./schema.json"),
     ...baseConfig,
     widgets: z.object(widgetSchemas).default(defaultWidgetConfig),
+    layout: z
+      .object({
+        main: z.array(z.enum(Array.from(widgetAllowedLocations.main))).default([]),
+        sidebar: z.array(z.enum(Array.from(widgetAllowedLocations.sidebar))).default([]),
+        calendar: z.array(z.enum(Array.from(widgetAllowedLocations.calendar))).default([]),
+        floating: z.array(z.enum(Array.from(widgetAllowedLocations.floating))).default([]),
+      })
+      .catch({ ...emptyLocations }),
   });
 
   let configData;
