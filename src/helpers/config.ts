@@ -1,9 +1,14 @@
 import { Location, WidgetType } from "@/helpers/types";
-import { BaseDirectory, exists, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { getVersion } from "@tauri-apps/api/app";
+import { BaseDirectory, exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import z, { type ZodType } from "zod";
 
+const CONFIG_BACKUP_LIMIT = 5;
+const CONFIG_BACKUP_DIR = "config-backups";
+const CONFIG_FILENAME = "config.json";
+const SCHEMA_FILENAME_PREFIX = "schema-";
+
 const baseConfig = {
-  version: z.string().catch("1.0.0"),
   checkNetwork: z.boolean().catch(true),
   orientation: z.enum(["portrait", "landscape"]).catch("landscape"),
   remoteConfig: z
@@ -66,8 +71,16 @@ export default async () => {
     widgetSchemas[Name] = Schema.prefault({});
   }
 
+  const currentVersion = await getVersion();
+  const schemaFileName = `${SCHEMA_FILENAME_PREFIX}${currentVersion}.json`;
+
+  // Backup old config if schema version has changed to prevent breaking changes from losing user config
+  if (!(await exists(schemaFileName, { baseDir: BaseDirectory.AppConfig }))) {
+    await backupConfig();
+  }
+
   const configSchema = z.object({
-    $schema: z.literal("./schema.json").catch("./schema.json"),
+    $schema: z.literal(schemaFileName).catch(schemaFileName),
     ...baseConfig,
     widgets: z.object(widgetSchemas).prefault({}),
     layout: z
@@ -79,19 +92,42 @@ export default async () => {
   });
 
   let configData;
-  if (!(await exists("config.json", { baseDir: BaseDirectory.AppConfig }))) {
+  if (!(await exists(CONFIG_FILENAME, { baseDir: BaseDirectory.AppConfig }))) {
     console.warn("Config file not found, using defaults");
     configData = configSchema.parse({});
   } else {
-    const configFileContents = await readTextFile("config.json", { baseDir: BaseDirectory.AppConfig });
+    const configFileContents = await readTextFile(CONFIG_FILENAME, { baseDir: BaseDirectory.AppConfig });
     const parsedConfig = JSON.parse(configFileContents);
     configData = configSchema.parse(parsedConfig);
   }
 
-  await writeTextFile("config.json", JSON.stringify(configData, null, 2), { baseDir: BaseDirectory.AppConfig });
-  await writeTextFile("schema.json", JSON.stringify(configSchema.toJSONSchema(), null, 2), {
+  await writeTextFile(CONFIG_FILENAME, JSON.stringify(configData, null, 2), { baseDir: BaseDirectory.AppConfig });
+  await writeTextFile(schemaFileName, JSON.stringify(configSchema.toJSONSchema(), null, 2), {
     baseDir: BaseDirectory.AppConfig,
   });
 
   return configData;
+};
+
+const backupConfig = async () => {
+  if (await exists(CONFIG_FILENAME, { baseDir: BaseDirectory.AppConfig })) {
+    await mkdir(CONFIG_BACKUP_DIR, { baseDir: BaseDirectory.AppConfig, recursive: true });
+
+    const entries = await readDir(CONFIG_BACKUP_DIR, { baseDir: BaseDirectory.AppConfig });
+    const backups = entries
+      .filter(entry => entry.name.startsWith("config-") && entry.name.endsWith(".json"))
+      .sort((a, b) => b.name.localeCompare(a.name));
+
+    const oldConfigContents = await readTextFile(CONFIG_FILENAME, { baseDir: BaseDirectory.AppConfig });
+    const timestamp = new Date().toISOString().replace(/[:T]/g, "-").replace(/\..+/, "");
+    await writeTextFile(`${CONFIG_BACKUP_DIR}/config-${timestamp}.json`, oldConfigContents, {
+      baseDir: BaseDirectory.AppConfig,
+    });
+
+    // Remove backups beyond the 5 most recent
+    for (const backup of backups.slice(CONFIG_BACKUP_LIMIT)) {
+      await remove(`${CONFIG_BACKUP_DIR}/${backup.name}`, { baseDir: BaseDirectory.AppConfig });
+      console.log(`Removed old backup: ${backup.name}`);
+    }
+  }
 };
