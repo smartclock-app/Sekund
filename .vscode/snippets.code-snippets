@@ -1,6 +1,8 @@
 {
   "Widget Component Template": {
     "prefix": "widget",
+    "isFileTemplate": true,
+    "scope": "typescript,typescriptreact",
     "body": [
       "import { Location, WidgetComponent } from \"@/helpers/types\";",
       "import z from \"zod\";",
