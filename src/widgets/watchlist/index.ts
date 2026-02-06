@@ -1,14 +1,8 @@
-import { Location, WidgetComponent } from "@/helpers/types";
+import { CalendarExtensionComponent, WidgetType } from "@/helpers/types";
 import z from "zod";
 
 export const Name = "watchlist";
-
-export const AllowedLocations = [
-  // Location.Main,
-  // Location.Sidebar,
-  Location.Calendar,
-  // Location.Floating,
-] as const;
+export const Type = WidgetType.CalendarExtension;
 
 export const Schema = z.object({
   trakt: z
@@ -31,12 +25,8 @@ export const Schema = z.object({
 
 export type Config = z.infer<typeof Schema>;
 
-export const Component: WidgetComponent<Config> = ({ config, location }) => {
-  return (
-    <>
-      <h1>Watchlist Widget</h1>
-      <p>Location: {location}</p>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
-    </>
-  );
+export const Component: CalendarExtensionComponent<Config> = config => {
+  console.log(config);
+
+  return [];
 };

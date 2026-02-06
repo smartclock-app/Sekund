@@ -1,12 +1,12 @@
-import { Location, WidgetComponent } from "@/helpers/types";
+import { Location, WidgetComponent, WidgetType } from "@/helpers/types";
 import z from "zod";
 
 export const Name = "weather";
+export const Type = WidgetType.Widget;
 
 export const AllowedLocations = [
   // Location.Main,
   Location.Sidebar,
-  // Location.Calendar,
   Location.Floating,
 ] as const;
 
