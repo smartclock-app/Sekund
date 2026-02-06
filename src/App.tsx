@@ -1,12 +1,12 @@
 import "@/App.css";
-import { loadConfig } from "./config/loader";
+import { loadConfig } from "@/helpers/config";
 
 function App() {
   return (
     <>
       <h1>App</h1>
 
-      <button onClick={async () => console.log((await loadConfig()).toJSONSchema())}>Load Config</button>
+      <button onClick={async () => console.log(await loadConfig())}>Load Config</button>
     </>
   );
 }

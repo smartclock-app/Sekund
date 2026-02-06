@@ -3,7 +3,7 @@ import z from "zod";
 export const Name = "weather";
 
 export const Schema = z.object({
-  enabled: z.boolean().default(true),
+  enabled: z.boolean().catch(true),
 });
 
 export type Config = z.infer<typeof Schema>;
