@@ -3,7 +3,12 @@ import z from "zod";
 
 export const Name = "clock";
 
-export const AllowedLocations = [Location.Main] as const;
+export const AllowedLocations = [
+  Location.Main,
+  // Location.Sidebar,
+  // Location.Calendar,
+  // Location.Floating,
+] as const;
 
 export const Schema = z.object({
   format: z.enum(["12h", "24h"]).catch("12h"),

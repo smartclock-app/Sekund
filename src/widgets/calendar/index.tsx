@@ -3,15 +3,31 @@ import z from "zod";
 
 export const Name = "calendar";
 
-export const AllowedLocations = [Location.Sidebar] as const;
+export const AllowedLocations = [
+  // Location.Main,
+  Location.Sidebar,
+  // Location.Calendar,
+  // Location.Floating,
+] as const;
 
 export const Schema = z.object({
+  auth: z
+    .object({
+      clientId: z.string().catch(""),
+      clientSecret: z.string().catch(""),
+      accessToken: z.string().catch(""),
+      refreshToken: z.string().catch(""),
+      tokenExpiry: z.iso.datetime().catch(new Date().toISOString()),
+    })
+    .prefault({} as any),
   maxEvents: z.number().min(1).catch(50),
-  titles: z.object({
-    odd: z.string().default(""),
-    even: z.string().default(""),
-  }),
-  eventFilter: z.array(z.string()).default([]),
+  titles: z
+    .object({
+      odd: z.string().catch(""),
+      even: z.string().catch(""),
+    })
+    .prefault({} as any),
+  eventFilter: z.array(z.string()).catch([]),
 });
 
 export type Config = z.infer<typeof Schema>;

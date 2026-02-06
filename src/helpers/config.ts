@@ -8,57 +8,50 @@ const baseConfig = {
   orientation: z.enum(["portrait", "landscape"]).catch("landscape"),
 };
 
-const emptyLocations = { main: [], sidebar: [], calendar: [], floating: [] };
-
 export default async () => {
   const modules = import.meta.glob("../widgets/*/index.tsx", { eager: true }) as Record<string, any>;
 
   const widgetSchemas: Record<string, ZodType> = {};
-  const defaultWidgetConfig: Record<string, any> = {};
-
-  const widgetAllowedLocations: Record<Location, Set<string>> = {
-    main: new Set(),
-    sidebar: new Set(),
-    calendar: new Set(),
-    floating: new Set(),
-  };
+  const widgetAllowedLocations: Record<Location, string[]> = { main: [], sidebar: [], calendar: [], floating: [] };
 
   for (const [path, mod] of Object.entries(modules)) {
-    const Name: unknown = mod && mod.Name;
-    const Schema: unknown = mod && mod.Schema;
+    const Name: string = mod.Name;
+    const Schema: ZodType = mod.Schema;
+    const AllowedLocations: Location[] = mod.AllowedLocations;
 
     if (typeof Name !== "string") {
-      console.warn(`Skipping widget at ${path}: missing or invalid Name export`);
-      continue;
+      throw new Error(`Widget at ${path} missing Name export or Name is not a string`);
     }
     if (!Schema || typeof (Schema as any).parse !== "function") {
-      console.warn(`Skipping widget "${Name}" at ${path}: missing or invalid Schema export`);
-      continue;
+      throw new Error(`Widget "${Name}" at ${path} missing Schema export or Schema is not a Zod schema`);
+    }
+    if (!Array.isArray(AllowedLocations)) {
+      // prettier-ignore
+      throw new Error(`Widget "${Name}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
     }
     if (widgetSchemas[Name]) {
-      throw new Error(`Duplicate widget Name "${Name}" found at ${path}`);
+      throw new Error(`Widget "${Name}" at ${path} already used by another widget, widget names must be unique`);
     }
 
-    widgetSchemas[Name] = Schema as ZodType;
-    defaultWidgetConfig[Name] = (Schema as ZodType).parse({});
+    widgetSchemas[Name] = Schema.prefault({});
 
-    for (const location of mod.AllowedLocations as Location[]) {
-      widgetAllowedLocations[location].add(mod.Name);
+    for (const location of AllowedLocations) {
+      widgetAllowedLocations[location].push(Name);
     }
   }
 
   const configSchema = z.object({
     $schema: z.literal("./schema.json").catch("./schema.json"),
     ...baseConfig,
-    widgets: z.object(widgetSchemas).default(defaultWidgetConfig),
+    widgets: z.object(widgetSchemas).prefault({}),
     layout: z
       .object({
-        main: z.array(z.enum(Array.from(widgetAllowedLocations.main))).default([]),
-        sidebar: z.array(z.enum(Array.from(widgetAllowedLocations.sidebar))).default([]),
-        calendar: z.array(z.enum(Array.from(widgetAllowedLocations.calendar))).default([]),
-        floating: z.array(z.enum(Array.from(widgetAllowedLocations.floating))).default([]),
+        main: z.array(z.enum(widgetAllowedLocations.main)).prefault([]),
+        sidebar: z.array(z.enum(widgetAllowedLocations.sidebar)).prefault([]),
+        calendar: z.array(z.enum(widgetAllowedLocations.calendar)).prefault([]),
+        floating: z.array(z.enum(widgetAllowedLocations.floating)).prefault([]),
       })
-      .catch({ ...emptyLocations }),
+      .prefault({}),
   });
 
   let configData;
@@ -66,9 +59,9 @@ export default async () => {
     console.warn("Config file not found, using defaults");
     configData = configSchema.parse({});
   } else {
-    configData = configSchema.parse(
-      JSON.parse(await readTextFile("config.json", { baseDir: BaseDirectory.AppConfig })),
-    );
+    const configFileContents = await readTextFile("config.json", { baseDir: BaseDirectory.AppConfig });
+    const parsedConfig = JSON.parse(configFileContents);
+    configData = configSchema.parse(parsedConfig);
   }
 
   await writeTextFile("config.json", JSON.stringify(configData, null, 2), { baseDir: BaseDirectory.AppConfig });
