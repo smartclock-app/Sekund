@@ -28,7 +28,7 @@ export default async () => {
   const modules = import.meta.glob("../widgets/*/index.{ts,tsx}", { eager: true }) as Record<string, any>;
 
   const widgetSchemas: Record<string, ZodType> = {};
-  const widgetAllowedLocations: Record<Location, string[]> = { main: [], sidebar: [], floating: [] };
+  const widgetAllowedLocations: Record<Location, string[]> = { main: [], sidebar: [] };
 
   for (const [path, mod] of Object.entries(modules)) {
     const Name: string = mod.Name;
@@ -52,12 +52,14 @@ export default async () => {
       throw new Error(`Widget "${Name}" at ${path} already used by another widget, widget names must be unique`);
     }
 
-    if (Type == WidgetType.Widget && !Array.isArray(AllowedLocations)) {
-      // prettier-ignore
-      throw new Error(`Widget "${Name}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
-    } else {
-      for (const location of AllowedLocations) {
-        widgetAllowedLocations[location].push(Name);
+    if (Type == WidgetType.Widget) {
+      if (!AllowedLocations || !Array.isArray(AllowedLocations)) {
+        // prettier-ignore
+        throw new Error(`Widget "${Name}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
+      } else {
+        for (const location of AllowedLocations) {
+          widgetAllowedLocations[location].push(Name);
+        }
       }
     }
 
@@ -72,7 +74,6 @@ export default async () => {
       .object({
         main: z.array(z.enum(widgetAllowedLocations.main)).prefault([]),
         sidebar: z.array(z.enum(widgetAllowedLocations.sidebar)).prefault([]),
-        floating: z.array(z.enum(widgetAllowedLocations.floating)).prefault([]),
       })
       .prefault({}),
   });

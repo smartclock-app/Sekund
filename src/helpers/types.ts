@@ -1,7 +1,6 @@
 export enum Location {
   Main = "main",
   Sidebar = "sidebar",
-  Floating = "floating",
 }
 
 export enum WidgetType {

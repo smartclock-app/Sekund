@@ -5,9 +5,8 @@ export const Name = "homeassistant";
 export const Type = WidgetType.Widget;
 
 export const AllowedLocations = [
-  // Location.Main,
+  Location.Main,
   // Location.Sidebar,
-  Location.Floating,
 ] as const;
 
 export const Schema = z.object({

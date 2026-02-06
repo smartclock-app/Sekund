@@ -7,7 +7,6 @@ export const Type = WidgetType.Widget;
 export const AllowedLocations = [
   // Location.Main,
   Location.Sidebar,
-  // Location.Floating,
 ] as const;
 
 export const Schema = z.object({
