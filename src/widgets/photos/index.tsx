@@ -1,32 +1,28 @@
-import { Location, WidgetComponent, WidgetType } from "@/helpers/types";
+import { ClockThemeComponent, WidgetType } from "@/helpers/types";
 import z from "zod";
 
 export const Name = "photos";
-export const Type = WidgetType.Widget;
-
-export const AllowedLocations = [
-  Location.Main,
-  // Location.Sidebar,
-  // Location.Floating,
-] as const;
+export const Type = WidgetType.ClockTheme;
 
 export const Schema = z.object({
-  interval: z.number().min(1).catch(1),
+  interval: z.number().min(1).catch(1).describe("Multiple of 30 second interval for how often to change the photo."),
   immichUrl: z.url().catch(""),
   immichAccessToken: z.string().catch(""),
   immichAlbumId: z.string().catch(""),
   immichShareKey: z.string().catch(""),
-  useStaticLinks: z.boolean().catch(false),
-  images: z.array(z.url()).catch([]),
+  useStaticLinks: z
+    .boolean()
+    .catch(false)
+    .describe("Whether to use the static image links provided in the config instead of fetching from Immich."),
+  images: z.array(z.url()).catch([]).describe("Array of image URLs to display when useStaticLinks is true."),
 });
 
 export type Config = z.infer<typeof Schema>;
 
-export const Component: WidgetComponent<Config> = ({ config, location }) => {
+export const Component: ClockThemeComponent<Config> = ({ config }) => {
   return (
     <>
-      <h1>Photos Widget</h1>
-      <p>Location: {location}</p>
+      <h1>Photos Theme</h1>
       <pre>{JSON.stringify(config, null, 2)}</pre>
     </>
   );

@@ -7,6 +7,7 @@ export enum Location {
 export enum WidgetType {
   Widget = "widget",
   CalendarExtension = "calendarExtension",
+  ClockTheme = "clockTheme",
 }
 
 export interface CalendarEvent {
@@ -19,3 +20,4 @@ export interface CalendarEvent {
 
 export type WidgetComponent<Config> = React.FC<{ config: Config; location: Location }>;
 export type CalendarExtensionComponent<Config> = (config: Config) => CalendarEvent[] | Promise<CalendarEvent[]>;
+export type ClockThemeComponent<Config> = React.FC<{ config: Config }>;
