@@ -1,16 +1,16 @@
 import "@/App.css";
 import LoadConfig from "@/helpers/config";
-import { useState } from "react";
+import useConfigStore from "./hooks/config";
 
 function App() {
-  const [config, setConfig] = useState<any>(null);
+  const configStore = useConfigStore();
 
   return (
     <>
       <h1>App</h1>
 
-      <button onClick={async () => setConfig(await LoadConfig())}>Load Config</button>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
+      <button onClick={async () => configStore.setConfig(await LoadConfig())}>Load Config</button>
+      <pre>{JSON.stringify(configStore.config, null, 2)}</pre>
     </>
   );
 }
