@@ -6,6 +6,22 @@ const baseConfig = {
   version: z.string().catch("1.0.0"),
   checkNetwork: z.boolean().catch(true),
   orientation: z.enum(["portrait", "landscape"]).catch("landscape"),
+  remoteConfig: z
+    .object({
+      enabled: z.boolean().catch(true),
+      port: z.number().catch(8080),
+      password: z.string().catch(""),
+      useBonjour: z.boolean().catch(true),
+      bonjourName: z.string().catch("Smart Clock"),
+      toggleDisplayPath: z.string().catch(""),
+    })
+    .prefault({} as any),
+  clock: z
+    .object({
+      format: z.enum(["12h", "24h"]).catch("12h"),
+      showSeconds: z.boolean().catch(true),
+    })
+    .prefault({} as any),
 };
 
 export default async () => {

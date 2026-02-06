@@ -1,7 +1,7 @@
 import { Location, WidgetComponent } from "@/helpers/types";
 import z from "zod";
 
-export const Name = "clock";
+export const Name = "photos";
 
 export const AllowedLocations = [
   Location.Main,
@@ -11,8 +11,13 @@ export const AllowedLocations = [
 ] as const;
 
 export const Schema = z.object({
-  format: z.enum(["12h", "24h"]).catch("12h"),
-  showSeconds: z.boolean().catch(true),
+  interval: z.number().min(1).catch(1),
+  immichUrl: z.url().catch(""),
+  immichAccessToken: z.string().catch(""),
+  immichAlbumId: z.string().catch(""),
+  immichShareKey: z.string().catch(""),
+  useStaticLinks: z.boolean().catch(false),
+  images: z.array(z.url()).catch([]),
 });
 
 export type Config = z.infer<typeof Schema>;
@@ -20,7 +25,7 @@ export type Config = z.infer<typeof Schema>;
 export const Component: WidgetComponent<Config> = ({ config, location }) => {
   return (
     <>
-      <h1>Clock Widget</h1>
+      <h1>Photos Widget</h1>
       <p>Location: {location}</p>
       <pre>{JSON.stringify(config, null, 2)}</pre>
     </>
