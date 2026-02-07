@@ -3,8 +3,11 @@ import LoadConfig from "@/helpers/config";
 import QueryClient from "@/widgets/alexa/QueryClient";
 import useConfigStore from "./hooks/config";
 
+import useMDNSStore from "./hooks/mdns";
+
 function App() {
   const configStore = useConfigStore();
+  const mdnsStore = useMDNSStore();
 
   const testCookies = async () => {
     const client = new QueryClient("cookies.json");
@@ -18,6 +21,11 @@ function App() {
     <>
       <h1>App</h1>
 
+      {mdnsStore.broadcasting ? (
+        <p>mDNS Broadcasting</p>
+      ) : (
+        <button onClick={() => mdnsStore.startBroadcast(false, configStore.config.remoteConfig)}>Start mDNS</button>
+      )}
       <button onClick={testCookies}>Test Cookies</button>
 
       <button onClick={async () => configStore.setConfig(await LoadConfig())}>Load Config</button>

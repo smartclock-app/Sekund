@@ -12,7 +12,6 @@ const SCHEMA_FILENAME_PREFIX = "schema-";
 const baseConfig = {
   orientation: z.enum(["portrait", "landscape"]).catch("landscape"),
   checkNetwork: z.boolean().catch(true),
-  checkForUpdates: z.boolean().catch(true),
   remoteConfig: z
     .object({
       enabled: z.boolean().catch(true),
@@ -88,7 +87,7 @@ export default async () => {
     layout: z
       .object({
         main: z.array(z.enum(widgetAllowedLocations.main)).prefault([]),
-        sidebar: z.array(z.enum(widgetAllowedLocations.sidebar)).prefault([]),
+        sidebar: z.array(z.enum(widgetAllowedLocations.sidebar)).prefault(["updater"]),
       })
       .prefault({}),
   });

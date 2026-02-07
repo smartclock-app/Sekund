@@ -1,11 +1,11 @@
 import { create } from "zustand";
 
-interface BearState {
+interface ConfigStoreState {
   config: Record<string, any>;
   setConfig: (newConfig: Record<string, any>) => void;
 }
 
-const useConfigStore = create<BearState>()(set => ({
+const useConfigStore = create<ConfigStoreState>()(set => ({
   config: {},
   setConfig: newConfig => set({ config: newConfig }),
 }));
