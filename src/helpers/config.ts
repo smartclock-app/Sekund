@@ -1,4 +1,4 @@
-import { WidgetComponent, WidgetLocation, WidgetType } from "@/helpers/types";
+import { WidgetLocation, WidgetModule, WidgetModuleOfType, WidgetType } from "@/helpers/types";
 import { getVersion } from "@tauri-apps/api/app";
 import { BaseDirectory, exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import z, { type ZodType } from "zod";
@@ -31,54 +31,48 @@ const baseConfig = {
 };
 
 export default async () => {
-  const modules = import.meta.glob("../widgets/*/index.{ts,tsx}", { eager: true }) as Record<string, any>;
+  const modules = import.meta.glob("../widgets/*/index.{ts,tsx}", { eager: true }) as Record<string, WidgetModule>;
 
   const widgetSchemas: Record<string, ZodType> = {};
-  const widgetComponents: Record<string, WidgetComponent> = {};
+  const widgetModules: Record<string, WidgetModule> = {};
   const widgetAllowedLocations: Record<WidgetLocation, string[]> = { main: [], sidebar: [] };
 
   for (const [path, mod] of Object.entries(modules)) {
-    const Name: string = mod.Name;
-    const Type: WidgetType = mod.Type;
-    const Schema: ZodType = mod.Schema;
-    const Component: WidgetComponent = mod.Component;
-    const AllowedLocations: WidgetLocation[] = mod.AllowedLocations;
-
-    if (typeof Name !== "string") {
+    if (typeof mod.Name !== "string") {
       throw new Error(`Widget at ${path} missing Name export or Name is not a string`);
     }
 
-    if (!Type || !Object.values(WidgetType).includes(Type)) {
-      throw new Error(`Widget "${Name}" at ${path} missing Type export or Type is not a valid WidgetType`);
+    if (!mod.Type || !Object.values(WidgetType).includes(mod.Type)) {
+      throw new Error(`Widget "${mod.Name}" at ${path} missing Type export or Type is not a valid WidgetType`);
     }
 
-    if (!Schema || typeof (Schema as any).parse !== "function") {
-      throw new Error(`Widget "${Name}" at ${path} missing Schema export or Schema is not a Zod schema`);
+    if (!mod.Schema || typeof (mod.Schema as any).parse !== "function") {
+      throw new Error(`Widget "${mod.Name}" at ${path} missing Schema export or Schema is not a Zod schema`);
     }
 
-    if (!Component || typeof Component !== "function") {
+    if (!mod.Component || typeof mod.Component !== "function") {
       throw new Error(
-        `Widget "${Name}" at ${path} missing Component export or Component is not a valid React component`,
+        `Widget "${mod.Name}" at ${path} missing Component export or Component is not a valid React component`,
       );
     }
 
-    if (widgetSchemas[Name]) {
-      throw new Error(`Widget "${Name}" at ${path} already used by another widget, widget names must be unique`);
+    if (widgetSchemas[mod.Name]) {
+      throw new Error(`Widget "${mod.Name}" at ${path} already used by another widget, widget names must be unique`);
     }
 
-    if (Type == WidgetType.Widget) {
-      if (!AllowedLocations || !Array.isArray(AllowedLocations)) {
+    if (mod.Type == WidgetType.Widget) {
+      if (!mod.AllowedLocations || !Array.isArray(mod.AllowedLocations)) {
         // prettier-ignore
-        throw new Error(`Widget "${Name}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
-      } else {
-        for (const location of AllowedLocations) {
-          widgetAllowedLocations[location].push(Name);
-        }
+        throw new Error(`Widget "${mod.Name}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
+      }
+
+      for (const location of mod.AllowedLocations) {
+        widgetAllowedLocations[location].push(mod.Name);
       }
     }
 
-    widgetSchemas[Name] = Schema.prefault({});
-    widgetComponents[Name] = Component;
+    widgetSchemas[mod.Name] = mod.Schema.prefault({});
+    widgetModules[mod.Name] = mod;
   }
 
   const currentVersion = await getVersion();
@@ -118,10 +112,12 @@ export default async () => {
 
   const layout = Object.entries(configData.layout).reduce(
     (acc, [location, widgetNames]) => {
-      acc[location as WidgetLocation] = widgetNames.map((name: string) => widgetComponents[name]);
+      acc[location as WidgetLocation] = widgetNames.map(
+        (name: string) => widgetModules[name] as WidgetModuleOfType<WidgetType.Widget>,
+      );
       return acc;
     },
-    {} as Record<WidgetLocation, WidgetComponent[]>,
+    {} as Record<WidgetLocation, WidgetModuleOfType<WidgetType.Widget>[]>,
   );
 
   return [configData, layout] as const;

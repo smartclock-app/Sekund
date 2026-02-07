@@ -1,10 +1,13 @@
-import { WidgetComponent, WidgetLocation } from "@/helpers/types";
+import { WidgetLocation, WidgetModuleOfType, WidgetType } from "@/helpers/types";
 import { create } from "zustand";
 
 interface ConfigStoreState {
   config: Record<string, any>;
-  layout: Record<WidgetLocation, WidgetComponent[]>;
-  setConfig: (newConfig: Record<string, any>, newLayout: Record<WidgetLocation, WidgetComponent[]>) => void;
+  layout: Record<WidgetLocation, WidgetModuleOfType<WidgetType.Widget>[]>;
+  setConfig: (
+    newConfig: Record<string, any>,
+    newLayout: Record<WidgetLocation, WidgetModuleOfType<WidgetType.Widget>[]>,
+  ) => void;
 }
 
 const useConfigStore = create<ConfigStoreState>()(set => ({

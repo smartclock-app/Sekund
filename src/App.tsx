@@ -25,13 +25,21 @@ function App() {
   return (
     <div className="container">
       <div className="main">
-        {configStore.layout.main.map((Widget, index) => (
-          <Widget key={index} config={configStore.config.widgetConfig} location={WidgetLocation.Main} />
+        {configStore.layout.main.map(Widget => (
+          <Widget.Component
+            key={Widget.Name}
+            config={configStore.config.widgets[Widget.Name]}
+            location={WidgetLocation.Main}
+          />
         ))}
       </div>
       <div className="sidebar">
-        {configStore.layout.sidebar.map((Widget, index) => (
-          <Widget key={index} config={configStore.config.widgetConfig} location={WidgetLocation.Sidebar} />
+        {configStore.layout.sidebar.map(Widget => (
+          <Widget.Component
+            key={Widget.Name}
+            config={configStore.config.widgets[Widget.Name]}
+            location={WidgetLocation.Sidebar}
+          />
         ))}
       </div>
     </div>

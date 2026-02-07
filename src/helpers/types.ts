@@ -1,3 +1,5 @@
+import { ZodAny } from "zod";
+
 export enum WidgetLocation {
   Main = "main",
   Sidebar = "sidebar",
@@ -9,6 +11,29 @@ export enum WidgetType {
   ClockTheme = "clockTheme",
 }
 
+export type WidgetModule =
+  | {
+      Name: string;
+      Type: WidgetType.Widget;
+      AllowedLocations: WidgetLocation[];
+      Schema: ZodAny;
+      Component: WidgetComponent;
+    }
+  | {
+      Name: string;
+      Type: WidgetType.CalendarExtension;
+      Schema: ZodAny;
+      Component: CalendarExtensionComponent;
+    }
+  | {
+      Name: string;
+      Type: WidgetType.ClockTheme;
+      Schema: ZodAny;
+      Component: ClockThemeComponent;
+    };
+
+export type WidgetModuleOfType<T extends WidgetType> = Extract<WidgetModule, { Type: T }>;
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -18,5 +43,5 @@ export interface CalendarEvent {
 }
 
 export type WidgetComponent<Config = {}> = React.FC<{ config: Config; location: WidgetLocation }>;
-export type CalendarExtensionComponent<Config> = (config: Config) => CalendarEvent[] | Promise<CalendarEvent[]>;
-export type ClockThemeComponent<Config> = React.FC<{ config: Config }>;
+export type CalendarExtensionComponent<Config = {}> = (config: Config) => CalendarEvent[] | Promise<CalendarEvent[]>;
+export type ClockThemeComponent<Config = {}> = React.FC<{ config: Config }>;
