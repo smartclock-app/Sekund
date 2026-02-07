@@ -10,7 +10,7 @@ export const AllowedLocations = [
 ] as const;
 
 export const Schema = z.object({
-  url: z.url().catch(""),
+  url: z.url().or(z.literal("")).catch(""),
   token: z.string().catch(""),
   cameras: z
     .array(
@@ -18,7 +18,7 @@ export const Schema = z.object({
         .object({
           id: z.string().catch(""),
           trigger: z.string().catch(""),
-          streamUri: z.url().catch(""),
+          streamUri: z.url().or(z.literal("")).catch(""),
           aspectRatio: z.number().catch(16 / 9),
         })
         .prefault({} as any),

@@ -12,7 +12,7 @@ export const Schema = z.object({
       accessToken: z.string().catch(""),
       refreshToken: z.string().catch(""),
       tokenExpiry: z.iso.datetime().catch(new Date().toISOString()),
-      redirectUri: z.url().catch(""),
+      redirectUri: z.url().or(z.literal("")).catch(""),
       listId: z.string().catch(""),
       includeWatchlist: z.boolean().catch(false),
       includeEpisodesAsShow: z.boolean().catch(false),

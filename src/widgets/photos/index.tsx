@@ -10,7 +10,7 @@ export const Schema = z.object({
     .min(1)
     .catch(1)
     .describe("Multiple of 30 second interval for how often to change the photo."),
-  immichUrl: z.url().catch(""),
+  immichUrl: z.url().or(z.literal("")).catch(""),
   immichAccessToken: z.string().catch(""),
   immichAlbumId: z.string().catch(""),
   immichShareKey: z.string().catch(""),
@@ -18,7 +18,10 @@ export const Schema = z.object({
     .boolean()
     .catch(false)
     .describe("Whether to use the static image links provided in the config instead of fetching from Immich."),
-  images: z.array(z.url()).catch([]).describe("Array of image URLs to display when useStaticLinks is true."),
+  images: z
+    .array(z.url().or(z.literal("")))
+    .catch([])
+    .describe("Array of image URLs to display when useStaticLinks is true."),
 });
 
 export type Config = z.infer<typeof Schema>;
