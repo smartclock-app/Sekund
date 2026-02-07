@@ -5,7 +5,11 @@ export const Name = "photos";
 export const Type = WidgetType.ClockTheme;
 
 export const Schema = z.object({
-  interval: z.number().min(1).catch(1).describe("Multiple of 30 second interval for how often to change the photo."),
+  refreshInterval: z
+    .number()
+    .min(1)
+    .catch(1)
+    .describe("Multiple of 30 second interval for how often to change the photo."),
   immichUrl: z.url().catch(""),
   immichAccessToken: z.string().catch(""),
   immichAlbumId: z.string().catch(""),
