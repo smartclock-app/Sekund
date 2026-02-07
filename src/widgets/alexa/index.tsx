@@ -1,4 +1,4 @@
-import { Location, WidgetComponent, WidgetType } from "@/helpers/types";
+import { WidgetComponent, WidgetLocation, WidgetType } from "@/helpers/types";
 import z from "zod";
 
 export const Name = "alexa";
@@ -6,7 +6,7 @@ export const Type = WidgetType.Widget;
 
 export const AllowedLocations = [
   // Location.Main,
-  Location.Sidebar,
+  WidgetLocation.Sidebar,
 ] as const;
 
 export const Schema = z.object({

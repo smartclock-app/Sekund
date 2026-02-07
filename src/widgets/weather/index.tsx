@@ -1,10 +1,10 @@
-import { Location, WidgetComponent, WidgetType } from "@/helpers/types";
+import { WidgetComponent, WidgetLocation, WidgetType } from "@/helpers/types";
 import z from "zod";
 
 export const Name = "weather";
 export const Type = WidgetType.Widget;
 
-export const AllowedLocations = [Location.Main, Location.Sidebar] as const;
+export const AllowedLocations = [WidgetLocation.Main, WidgetLocation.Sidebar] as const;
 
 export const Schema = z
   .object({

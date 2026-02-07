@@ -1,4 +1,4 @@
-export enum Location {
+export enum WidgetLocation {
   Main = "main",
   Sidebar = "sidebar",
 }
@@ -17,6 +17,6 @@ export interface CalendarEvent {
   color: string;
 }
 
-export type WidgetComponent<Config> = React.FC<{ config: Config; location: Location }>;
+export type WidgetComponent<Config = {}> = React.FC<{ config: Config; location: WidgetLocation }>;
 export type CalendarExtensionComponent<Config> = (config: Config) => CalendarEvent[] | Promise<CalendarEvent[]>;
 export type ClockThemeComponent<Config> = React.FC<{ config: Config }>;

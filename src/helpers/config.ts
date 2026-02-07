@@ -1,4 +1,4 @@
-import { Location, WidgetType } from "@/helpers/types";
+import { WidgetComponent, WidgetLocation, WidgetType } from "@/helpers/types";
 import { getVersion } from "@tauri-apps/api/app";
 import { BaseDirectory, exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import z, { type ZodType } from "zod";
@@ -34,13 +34,15 @@ export default async () => {
   const modules = import.meta.glob("../widgets/*/index.{ts,tsx}", { eager: true }) as Record<string, any>;
 
   const widgetSchemas: Record<string, ZodType> = {};
-  const widgetAllowedLocations: Record<Location, string[]> = { main: [], sidebar: [] };
+  const widgetComponents: Record<string, WidgetComponent> = {};
+  const widgetAllowedLocations: Record<WidgetLocation, string[]> = { main: [], sidebar: [] };
 
   for (const [path, mod] of Object.entries(modules)) {
     const Name: string = mod.Name;
     const Type: WidgetType = mod.Type;
     const Schema: ZodType = mod.Schema;
-    const AllowedLocations: Location[] = mod.AllowedLocations;
+    const Component: WidgetComponent = mod.Component;
+    const AllowedLocations: WidgetLocation[] = mod.AllowedLocations;
 
     if (typeof Name !== "string") {
       throw new Error(`Widget at ${path} missing Name export or Name is not a string`);
@@ -52,6 +54,12 @@ export default async () => {
 
     if (!Schema || typeof (Schema as any).parse !== "function") {
       throw new Error(`Widget "${Name}" at ${path} missing Schema export or Schema is not a Zod schema`);
+    }
+
+    if (!Component || typeof Component !== "function") {
+      throw new Error(
+        `Widget "${Name}" at ${path} missing Component export or Component is not a valid React component`,
+      );
     }
 
     if (widgetSchemas[Name]) {
@@ -70,6 +78,7 @@ export default async () => {
     }
 
     widgetSchemas[Name] = Schema.prefault({});
+    widgetComponents[Name] = Component;
   }
 
   const currentVersion = await getVersion();
@@ -107,7 +116,15 @@ export default async () => {
     baseDir: BASE_DIRECTORY,
   });
 
-  return configData;
+  const layout = Object.entries(configData.layout).reduce(
+    (acc, [location, widgetNames]) => {
+      acc[location as WidgetLocation] = widgetNames.map((name: string) => widgetComponents[name]);
+      return acc;
+    },
+    {} as Record<WidgetLocation, WidgetComponent[]>,
+  );
+
+  return [configData, layout] as const;
 };
 
 const backupConfig = async () => {

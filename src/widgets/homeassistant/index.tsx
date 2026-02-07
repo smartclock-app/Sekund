@@ -1,11 +1,11 @@
-import { Location, WidgetComponent, WidgetType } from "@/helpers/types";
+import { WidgetComponent, WidgetLocation, WidgetType } from "@/helpers/types";
 import z from "zod";
 
 export const Name = "homeassistant";
 export const Type = WidgetType.Widget;
 
 export const AllowedLocations = [
-  Location.Main,
+  WidgetLocation.Main,
   // Location.Sidebar,
 ] as const;
 
