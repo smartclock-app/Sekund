@@ -10,8 +10,9 @@ const CONFIG_FILENAME = "config.json";
 const SCHEMA_FILENAME_PREFIX = "schema-";
 
 const baseConfig = {
-  checkNetwork: z.boolean().catch(true),
   orientation: z.enum(["portrait", "landscape"]).catch("landscape"),
+  checkNetwork: z.boolean().catch(true),
+  checkForUpdates: z.boolean().catch(true),
   remoteConfig: z
     .object({
       enabled: z.boolean().catch(true),
