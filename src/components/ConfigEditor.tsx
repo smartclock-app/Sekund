@@ -1,5 +1,5 @@
 import useConfigStore from "@/hooks/config";
-import useRouter, { RouterScreen } from "@/hooks/router";
+import useRouter from "@/hooks/router";
 import { useState } from "react";
 
 const ConfigEditor = () => {
@@ -9,8 +9,8 @@ const ConfigEditor = () => {
 
   return (
     <div className="editor" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-      <nav>
-        <button onClick={() => routerStore.navigate(RouterScreen.Main)}>Back</button>
+      <nav style={{ padding: "1rem", display: "flex", justifyContent: "space-between" }}>
+        <button onClick={() => routerStore.goBack()}>Back</button>
         <button
           onClick={async () => {
             await configStore.editConfig(JSON.parse(editedConfig));
@@ -21,8 +21,11 @@ const ConfigEditor = () => {
         </button>
       </nav>
       <textarea
-        draggable={false}
         style={{ flex: 1 }}
+        autoCapitalize="off"
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck="false"
         value={editedConfig}
         onChange={e => setEditedConfig(e.target.value)}
       />

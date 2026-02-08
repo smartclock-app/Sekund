@@ -21,7 +21,7 @@ function App() {
   const longPressProps = useLongPress(() => {
     info("Long press detected");
     routerStore.navigate(RouterScreen.Editor);
-  }, 1000);
+  });
 
   useHttpRequestListener(event => {
     info(JSON.stringify(event));

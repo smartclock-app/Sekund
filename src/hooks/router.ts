@@ -8,12 +8,24 @@ export enum RouterScreen {
 
 interface RouterStoreState {
   currentScreen: RouterScreen;
+  previousScreen?: RouterScreen; // Optional: track history
   navigate: (screen: RouterScreen) => void;
+  goBack: () => void; // Optional: simple back navigation
 }
 
 const useRouter = create<RouterStoreState>()(set => ({
   currentScreen: RouterScreen.Main,
-  navigate: (screen: RouterScreen) => set({ currentScreen: screen }),
+  previousScreen: undefined,
+  navigate: (screen: RouterScreen) =>
+    set(state => ({
+      currentScreen: screen,
+      previousScreen: state.currentScreen,
+    })),
+  goBack: () =>
+    set(state => ({
+      currentScreen: state.previousScreen ?? RouterScreen.Main,
+      previousScreen: undefined,
+    })),
 }));
 
 export default useRouter;
