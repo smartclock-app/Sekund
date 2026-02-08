@@ -2,7 +2,7 @@ import { ClockThemeComponent } from "@/helpers/types";
 import useEventListener, { EventType } from "@/hooks/event";
 import { useCallback, useEffect, useState } from "react";
 import { Config } from ".";
-import loadImages from "./loadImages";
+import fetchImages from "./fetchImages";
 import styles from "./photos.module.scss";
 
 const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) => {
@@ -11,7 +11,7 @@ const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) =>
   const [loadedImage, setLoadedImage] = useState<string>();
 
   useEffect(() => {
-    loadImages(config).then(setPhotos);
+    fetchImages(config).then(setPhotos);
   }, [config]);
 
   useEffect(() => {

@@ -1,14 +1,11 @@
-import { WidgetComponent } from "@/helpers/types";
+import { WidgetComponent, WidgetLocation } from "@/helpers/types";
 import { Config } from ".";
+import WeatherMain from "./Main";
+import WeatherSidebar from "./Sidebar";
 
 const Component: WidgetComponent<Config> = ({ config, location }) => {
-  return (
-    <div style={{ position: "absolute", top: 0, left: 0, width: "100%" }}>
-      <h1>Weather Widget</h1>
-      <p>Location: {location}</p>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
-    </div>
-  );
+  if (location === WidgetLocation.Sidebar) return <WeatherSidebar config={config} />;
+  return <WeatherMain config={config} />;
 };
 
 export default Component;

@@ -25,13 +25,13 @@ const getImagesFromImmich = async (config: Config) => {
   }
 };
 
-const loadImages = async (config: Config) => {
+const fetchImages = async (config: Config) => {
   let images: string[] = [];
   if (config.useStaticLinks) {
     images = config.images;
   } else {
     if (!config.immichUrl || !config.immichAccessToken || !config.immichAlbumId || !config.immichShareKey) {
-      warn("[Clock] Cannot get images from Immich, missing required fields");
+      warn("[Photos] Cannot get images from Immich, missing required fields");
       return [];
     }
 
@@ -42,4 +42,4 @@ const loadImages = async (config: Config) => {
   return images;
 };
 
-export default loadImages;
+export default fetchImages;
