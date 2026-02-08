@@ -36,6 +36,7 @@ export default async () => {
   const widgetSchemas: Record<string, ZodType> = {};
   const widgetModules: Record<string, WidgetModule> = {};
   const widgetAllowedLocations: Record<WidgetLocation, string[]> = { main: [], sidebar: [] };
+  const widgetThemes: string[] = [];
 
   for (const [path, mod] of Object.entries(modules)) {
     if (typeof mod.Name !== "string") {
@@ -71,6 +72,10 @@ export default async () => {
       }
     }
 
+    if (mod.Type == WidgetType.ClockTheme) {
+      widgetThemes.push(mod.Name);
+    }
+
     widgetSchemas[mod.Name] = mod.Schema.prefault({});
     widgetModules[mod.Name] = mod;
   }
@@ -87,6 +92,7 @@ export default async () => {
     $schema: z.literal(schemaFileName).catch(schemaFileName),
     ...baseConfig,
     widgets: z.object(widgetSchemas).prefault({}),
+    clockTheme: z.enum(["default", ...widgetThemes]).catch("default"),
     layout: z
       .object({
         main: z.array(z.enum(widgetAllowedLocations.main)).prefault([]),
@@ -120,7 +126,10 @@ export default async () => {
     {} as Record<WidgetLocation, WidgetModuleOfType<WidgetType.Widget>[]>,
   );
 
-  return [configData, layout] as const;
+  const theme =
+    (widgetModules[configData.clockTheme] as WidgetModuleOfType<WidgetType.ClockTheme> | undefined) ?? "default";
+
+  return [configData, layout, theme] as const;
 };
 
 const backupConfig = async () => {

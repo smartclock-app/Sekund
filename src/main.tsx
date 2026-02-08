@@ -11,22 +11,22 @@ const originalError = console.error;
 
 console.debug = (...args) => {
   originalLog(...args);
-  debug(args.map(s => JSON.stringify(s)).join(" "), { file: "frontend", line: 0 });
+  debug(args.map(s => (typeof s === "string" ? s : JSON.stringify(s))).join(" "), { file: "frontend", line: 0 });
 };
 
 console.log = (...args) => {
   originalLog(...args);
-  info(args.map(s => JSON.stringify(s)).join(" "), { file: "frontend", line: 0 });
+  info(args.map(s => (typeof s === "string" ? s : JSON.stringify(s))).join(" "), { file: "frontend", line: 0 });
 };
 
 console.warn = (...args) => {
   originalWarn(...args);
-  warn(args.map(s => JSON.stringify(s)).join(" "), { file: "frontend", line: 0 });
+  warn(args.map(s => (typeof s === "string" ? s : JSON.stringify(s))).join(" "), { file: "frontend", line: 0 });
 };
 
 console.error = (...args) => {
   originalError(...args);
-  warn(args.map(s => JSON.stringify(s)).join(" "), { file: "frontend", line: 0 });
+  warn(args.map(s => (typeof s === "string" ? s : JSON.stringify(s))).join(" "), { file: "frontend", line: 0 });
 };
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

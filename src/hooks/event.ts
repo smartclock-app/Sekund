@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 
 export enum EventType {
+  Tick = "tick",
   Refresh = "refresh",
   HttpRequest = "http-request",
 }

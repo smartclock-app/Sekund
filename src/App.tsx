@@ -4,6 +4,7 @@ import useConfigStore from "./hooks/config";
 import useMDNSStore from "./hooks/mdns";
 
 import { useEffect } from "react";
+import Clock from "./components/Clock";
 import { WidgetLocation } from "./helpers/types";
 import useRemoteStore, { useHttpRequestListener } from "./hooks/remote";
 
@@ -18,8 +19,8 @@ function App() {
 
   useEffect(() => {
     LoadConfig()
-      .then(([config, layout]) => {
-        configStore.setConfig(config, layout);
+      .then(([config, layout, theme]) => {
+        configStore.setConfig([config, layout, theme]);
         if (config.remoteConfig?.enabled) {
           if (!mdnsStore.broadcasting) mdnsStore.startBroadcast(mdnsStore.broadcasting, config.remoteConfig);
           if (!remoteStore.running) remoteStore.startServer(config.remoteConfig.port);
@@ -38,6 +39,7 @@ function App() {
             location={WidgetLocation.Main}
           />
         ))}
+        <Clock />
       </div>
       <div className="sidebar">
         {configStore.layout.sidebar.map(Widget => (

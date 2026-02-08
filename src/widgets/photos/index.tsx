@@ -26,11 +26,12 @@ export const Schema = z.object({
 
 export type Config = z.infer<typeof Schema>;
 
-export const Component: ClockThemeComponent<Config> = ({ config }) => {
+export const Component: ClockThemeComponent<Config> = ({ config, now }) => {
   return (
     <>
       <h1>Photos Theme</h1>
       <pre>{JSON.stringify(config, null, 2)}</pre>
+      <h2>{now.format("HH:mm:ss")}</h2>
     </>
   );
 };
