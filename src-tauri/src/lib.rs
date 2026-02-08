@@ -2,10 +2,12 @@ mod http_server;
 mod mdns;
 
 use mdns::{start_mdns, MdnsState};
+use std::collections::HashMap;
+use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use http_server::{start_http_server, stop_http_server, HttpServerState};
+use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -32,11 +34,14 @@ pub fn run() {
         .manage(HttpServerState {
             handle: Arc::new(Mutex::new(None)),
             running: Arc::new(Mutex::new(false)),
+            responses: Arc::new(Mutex::new(HashMap::new())),
+            id_counter: Arc::new(AtomicU64::new(1)),
         })
         .invoke_handler(tauri::generate_handler![
             start_mdns,
             start_http_server,
-            stop_http_server
+            stop_http_server,
+            http_respond
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

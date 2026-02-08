@@ -17,6 +17,7 @@ function App() {
 
   useHttpRequestListener(event => {
     info(JSON.stringify(event));
+    return { status: "ok", result: { message: "Hello from SmartClock!" } };
   });
 
   useEffect(() => {

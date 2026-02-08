@@ -28,15 +28,25 @@ const useRemoteStore = create<RemoteStoreState>()(set => ({
 export default useRemoteStore;
 
 interface HttpRequest {
+  id: number;
   method: string;
   path: string;
   headers: [string, string][];
   body: string;
 }
 
-export const useHttpRequestListener = (callback: (event: HttpRequest) => void) => {
+export const useHttpRequestListener = (
+  callback: (event: HttpRequest) => { status: "ok"; result: Record<string, any> } | { status: "error"; error: string },
+) => {
   useEffect(() => {
-    const unlisten = listen<HttpRequest>("http-request", e => callback(e.payload));
+    const unlisten = listen<HttpRequest>("http-request", async e => {
+      const response = callback(e.payload);
+      console.log(response);
+      await invoke("http_respond", {
+        id: e.payload.id,
+        responseBody: JSON.stringify(response),
+      });
+    });
 
     return () => {
       unlisten.then(fn => fn());
