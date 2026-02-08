@@ -1,5 +1,6 @@
 import useConfigStore from "@/hooks/config";
 import { dispatchEvent, EventType } from "@/hooks/event";
+import { info } from "@tauri-apps/plugin-log";
 import moment from "moment";
 import { Suspense, useEffect, useState } from "react";
 
@@ -18,7 +19,7 @@ const Clock = () => {
       if (now.seconds() !== time.seconds()) {
         dispatchEvent(EventType.Tick);
         if (time.seconds() % 30 === 0) {
-          console.log("Dispatching refresh event");
+          info("Dispatching refresh event");
           dispatchEvent(EventType.Refresh);
         }
       }
@@ -33,7 +34,11 @@ const Clock = () => {
   const Component = configStore.clockTheme.Component;
   return (
     <Suspense fallback={<h1>Loading</h1>}>
-      <Component config={configStore.config.widgets[configStore.clockTheme.Name]} now={now} />
+      <Component
+        config={configStore.config.widgets[configStore.clockTheme.Name]}
+        clockConfig={configStore.config.clock}
+        now={now}
+      />
     </Suspense>
   );
 };

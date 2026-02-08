@@ -3,6 +3,7 @@ import LoadConfig from "@/helpers/config";
 import useConfigStore from "./hooks/config";
 import useMDNSStore from "./hooks/mdns";
 
+import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef } from "react";
 import Clock from "./components/Clock";
 import { WidgetLocation } from "./helpers/types";
@@ -15,7 +16,7 @@ function App() {
   const remoteStore = useRemoteStore();
 
   useHttpRequestListener(event => {
-    console.log(event);
+    info(JSON.stringify(event));
   });
 
   useEffect(() => {
@@ -29,7 +30,7 @@ function App() {
           if (!remoteStore.running) remoteStore.startServer(config.remoteConfig.port);
         }
       })
-      .catch(err => console.error("Error loading config:", err));
+      .catch(err => info(`Error loading config: ${err.toString()}`));
   }, []);
 
   return (

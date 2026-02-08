@@ -69,6 +69,7 @@
     "scope": "typescript",
     "body": [
       "import { CalendarExtensionComponent, WidgetType } from \"@/helpers/types\";",
+      "import { info } from \"@tauri-apps/plugin-log\";",
       "import z from \"zod\";",
       "",
       "export const Name = \"${1:calendarExtensionName}\";",
@@ -81,7 +82,7 @@
       "export type Config = z.infer<typeof Schema>;",
       "",
       "export const Component: CalendarExtensionComponent<Config> = (config) => {",
-      "  console.log(\"${1/(.*)/${1:/pascalcase}/} Config\", config);",
+      "  info(`${1/(.*)/${1:/pascalcase}/} Config: ${JSON.stringify(config)}`);",
       "  return [];",
       "};",
       "",

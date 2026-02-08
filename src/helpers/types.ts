@@ -1,4 +1,5 @@
 import { ZodAny } from "zod";
+import { ClockConfig } from "./baseConfig";
 
 export enum WidgetLocation {
   Main = "main",
@@ -59,4 +60,8 @@ export interface CalendarEvent {
 
 export type WidgetComponent<Config = {}> = React.FC<{ config: Config; location: WidgetLocation }>;
 export type CalendarExtensionComponent<Config = {}> = (config: Config) => CalendarEvent[] | Promise<CalendarEvent[]>;
-export type ClockThemeComponent<Config = {}> = React.FC<{ config: Config; now: moment.Moment }>;
+export type ClockThemeComponent<Config = {}> = React.FC<{
+  config: Config;
+  clockConfig: ClockConfig;
+  now: moment.Moment;
+}>;

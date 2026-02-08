@@ -1,5 +1,6 @@
 import { BaseDirectory, exists, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { fetch } from "@tauri-apps/plugin-http";
+import { error, info, warn } from "@tauri-apps/plugin-log";
 import { Mutex } from "async-mutex";
 import moment, { type Moment } from "moment";
 import { Device, Memory, Notification, Queue } from "./types";
@@ -38,7 +39,7 @@ class QueryClient {
         this._cookies = cookies;
       }
     } catch (error) {
-      console.error("Failed to load cookies:", error);
+      warn(`Failed to load cookies: ${error}`);
     }
   }
 
@@ -78,17 +79,17 @@ class QueryClient {
         if (diff < 15) return this._lastLogin[1];
       }
 
-      console.log("Checking status for user: $userId", "trace");
+      info(`Checking status for user: ${userId}`);
       const status = await this.checkStatus(userId);
       if (status == true) return true;
 
       token ??= this.loginToken;
       if (!token || token.trim() === "") {
-        console.error("No token provided");
+        error("No token provided");
         return false;
       }
 
-      console.log("Logging in user: $userId", "trace");
+      info(`Logging in user: ${userId}`);
 
       const postBody = new URLSearchParams();
       postBody.append("app_name", "Amazon Alexa");
@@ -109,7 +110,7 @@ class QueryClient {
       });
 
       if (response.status != 200) {
-        console.warn(`Login failed with status code: ${response.status}`);
+        warn(`Login failed with status code: ${response.status}`);
         return false;
       }
 
@@ -148,7 +149,7 @@ class QueryClient {
       }
 
       if (!csrfTokenExists) {
-        console.error("CSRF Token not found");
+        warn("CSRF Token not found");
         return false;
       }
 

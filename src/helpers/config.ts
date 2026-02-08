@@ -1,34 +1,15 @@
 import { Widget, WidgetLocation, WidgetModule, WidgetOfType, WidgetType } from "@/helpers/types";
 import { getVersion } from "@tauri-apps/api/app";
 import { BaseDirectory, exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
+import { info, warn } from "@tauri-apps/plugin-log";
 import z, { type ZodType } from "zod";
+import baseConfig from "./baseConfig";
 
 const BASE_DIRECTORY = BaseDirectory.AppData;
 const CONFIG_BACKUP_LIMIT = 5;
 const CONFIG_BACKUP_DIR = "config-backups";
 const CONFIG_FILENAME = "config.json";
 const SCHEMA_FILENAME_PREFIX = "schema-";
-
-const baseConfig = {
-  orientation: z.enum(["portrait", "landscape"]).catch("landscape"),
-  checkNetwork: z.boolean().catch(true),
-  remoteConfig: z
-    .object({
-      enabled: z.boolean().catch(true),
-      port: z.number().catch(8080),
-      password: z.string().catch(""),
-      useBonjour: z.boolean().catch(true),
-      bonjourName: z.string().catch("Smart Clock"),
-      toggleDisplayPath: z.string().catch(""),
-    })
-    .prefault({} as any),
-  clock: z
-    .object({
-      format: z.enum(["12h", "24h"]).catch("12h"),
-      showSeconds: z.boolean().catch(true),
-    })
-    .prefault({} as any),
-};
 
 export default async () => {
   const modules = import.meta.glob("../widgets/*/index.ts", { eager: true }) as Record<string, WidgetModule>;
@@ -46,9 +27,6 @@ export default async () => {
     const widgetName = path.match(/\.\.\/widgets\/(.+)\/index\.ts$/)![1];
     const componentPath = `../widgets/${widgetName}/Component.tsx`;
     const Component = componentModules[componentPath].default;
-
-    console.log(`Loading widget "${widgetName}" from ${path}`);
-    console.log(typeof Component);
 
     if (!mod.Type || !Object.values(WidgetType).includes(mod.Type)) {
       throw new Error(`Widget "${widgetName}" at ${path} missing Type export or Type is not a valid WidgetType`);
@@ -70,8 +48,9 @@ export default async () => {
 
     if (mod.Type == WidgetType.Widget) {
       if (!mod.AllowedLocations || !Array.isArray(mod.AllowedLocations)) {
-        // prettier-ignore
-        throw new Error(`Widget "${widgetName}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
+        throw new Error(
+          `Widget "${widgetName}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`,
+        );
       }
 
       for (const location of mod.AllowedLocations) {
@@ -121,7 +100,7 @@ export default async () => {
 
   let configData;
   if (!(await exists(CONFIG_FILENAME, { baseDir: BASE_DIRECTORY }))) {
-    console.warn("Config file not found, using defaults");
+    warn("Config file not found, using defaults");
     configData = configSchema.parse({});
   } else {
     const configFileContents = await readTextFile(CONFIG_FILENAME, { baseDir: BASE_DIRECTORY });
@@ -164,10 +143,9 @@ const backupConfig = async () => {
       baseDir: BASE_DIRECTORY,
     });
 
-    // Remove backups beyond the 5 most recent
     for (const backup of backups.slice(CONFIG_BACKUP_LIMIT)) {
-      await remove(`${CONFIG_BACKUP_DIR}/${backup.name}`, { baseDir: BASE_DIRECTORY });
-      console.log(`Removed old backup: ${backup.name}`);
+      remove(`${CONFIG_BACKUP_DIR}/${backup.name}`, { baseDir: BASE_DIRECTORY });
+      info(`Removed old backup: ${backup.name}`);
     }
   }
 };
