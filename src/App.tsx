@@ -5,22 +5,28 @@ import useMDNSStore from "./hooks/mdns";
 
 import { useEffect } from "react";
 import { WidgetLocation } from "./helpers/types";
+import useRemoteStore, { useHttpRequestListener } from "./hooks/remote";
 
 function App() {
   const configStore = useConfigStore();
   const mdnsStore = useMDNSStore();
+  const remoteStore = useRemoteStore();
+
+  useHttpRequestListener(event => {
+    console.log(event);
+  });
 
   useEffect(() => {
     LoadConfig()
-      .then(([config, layout]) => configStore.setConfig(config, layout))
-      .catch(console.log);
+      .then(([config, layout]) => {
+        configStore.setConfig(config, layout);
+        if (config.remoteConfig?.enabled) {
+          if (!mdnsStore.broadcasting) mdnsStore.startBroadcast(mdnsStore.broadcasting, config.remoteConfig);
+          if (!remoteStore.running) remoteStore.startServer(config.remoteConfig.port);
+        }
+      })
+      .catch(console.error);
   }, []);
-
-  useEffect(() => {
-    if (!mdnsStore.broadcasting && configStore?.config?.remoteConfig?.enabled) {
-      mdnsStore.startBroadcast(mdnsStore.broadcasting, configStore.config.remoteConfig);
-    }
-  }, [configStore.config]);
 
   return (
     <div className="container">

@@ -18,14 +18,13 @@ pub fn start_mdns(
     port: u16,
     name: String,
 ) -> Result<(), String> {
-    println!("Starting mDNS broadcast...");
+    log::info!("Starting broadcast...");
 
     let mdns = ServiceDaemon::new().map_err(|e| {
-        eprintln!("Failed to create daemon: {}", e);
+        log::error!("Failed to create daemon: {}", e);
         e.to_string()
     })?;
 
-    println!("Creating service info...");
     let my_local_ip = local_ip().map_err(|e| e.to_string())?;
     let service_info = ServiceInfo::new(
         "_smartclock._tcp.local.",
@@ -36,18 +35,16 @@ pub fn start_mdns(
         None,
     )
     .map_err(|e| {
-        eprintln!("Failed to create service info: {}", e);
+        log::error!("Failed to create service info: {}", e);
         e.to_string()
     })?;
 
-    println!("Registering service: {:?}", service_info);
     mdns.register(service_info).map_err(|e| {
-        eprintln!("Failed to register: {}", e);
+        log::error!("Failed to register: {}", e);
         e.to_string()
     })?;
 
-    println!("✓ mDNS service registered successfully");
-
+    log::info!("Service registered successfully");
     let mut mdns_state = state.lock().unwrap();
     mdns_state.daemon = Some(Arc::new(mdns));
 

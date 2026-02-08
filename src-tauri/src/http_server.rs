@@ -12,11 +12,12 @@ pub fn start_http_server(
     port: u16,
     window: Window,
     state: State<HttpServerState>,
-) -> Result<String, String> {
+) -> Result<(), String> {
     let mut running = state.running.lock().unwrap();
 
     if *running {
-        return Err("Server already running".to_string());
+        log::info!("Server already running");
+        return Ok(());
     }
 
     *running = true;
@@ -25,15 +26,16 @@ pub fn start_http_server(
     let handle = thread::spawn(move || {
         let addr = format!("0.0.0.0:{}", port);
         let server = match tiny_http::Server::http(&addr) {
-            Ok(s) => s,
+            Ok(s) => {
+                log::info!("Server started on {}", addr);
+                s
+            }
             Err(e) => {
-                eprintln!("Failed to start server: {}", e);
+                log::error!("Failed to start server: {}", e);
                 *running_clone.lock().unwrap() = false;
                 return;
             }
         };
-
-        println!("HTTP server listening on http://{}", addr);
 
         for mut request in server.incoming_requests() {
             // Check if we should stop
@@ -64,25 +66,35 @@ pub fn start_http_server(
 
             let _ = window.emit("http-request", payload);
 
-            let response = tiny_http::Response::from_string("OK");
+            let response = tiny_http::Response::from_string("{}").with_header(
+                tiny_http::Header::from_bytes(&b"Content-Type"[..], &b"application/json"[..])
+                    .unwrap(),
+            );
             let _ = request.respond(response);
         }
     });
 
     *state.handle.lock().unwrap() = Some(handle);
 
-    Ok(format!("Server started on port {}", port))
+    Ok(())
 }
 
 #[tauri::command]
-pub fn stop_http_server(state: State<HttpServerState>) -> Result<String, String> {
+pub fn stop_http_server(state: State<HttpServerState>) -> Result<(), String> {
     let mut running = state.running.lock().unwrap();
 
     if !*running {
-        return Err("Server not running".to_string());
+        log::warn!("Server not running");
+        return Ok(());
     }
 
     *running = false;
+    if let Some(handle) = state.handle.lock().unwrap().take() {
+        let _ = handle.join();
+        log::info!("Server stopped");
+    } else {
+        log::warn!("No server thread to join");
+    }
 
-    Ok("Server stopped".to_string())
+    Ok(())
 }

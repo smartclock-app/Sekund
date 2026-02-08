@@ -1,14 +1,15 @@
 import { useEffect } from "react";
 
-enum EventType {
+export enum EventType {
   Refresh = "refresh",
+  HttpRequest = "http-request",
 }
 
 export const dispatchEvent = (eventName: EventType) => {
   window.dispatchEvent(new Event(eventName));
 };
 
-const useEventListener = (eventName: EventType, callback: VoidFunction) => {
+const useEventListener = (eventName: EventType, callback: (event: Event) => void) => {
   useEffect(() => {
     window.addEventListener(eventName, callback);
 

@@ -16,10 +16,8 @@ const useMDNSStore = create<MDNSStoreState>()(set => ({
         port: remoteConfig.port,
         name: remoteConfig.bonjourName,
       });
-      console.log("mDNS broadcast started");
       set({ broadcasting: true });
     } catch (error) {
-      console.error("Failed to start mDNS:", error);
       set({ broadcasting: false });
     }
   },
