@@ -1,15 +1,15 @@
-import { WidgetLocation, WidgetModuleOfType, WidgetType } from "@/helpers/types";
+import { WidgetLocation, WidgetOfType, WidgetType } from "@/helpers/types";
 import { create } from "zustand";
 
 interface ConfigStoreState {
   config: Record<string, any>;
-  layout: Record<WidgetLocation, WidgetModuleOfType<WidgetType.Widget>[]>;
-  clockTheme: WidgetModuleOfType<WidgetType.ClockTheme> | "default";
+  layout: Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>;
+  clockTheme: WidgetOfType<WidgetType.ClockTheme> | "default";
   setConfig: (
     config: [
       Record<string, any>,
-      Record<WidgetLocation, WidgetModuleOfType<WidgetType.Widget>[]>,
-      WidgetModuleOfType<WidgetType.ClockTheme> | "default",
+      Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>,
+      WidgetOfType<WidgetType.ClockTheme> | "default",
     ],
   ) => void;
 }

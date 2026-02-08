@@ -13,6 +13,21 @@ export enum WidgetType {
 
 export type WidgetModule =
   | {
+      Type: WidgetType.Widget;
+      AllowedLocations: WidgetLocation[];
+      Schema: ZodAny;
+    }
+  | {
+      Type: WidgetType.CalendarExtension;
+      Schema: ZodAny;
+    }
+  | {
+      Type: WidgetType.ClockTheme;
+      Schema: ZodAny;
+    };
+export type WidgetComponentModule = WidgetComponent | CalendarExtensionComponent | ClockThemeComponent;
+export type Widget =
+  | {
       Name: string;
       Type: WidgetType.Widget;
       AllowedLocations: WidgetLocation[];
@@ -32,7 +47,7 @@ export type WidgetModule =
       Component: ClockThemeComponent;
     };
 
-export type WidgetModuleOfType<T extends WidgetType> = Extract<WidgetModule, { Type: T }>;
+export type WidgetOfType<T extends WidgetType> = Extract<Widget, { Type: T }>;
 
 export interface CalendarEvent {
   id: string;

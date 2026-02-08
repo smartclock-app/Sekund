@@ -1,7 +1,6 @@
-import { CalendarExtensionComponent, WidgetType } from "@/helpers/types";
+import { WidgetType } from "@/helpers/types";
 import z from "zod";
 
-export const Name = "watchlist";
 export const Type = WidgetType.CalendarExtension;
 
 export const Schema = z.object({
@@ -24,9 +23,3 @@ export const Schema = z.object({
 });
 
 export type Config = z.infer<typeof Schema>;
-
-export const Component: CalendarExtensionComponent<Config> = config => {
-  console.log(config);
-
-  return [];
-};

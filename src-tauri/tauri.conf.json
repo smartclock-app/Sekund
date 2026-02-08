@@ -13,7 +13,8 @@
     "windows": [
       {
         "title": "Smart Clock",
-        "maximizable": true,
+        "maximized": true,
+        "devtools": true,
         "focus": true,
         "acceptFirstMouse": true,
         "titleBarStyle": "Transparent"

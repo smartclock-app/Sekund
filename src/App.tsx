@@ -3,12 +3,13 @@ import LoadConfig from "@/helpers/config";
 import useConfigStore from "./hooks/config";
 import useMDNSStore from "./hooks/mdns";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Clock from "./components/Clock";
 import { WidgetLocation } from "./helpers/types";
 import useRemoteStore, { useHttpRequestListener } from "./hooks/remote";
 
 function App() {
+  const configLoaded = useRef(false);
   const configStore = useConfigStore();
   const mdnsStore = useMDNSStore();
   const remoteStore = useRemoteStore();
@@ -18,6 +19,8 @@ function App() {
   });
 
   useEffect(() => {
+    if (configLoaded.current) return;
+    configLoaded.current = true;
     LoadConfig()
       .then(([config, layout, theme]) => {
         configStore.setConfig([config, layout, theme]);
@@ -26,7 +29,7 @@ function App() {
           if (!remoteStore.running) remoteStore.startServer(config.remoteConfig.port);
         }
       })
-      .catch(console.error);
+      .catch(err => console.error("Error loading config:", err));
   }, []);
 
   return (

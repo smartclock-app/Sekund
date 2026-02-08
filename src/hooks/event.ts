@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export enum EventType {
   Tick = "tick",
@@ -11,13 +11,20 @@ export const dispatchEvent = (eventName: EventType) => {
 };
 
 const useEventListener = (eventName: EventType, callback: (event: Event) => void) => {
+  const savedCallback = useRef(callback);
+
   useEffect(() => {
-    window.addEventListener(eventName, callback);
+    savedCallback.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    const eventListener = (event: Event) => savedCallback.current(event);
+    window.addEventListener(eventName, eventListener);
 
     return () => {
-      window.removeEventListener(eventName, callback);
+      window.removeEventListener(eventName, eventListener);
     };
-  }, [eventName, callback]);
+  }, [eventName]);
 };
 
 export default useEventListener;

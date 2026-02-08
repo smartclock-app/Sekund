@@ -1,4 +1,4 @@
-import { WidgetLocation, WidgetModule, WidgetModuleOfType, WidgetType } from "@/helpers/types";
+import { Widget, WidgetLocation, WidgetModule, WidgetOfType, WidgetType } from "@/helpers/types";
 import { getVersion } from "@tauri-apps/api/app";
 import { BaseDirectory, exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import z, { type ZodType } from "zod";
@@ -31,53 +31,71 @@ const baseConfig = {
 };
 
 export default async () => {
-  const modules = import.meta.glob("../widgets/*/index.{ts,tsx}", { eager: true }) as Record<string, WidgetModule>;
+  const modules = import.meta.glob("../widgets/*/index.ts", { eager: true }) as Record<string, WidgetModule>;
+  const componentModules = import.meta.glob("../widgets/*/Component.{ts,tsx}", { eager: true }) as Record<
+    string,
+    { default: any }
+  >;
 
   const widgetSchemas: Record<string, ZodType> = {};
-  const widgetModules: Record<string, WidgetModule> = {};
+  const widgetModules: Record<string, Widget> = {};
   const widgetAllowedLocations: Record<WidgetLocation, string[]> = { main: [], sidebar: [] };
   const widgetThemes: string[] = [];
 
-  for (const [path, mod] of Object.entries(modules)) {
-    if (typeof mod.Name !== "string") {
-      throw new Error(`Widget at ${path} missing Name export or Name is not a string`);
-    }
+  for (let [path, mod] of Object.entries(modules)) {
+    const widgetName = path.match(/\.\.\/widgets\/(.+)\/index\.ts$/)![1];
+    const componentPath = `../widgets/${widgetName}/Component.tsx`;
+    const Component = componentModules[componentPath].default;
+
+    console.log(`Loading widget "${widgetName}" from ${path}`);
+    console.log(typeof Component);
 
     if (!mod.Type || !Object.values(WidgetType).includes(mod.Type)) {
-      throw new Error(`Widget "${mod.Name}" at ${path} missing Type export or Type is not a valid WidgetType`);
+      throw new Error(`Widget "${widgetName}" at ${path} missing Type export or Type is not a valid WidgetType`);
     }
 
     if (!mod.Schema || typeof (mod.Schema as any).parse !== "function") {
-      throw new Error(`Widget "${mod.Name}" at ${path} missing Schema export or Schema is not a Zod schema`);
+      throw new Error(`Widget "${widgetName}" at ${path} missing Schema export or Schema is not a Zod schema`);
     }
 
-    if (!mod.Component || typeof mod.Component !== "function") {
+    if (!Component || typeof Component !== "function") {
       throw new Error(
-        `Widget "${mod.Name}" at ${path} missing Component export or Component is not a valid React component`,
+        `Widget "${widgetName}" at ${path} missing Component export or Component is not a valid React component`,
       );
     }
 
-    if (widgetSchemas[mod.Name]) {
-      throw new Error(`Widget "${mod.Name}" at ${path} already used by another widget, widget names must be unique`);
+    if (widgetSchemas[widgetName]) {
+      throw new Error(`Widget "${widgetName}" at ${path} already used by another widget, widget names must be unique`);
     }
 
     if (mod.Type == WidgetType.Widget) {
       if (!mod.AllowedLocations || !Array.isArray(mod.AllowedLocations)) {
         // prettier-ignore
-        throw new Error(`Widget "${mod.Name}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
+        throw new Error(`Widget "${widgetName}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`);
       }
 
       for (const location of mod.AllowedLocations) {
-        widgetAllowedLocations[location].push(mod.Name);
+        widgetAllowedLocations[location].push(widgetName);
       }
+
+      widgetModules[widgetName] = {
+        Name: widgetName,
+        Type: mod.Type,
+        AllowedLocations: mod.AllowedLocations,
+        Schema: mod.Schema,
+        Component,
+      };
+    } else {
+      widgetModules[widgetName] = {
+        Name: widgetName,
+        Type: mod.Type,
+        Schema: mod.Schema,
+        Component,
+      };
     }
 
-    if (mod.Type == WidgetType.ClockTheme) {
-      widgetThemes.push(mod.Name);
-    }
-
-    widgetSchemas[mod.Name] = mod.Schema.prefault({});
-    widgetModules[mod.Name] = mod;
+    if (mod.Type == WidgetType.ClockTheme) widgetThemes.push(widgetName);
+    widgetSchemas[widgetName] = mod.Schema.prefault({});
   }
 
   const currentVersion = await getVersion();
@@ -119,15 +137,14 @@ export default async () => {
   const layout = Object.entries(configData.layout).reduce(
     (acc, [location, widgetNames]) => {
       acc[location as WidgetLocation] = widgetNames.map(
-        (name: string) => widgetModules[name] as WidgetModuleOfType<WidgetType.Widget>,
+        (name: string) => widgetModules[name] as WidgetOfType<WidgetType.Widget>,
       );
       return acc;
     },
-    {} as Record<WidgetLocation, WidgetModuleOfType<WidgetType.Widget>[]>,
+    {} as Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>,
   );
 
-  const theme =
-    (widgetModules[configData.clockTheme] as WidgetModuleOfType<WidgetType.ClockTheme> | undefined) ?? "default";
+  const theme = (widgetModules[configData.clockTheme] as WidgetOfType<WidgetType.ClockTheme> | undefined) ?? "default";
 
   return [configData, layout, theme] as const;
 };

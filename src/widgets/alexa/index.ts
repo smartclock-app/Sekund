@@ -1,4 +1,4 @@
-import { WidgetComponent, WidgetLocation, WidgetType } from "@/helpers/types";
+import { WidgetLocation, WidgetType } from "@/helpers/types";
 import z from "zod";
 
 export const Name = "alexa";
@@ -26,13 +26,3 @@ export const Schema = z.object({
 });
 
 export type Config = z.infer<typeof Schema>;
-
-export const Component: WidgetComponent<Config> = ({ config, location }) => {
-  return (
-    <>
-      <h1>Alexa Widget</h1>
-      <p>Location: {location}</p>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
-    </>
-  );
-};

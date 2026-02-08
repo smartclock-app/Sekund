@@ -1,13 +1,8 @@
-import { WidgetComponent, WidgetLocation, WidgetType } from "@/helpers/types";
+import { WidgetLocation, WidgetType } from "@/helpers/types";
 import z from "zod";
 
-export const Name = "homeassistant";
 export const Type = WidgetType.Widget;
-
-export const AllowedLocations = [
-  // WidgetLocation.Main,
-  WidgetLocation.Sidebar,
-] as const;
+export const AllowedLocations = [WidgetLocation.Sidebar] as const;
 
 export const Schema = z.object({
   url: z.url().or(z.literal("")).catch(""),
@@ -28,13 +23,3 @@ export const Schema = z.object({
 });
 
 export type Config = z.infer<typeof Schema>;
-
-export const Component: WidgetComponent<Config> = ({ config, location }) => {
-  return (
-    <>
-      <h1>HomeAssistant Widget</h1>
-      <p>Location: {location}</p>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
-    </>
-  );
-};

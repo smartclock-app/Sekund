@@ -1,9 +1,7 @@
-import { ClockThemeComponent, WidgetType } from "@/helpers/types";
+import { WidgetType } from "@/helpers/types";
 import z from "zod";
 
-export const Name = "photos";
 export const Type = WidgetType.ClockTheme;
-
 export const Schema = z.object({
   refreshInterval: z
     .number()
@@ -25,13 +23,3 @@ export const Schema = z.object({
 });
 
 export type Config = z.infer<typeof Schema>;
-
-export const Component: ClockThemeComponent<Config> = ({ config, now }) => {
-  return (
-    <>
-      <h1>Photos Theme</h1>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
-      <h2>{now.format("HH:mm:ss")}</h2>
-    </>
-  );
-};
