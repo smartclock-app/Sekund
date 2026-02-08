@@ -1,4 +1,5 @@
 import { fetch } from "@tauri-apps/plugin-http";
+import { info, warn } from "@tauri-apps/plugin-log";
 import { Config } from ".";
 
 const getImagesFromImmich = async (config: Config) => {
@@ -16,10 +17,10 @@ const getImagesFromImmich = async (config: Config) => {
         `${config.immichUrl}/api/assets/${e["id"]}/thumbnail?key=${config.immichShareKey}&size=preview`,
     );
 
-    console.log(`[Photos] Fetched ${images.length} images from Immich`);
+    info(`[Photos] Fetched ${images.length} images from Immich`);
     return images;
   } catch (e) {
-    console.error(`[Photos] Error fetching images from Immich: ${e}`);
+    info(`[Photos] Error fetching images from Immich: ${e}`);
     return [];
   }
 };
@@ -30,7 +31,7 @@ const loadImages = async (config: Config) => {
     images = config.images;
   } else {
     if (!config.immichUrl || !config.immichAccessToken || !config.immichAlbumId || !config.immichShareKey) {
-      console.warn("[Clock] Cannot get images from Immich, missing required fields");
+      warn("[Clock] Cannot get images from Immich, missing required fields");
       return [];
     }
 

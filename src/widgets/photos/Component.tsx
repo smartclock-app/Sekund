@@ -5,7 +5,7 @@ import { Config } from ".";
 import loadImages from "./loadImages";
 import styles from "./photos.module.scss";
 
-const Component: ClockThemeComponent<Config> = ({ config, now }) => {
+const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) => {
   const [photos, setPhotos] = useState<string[]>();
   const [index, setIndex] = useState(0);
   const [loadedImage, setLoadedImage] = useState<string>();
@@ -36,9 +36,16 @@ const Component: ClockThemeComponent<Config> = ({ config, now }) => {
 
   return (
     <div className={styles.container} style={{ backgroundImage: loadedImage ? `url(${loadedImage})` : undefined }}>
-      <h1>Photos Theme</h1>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
-      <h2>{now.format("HH:mm:ss")}</h2>
+      <div className={styles.overlay}>
+        <div className={styles.time}>
+          <p className={styles.main}>{now.format(`${clockConfig.format == "12h" ? "hh" : "HH"}:mm`)}</p>
+          <div className={styles.sub}>
+            <p>{now.format("A")}</p>
+            {clockConfig.showSeconds && <p>{now.format("ss")}</p>}
+          </div>
+        </div>
+        <div className={styles.date}>{now.format("dddd Do MMMM YYYY")}</div>
+      </div>
     </div>
   );
 };
