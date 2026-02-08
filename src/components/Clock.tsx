@@ -2,7 +2,7 @@ import useConfigStore from "@/hooks/config";
 import { dispatchEvent, EventType } from "@/hooks/event";
 import { info } from "@tauri-apps/plugin-log";
 import moment from "moment";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const DefaultTheme = ({ now }: { now: moment.Moment }) => {
   return <>{now.format("HH:mm:ss")}</>;
@@ -33,13 +33,11 @@ const Clock = () => {
   if (configStore.clockTheme === "default") return <DefaultTheme now={now} />;
   const Component = configStore.clockTheme.Component;
   return (
-    <Suspense fallback={<h1>Loading</h1>}>
-      <Component
-        config={configStore.config.widgets[configStore.clockTheme.Name]}
-        clockConfig={configStore.config.clock}
-        now={now}
-      />
-    </Suspense>
+    <Component
+      config={configStore.config.widgets[configStore.clockTheme.Name]}
+      clockConfig={configStore.config.clock}
+      now={now}
+    />
   );
 };
 

@@ -7,6 +7,7 @@ import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef } from "react";
 import Clock from "./components/Clock";
 import { WidgetLocation } from "./helpers/types";
+import useLongPress from "./hooks/longPress";
 import useRemoteStore, { useHttpRequestListener } from "./hooks/remote";
 
 function App() {
@@ -14,6 +15,9 @@ function App() {
   const configStore = useConfigStore();
   const mdnsStore = useMDNSStore();
   const remoteStore = useRemoteStore();
+  const longPressProps = useLongPress(() => {
+    info("Long press detected");
+  }, 1000);
 
   useHttpRequestListener(event => {
     info(JSON.stringify(event));
@@ -36,7 +40,7 @@ function App() {
 
   return (
     <div className="container">
-      <div className="main">
+      <div className="main" {...longPressProps}>
         {configStore.layout.main.map(Widget => (
           <Widget.Component
             key={Widget.Name}
