@@ -1,3 +1,4 @@
+import { saveConfig } from "@/helpers/config";
 import { WidgetLocation, WidgetOfType, WidgetType } from "@/helpers/types";
 import { create } from "zustand";
 
@@ -12,6 +13,7 @@ interface ConfigStoreState {
       WidgetOfType<WidgetType.ClockTheme> | "default",
     ],
   ) => void;
+  editConfig: (config: Record<string, any>) => Promise<void>;
 }
 
 const useConfigStore = create<ConfigStoreState>()(set => ({
@@ -19,6 +21,10 @@ const useConfigStore = create<ConfigStoreState>()(set => ({
   layout: { main: [], sidebar: [] },
   clockTheme: "default" as const,
   setConfig: ([config, layout, theme]) => set({ config, layout, clockTheme: theme }),
+  editConfig: async config => {
+    await saveConfig(config);
+    set({ config });
+  },
 }));
 
 export default useConfigStore;

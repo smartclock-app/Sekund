@@ -23,7 +23,9 @@ body {
   width: 100%;
   height: 100%;
 
-  padding: 1rem;
+  padding: calc(1rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right))
+    calc(1rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
+
   gap: 1rem;
 
   background-color: white;

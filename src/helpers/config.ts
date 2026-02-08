@@ -108,7 +108,7 @@ export default async () => {
     configData = configSchema.parse(parsedConfig);
   }
 
-  await writeTextFile(CONFIG_FILENAME, JSON.stringify(configData, null, 2), { baseDir: BASE_DIRECTORY });
+  await saveConfig(configData);
   await writeTextFile(schemaFileName, JSON.stringify(configSchema.toJSONSchema(), null, 2), {
     baseDir: BASE_DIRECTORY,
   });
@@ -126,6 +126,10 @@ export default async () => {
   const theme = (widgetModules[configData.clockTheme] as WidgetOfType<WidgetType.ClockTheme> | undefined) ?? "default";
 
   return [configData, layout, theme] as const;
+};
+
+export const saveConfig = async (config: Record<string, any>) => {
+  await writeTextFile(CONFIG_FILENAME, JSON.stringify(config, null, 2), { baseDir: BASE_DIRECTORY });
 };
 
 const backupConfig = async () => {

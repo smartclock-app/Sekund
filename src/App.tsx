@@ -6,17 +6,21 @@ import useMDNSStore from "./hooks/mdns";
 import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef } from "react";
 import Clock from "./components/Clock";
+import ConfigEditor from "./components/ConfigEditor";
 import { WidgetLocation } from "./helpers/types";
 import useLongPress from "./hooks/longPress";
 import useRemoteStore, { useHttpRequestListener } from "./hooks/remote";
+import useRouter, { RouterScreen } from "./hooks/router";
 
 function App() {
+  const routerStore = useRouter();
   const configLoaded = useRef(false);
   const configStore = useConfigStore();
   const mdnsStore = useMDNSStore();
   const remoteStore = useRemoteStore();
   const longPressProps = useLongPress(() => {
     info("Long press detected");
+    routerStore.navigate(RouterScreen.Editor);
   }, 1000);
 
   useHttpRequestListener(event => {
@@ -38,7 +42,9 @@ function App() {
       .catch(err => info(`Error loading config: ${err.toString()}`));
   }, []);
 
-  return (
+  return routerStore.currentScreen === RouterScreen.Editor ? (
+    <ConfigEditor />
+  ) : (
     <div className="container">
       <div className="main" {...longPressProps}>
         {configStore.layout.main.map(Widget => (
