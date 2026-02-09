@@ -1,4 +1,4 @@
-import type { Moment } from "moment";
+import type { Dayjs } from "dayjs";
 
 export interface AlexaLoginResponse {
   response: {
@@ -23,7 +23,7 @@ export interface Device {
 }
 
 export interface Memory {
-  updatedDateTime?: Moment;
+  updatedDateTime?: Dayjs;
   value?: string;
 }
 
@@ -75,5 +75,5 @@ export interface Queue {
     };
     providerName?: string;
   };
-  timestamp?: Moment;
+  timestamp?: Dayjs;
 }

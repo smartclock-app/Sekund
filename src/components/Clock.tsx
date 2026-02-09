@@ -1,24 +1,24 @@
 import useConfigStore from "@/hooks/config";
 import { dispatchEvent, EventType } from "@/hooks/event";
 import { info } from "@tauri-apps/plugin-log";
-import moment from "moment";
+import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 
-const DefaultTheme = ({ now }: { now: moment.Moment }) => {
+const DefaultTheme = ({ now }: { now: dayjs.Dayjs }) => {
   return <>{now.format("HH:mm:ss")}</>;
 };
 
 const Clock = () => {
-  const [now, setNow] = useState(moment());
+  const [now, setNow] = useState(dayjs());
   const configStore = useConfigStore();
 
   useEffect(() => {
     const timer = setInterval(() => {
-      const time = moment();
+      const time = dayjs();
 
-      if (now.seconds() !== time.seconds()) {
+      if (now.second() !== time.second()) {
         dispatchEvent(EventType.Tick);
-        if (time.seconds() % 30 === 0) {
+        if (time.second() % 30 === 0) {
           info("Dispatching refresh event");
           dispatchEvent(EventType.Refresh);
         }

@@ -61,7 +61,7 @@ function App() {
       <div className="sidebar">
         {configStore.layout.sidebar.map(Widget => {
           if (Widget.Name === "calendar") {
-            return <Calendar config={configStore.config.calendar} location={WidgetLocation.Sidebar} />;
+            return <Calendar key="calendar" config={configStore.config.calendar} location={WidgetLocation.Sidebar} />;
           }
 
           return (

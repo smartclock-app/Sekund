@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 import { ZodAny } from "zod";
 import { ClockConfig } from "./baseConfig";
 
@@ -63,5 +64,5 @@ export type CalendarExtensionComponent<Config = {}> = (config: Config) => Calend
 export type ClockThemeComponent<Config = {}> = React.FC<{
   config: Config;
   clockConfig: ClockConfig;
-  now: moment.Moment;
+  now: dayjs.Dayjs;
 }>;

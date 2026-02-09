@@ -2,7 +2,7 @@ import { BaseDirectory, exists, readTextFile, writeTextFile } from "@tauri-apps/
 import { fetch } from "@tauri-apps/plugin-http";
 import { error, info, warn } from "@tauri-apps/plugin-log";
 import { Mutex } from "async-mutex";
-import moment, { type Moment } from "moment";
+import dayjs from "dayjs";
 import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "./types";
 
 const BASE_DIRECTORY = BaseDirectory.AppData;
@@ -23,7 +23,7 @@ class QueryClient {
   private _cookies: Record<string, string> = {};
   private _csrfToken: string = "";
   private _mutex = new Mutex();
-  private _lastLogin?: [Moment, boolean];
+  private _lastLogin?: [dayjs.Dayjs, boolean];
   public isInitialized = false;
 
   constructor(
@@ -75,7 +75,7 @@ class QueryClient {
   public async login(userId: string, token?: string) {
     const loggedIn = await this._mutex.runExclusive(async () => {
       if (this._lastLogin != null) {
-        const diff = moment().diff(this._lastLogin[0], "seconds");
+        const diff = dayjs().diff(this._lastLogin[0], "seconds");
         if (diff < 15) return this._lastLogin[1];
       }
 
@@ -158,7 +158,7 @@ class QueryClient {
       return true;
     });
 
-    this._lastLogin = [moment(), loggedIn];
+    this._lastLogin = [dayjs(), loggedIn];
     return loggedIn;
   }
 
@@ -220,7 +220,7 @@ class QueryClient {
     if (data["memories"] == null) return [];
 
     return (data["memories"] as any[]).map<Memory>(json => ({
-      updatedDateTime: json["updatedDateTime"] != null ? moment(json["updatedDateTime"]) : undefined,
+      updatedDateTime: json["updatedDateTime"] != null ? dayjs(json["updatedDateTime"]) : undefined,
       value: json["value"],
     }));
   }
@@ -320,7 +320,7 @@ class QueryClient {
 
     if (!nowplaying?.["playerState"]) return {};
 
-    const timestamp = moment(response.headers.get("Date")!);
+    const timestamp = dayjs(response.headers.get("Date")!);
     return { ...nowplaying, timestamp };
   }
 }
