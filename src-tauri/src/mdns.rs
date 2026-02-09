@@ -20,6 +20,31 @@ pub fn start_mdns(
 ) -> Result<(), String> {
     log::info!("Starting broadcast...");
 
+    // Check if already registered
+    let mut mdns_state = state.lock().unwrap();
+    if mdns_state.daemon.is_some() {
+        log::info!("Service already registered");
+        return Ok(());
+    }
+
+    // Validate service name
+    if name.is_empty() {
+        return Err("Service name cannot be empty".to_string());
+    }
+    if name.len() > 63 {
+        return Err("Service name cannot exceed 63 characters".to_string());
+    }
+    if !name
+        .chars()
+        .all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ' ')
+    {
+        log::error!("Invalid service name: {}", name);
+        return Err(
+            "Service name can only contain alphanumeric characters, hyphens, underscores, and spaces"
+                .to_string(),
+        );
+    }
+
     let mdns = ServiceDaemon::new().map_err(|e| {
         log::error!("Failed to create daemon: {}", e);
         e.to_string()
@@ -39,13 +64,14 @@ pub fn start_mdns(
         e.to_string()
     })?;
 
-    mdns.register(service_info).map_err(|e| {
+    if let Err(e) = mdns.register(service_info) {
         log::error!("Failed to register: {}", e);
-        e.to_string()
-    })?;
+        // Cleanup: shutdown daemon on registration failure
+        let _ = mdns.shutdown();
+        return Err(e.to_string());
+    }
 
     log::info!("Service registered successfully");
-    let mut mdns_state = state.lock().unwrap();
     mdns_state.daemon = Some(Arc::new(mdns));
 
     Ok(())
