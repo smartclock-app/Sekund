@@ -2,7 +2,7 @@ import { Widget, WidgetLocation, WidgetModule, WidgetOfType, WidgetType } from "
 import { getVersion } from "@tauri-apps/api/app";
 import { BaseDirectory, exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import { info, warn } from "@tauri-apps/plugin-log";
-import z, { type ZodType } from "zod";
+import z, { type ZodAny, type ZodType } from "zod";
 import baseConfig from "./baseConfig";
 
 const BASE_DIRECTORY = BaseDirectory.AppData;
@@ -21,12 +21,24 @@ export default async () => {
   const widgetSchemas: Record<string, ZodType> = {};
   const widgetModules: Record<string, Widget> = {};
   const widgetAllowedLocations: Record<WidgetLocation, string[]> = { main: [], sidebar: [] };
-  const widgetThemes: string[] = [];
+  const clockThemes: string[] = [];
+  const calendarExtensions: Record<string, WidgetOfType<WidgetType.CalendarExtension>> = {};
+
+  // Assign built-in calendar widget before external to prevent external widgets from using the reserved "calendar" name
+  widgetModules["calendar"] = {
+    Name: "calendar",
+    Type: WidgetType.Widget,
+    AllowedLocations: [WidgetLocation.Sidebar],
+    Schema: {} as ZodAny,
+    Component: () => null,
+  };
+  widgetAllowedLocations[WidgetLocation.Sidebar].push("calendar");
 
   for (let [path, mod] of Object.entries(modules)) {
     const widgetName = path.match(/\.\.\/widgets\/(.+)\/index\.ts$/)![1];
     const componentPath = `../widgets/${widgetName}/Component.tsx`;
-    const Component = componentModules[componentPath].default;
+    const altComponentPath = `../widgets/${widgetName}/Component.ts`;
+    const Component = componentModules[componentPath]?.default || componentModules[altComponentPath]?.default;
 
     if (!mod.Type || !Object.values(WidgetType).includes(mod.Type)) {
       throw new Error(`Widget "${widgetName}" at ${path} missing Type export or Type is not a valid WidgetType`);
@@ -73,7 +85,9 @@ export default async () => {
       };
     }
 
-    if (mod.Type == WidgetType.ClockTheme) widgetThemes.push(widgetName);
+    if (mod.Type == WidgetType.ClockTheme) clockThemes.push(widgetName);
+    if (mod.Type == WidgetType.CalendarExtension)
+      calendarExtensions[widgetName] = widgetModules[widgetName] as WidgetOfType<WidgetType.CalendarExtension>;
     widgetSchemas[widgetName] = mod.Schema.prefault({});
   }
 
@@ -89,7 +103,7 @@ export default async () => {
     $schema: z.literal(schemaFileName).catch(schemaFileName),
     ...baseConfig,
     widgets: z.object(widgetSchemas).prefault({}),
-    clockTheme: z.enum(["default", ...widgetThemes]).catch("default"),
+    clockTheme: z.enum(["default", ...clockThemes]).catch("default"),
     layout: z
       .object({
         main: z.array(z.enum(widgetAllowedLocations.main)).prefault([]),
@@ -123,9 +137,10 @@ export default async () => {
     {} as Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>,
   );
 
-  const theme = (widgetModules[configData.clockTheme] as WidgetOfType<WidgetType.ClockTheme> | undefined) ?? "default";
+  const clockTheme =
+    (widgetModules[configData.clockTheme] as WidgetOfType<WidgetType.ClockTheme> | undefined) ?? "default";
 
-  return [configData, layout, theme] as const;
+  return { config: configData, layout, clockTheme, calendarExtensions } as const;
 };
 
 export const saveConfig = async (config: Record<string, any>) => {

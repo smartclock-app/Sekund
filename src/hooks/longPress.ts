@@ -4,9 +4,11 @@ const useLongPress = (callback: () => void, button: "left" | "right" | "both" = 
   const timeoutRef = useRef<number | null>(null);
 
   const start = useCallback(
-    (e: React.MouseEvent) => {
-      if (button === "left" && e.button !== 0) return;
-      if (button === "right" && e.button !== 2) return;
+    (e: React.MouseEvent | React.TouchEvent) => {
+      if ("button" in e) {
+        if (button === "left" && e.button !== 0) return;
+        if (button === "right" && e.button !== 2) return;
+      }
 
       timeoutRef.current = window.setTimeout(callback, delay);
     },

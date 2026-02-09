@@ -5,6 +5,7 @@ import useMDNSStore from "./hooks/mdns";
 
 import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef } from "react";
+import Calendar from "./components/Calendar";
 import Clock from "./components/Clock";
 import ConfigEditor from "./components/ConfigEditor";
 import { WidgetLocation } from "./helpers/types";
@@ -32,11 +33,12 @@ function App() {
     if (configLoaded.current) return;
     configLoaded.current = true;
     LoadConfig()
-      .then(([config, layout, theme]) => {
-        configStore.setConfig([config, layout, theme]);
-        if (config.remoteConfig?.enabled) {
-          if (!mdnsStore.broadcasting) mdnsStore.startBroadcast(mdnsStore.broadcasting, config.remoteConfig);
-          if (!remoteStore.running) remoteStore.startServer(config.remoteConfig.port);
+      .then(loadedConfig => {
+        configStore.setConfig(loadedConfig);
+        if (loadedConfig.config.remoteConfig?.enabled) {
+          if (!mdnsStore.broadcasting)
+            mdnsStore.startBroadcast(mdnsStore.broadcasting, loadedConfig.config.remoteConfig);
+          if (!remoteStore.running) remoteStore.startServer(loadedConfig.config.remoteConfig.port);
         }
       })
       .catch(err => info(`Error loading config: ${err.toString()}`));
@@ -57,13 +59,19 @@ function App() {
         <Clock />
       </div>
       <div className="sidebar">
-        {configStore.layout.sidebar.map(Widget => (
-          <Widget.Component
-            key={Widget.Name}
-            config={configStore.config.widgets[Widget.Name]}
-            location={WidgetLocation.Sidebar}
-          />
-        ))}
+        {configStore.layout.sidebar.map(Widget => {
+          if (Widget.Name === "calendar") {
+            return <Calendar config={configStore.config.calendar} location={WidgetLocation.Sidebar} />;
+          }
+
+          return (
+            <Widget.Component
+              key={Widget.Name}
+              config={configStore.config.widgets[Widget.Name]}
+              location={WidgetLocation.Sidebar}
+            />
+          );
+        })}
       </div>
     </div>
   );
