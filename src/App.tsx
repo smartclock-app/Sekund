@@ -5,8 +5,8 @@ import useMDNSStore from "./hooks/useMDNSStore";
 
 import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef, useState } from "react";
-import Calendar from "./components/Calendar";
-import Clock from "./components/Clock";
+import Calendar from "./components/calendar/Calendar";
+import Clock from "./components/clock/Clock";
 import ConfigEditor from "./components/ConfigEditor";
 import { WidgetLocation } from "./helpers/types";
 import useLongPress from "./hooks/useLongPress";

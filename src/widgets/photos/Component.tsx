@@ -1,4 +1,4 @@
-import getOrdinal from "@/helpers/getOrdinal";
+import getOrdinal from "@/components/clock/getOrdinal";
 import { ClockThemeComponent } from "@/helpers/types";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { useCallback, useEffect, useState } from "react";
