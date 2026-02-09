@@ -4,7 +4,7 @@ import useConfigStore from "./hooks/useConfigStore";
 import useMDNSStore from "./hooks/useMDNSStore";
 
 import { info } from "@tauri-apps/plugin-log";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Calendar from "./components/Calendar";
 import Clock from "./components/Clock";
 import ConfigEditor from "./components/ConfigEditor";
@@ -22,6 +22,21 @@ function App() {
   const longPressProps = useLongPress(() => {
     info("Long press detected");
     routerStore.navigate(RouterScreen.Editor);
+  });
+
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const [sidebarHasChildren, setSidebarHasChildren] = useState(false);
+
+  useEffect(() => {
+    if (!sidebarRef.current) return;
+
+    const observer = new MutationObserver(() => {
+      setSidebarHasChildren(sidebarRef.current!.children.length > 0);
+    });
+
+    observer.observe(sidebarRef.current, { childList: true });
+    setSidebarHasChildren(sidebarRef.current.children.length > 0);
+    return () => observer.disconnect();
   });
 
   useHttpRequestListener(event => {
@@ -50,11 +65,7 @@ function App() {
     <ConfigEditor />
   ) : (
     <div className="container">
-      <div
-        className="main"
-        style={{ width: configStore.layout.sidebar.length > 0 ? undefined : "100%" }}
-        {...longPressProps}
-      >
+      <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
         {configStore.layout.main.map(Widget => (
           <Widget.Component
             key={Widget.Name}
@@ -64,23 +75,21 @@ function App() {
         ))}
         <Clock />
       </div>
-      {configStore.layout.sidebar.length > 0 && (
-        <div className="sidebar">
-          {configStore.layout.sidebar.map(Widget => {
-            if (Widget.Name === "calendar") {
-              return <Calendar key="calendar" config={configStore.config.calendar} location={WidgetLocation.Sidebar} />;
-            }
+      <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
+        {configStore.layout.sidebar.map(Widget => {
+          if (Widget.Name === "calendar") {
+            return <Calendar key="calendar" config={configStore.config.calendar} location={WidgetLocation.Sidebar} />;
+          }
 
-            return (
-              <Widget.Component
-                key={Widget.Name}
-                config={configStore.config.widgets[Widget.Name]}
-                location={WidgetLocation.Sidebar}
-              />
-            );
-          })}
-        </div>
-      )}
+          return (
+            <Widget.Component
+              key={Widget.Name}
+              config={configStore.config.widgets[Widget.Name]}
+              location={WidgetLocation.Sidebar}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
