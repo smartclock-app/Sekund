@@ -7,12 +7,12 @@ export enum EventType {
   HttpRequest = "http-request",
 }
 
-export const dispatchEvent = (eventName: EventType) => {
+export const dispatchEvent = (eventName: EventType, detail?: any) => {
   if (eventName !== EventType.Tick) info(`[Event] Dispatching ${eventName}`);
-  window.dispatchEvent(new Event(eventName));
+  window.dispatchEvent(new CustomEvent(eventName, { detail }));
 };
 
-const useEventListener = (eventName: EventType, callback: (event: Event) => void) => {
+const useEventListener = (eventName: EventType, callback: (event: Event & { detail?: any }) => void) => {
   const savedCallback = useRef(callback);
 
   useEffect(() => {

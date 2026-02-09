@@ -16,9 +16,9 @@ const Clock = () => {
       const time = dayjs();
 
       if (now.second() !== time.second()) {
-        dispatchEvent(EventType.Tick);
+        dispatchEvent(EventType.Tick, time);
         if (time.second() % 30 === 0) {
-          dispatchEvent(EventType.Refresh);
+          dispatchEvent(EventType.Refresh, time);
         }
       }
 

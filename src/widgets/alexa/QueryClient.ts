@@ -3,7 +3,7 @@ import { fetch } from "@tauri-apps/plugin-http";
 import { error, info, warn } from "@tauri-apps/plugin-log";
 import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
-import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "./types";
+import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "./util/types";
 
 const BASE_DIRECTORY = BaseDirectory.AppData;
 
@@ -28,7 +28,7 @@ class QueryClient {
 
   private constructor(
     private _cookieFile: string,
-    private loginToken: string,
+    private _loginToken: string,
   ) {}
 
   public static async createClient(cookieFile: string, token: string) {
@@ -119,11 +119,11 @@ class QueryClient {
       info(`[Alexa] Checking status for user: ${userId}`);
       const status = await this.checkStatus(userId);
       if (status) {
-        info(`[Alexa] User ${userId} is already logged in`);
+        info(`[Alexa] User ${userId} logged in`);
         return true;
       }
 
-      token ??= this.loginToken;
+      token ??= this._loginToken;
       if (!token || token.trim() === "") {
         error("No token provided");
         return false;

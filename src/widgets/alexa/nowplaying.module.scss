@@ -1,0 +1,78 @@
+.nowplaying {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.media {
+  display: flex;
+  align-items: stretch;
+
+  img {
+    width: 146px;
+    height: 146px;
+    object-fit: cover;
+    border-radius: 4px;
+  }
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  font-weight: bold;
+
+  .title,
+  .artist {
+    font-size: 2rem;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+}
+
+.progressContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: "RobotoMono", monospace;
+}
+
+.progress {
+  flex: 1;
+  height: 8px;
+  background-color: #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+
+  .progressBar {
+    height: 100%;
+    background-color: #1a1a1a;
+    border-radius: 4px;
+  }
+}
+
+.lyricsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-inline: 1rem;
+  padding-block: 0.5rem;
+
+  .currentLine {
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .previousLine,
+  .nextLine {
+    font-size: 1.2rem;
+    color: #666;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+}
