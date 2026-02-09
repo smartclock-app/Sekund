@@ -1,6 +1,11 @@
 {
   "name": "smart-clock",
   "private": true,
+  "license": "Polyform-Noncommercial-1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/0x5045414b/ClockBeta"
+  },
   "version": "0.1.1",
   "type": "module",
   "scripts": {
