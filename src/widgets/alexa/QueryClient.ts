@@ -18,20 +18,28 @@ const DANGEROUS_OPTIONS = {
 };
 
 class QueryClient {
-  private static _browser =
-    "AppleWebKit PitanguiBridge/2.2.632832.0-[HARDWARE=iPhone14_5][SOFTWARE=18.0.1][DEVICE=iPhone]";
+  private static _browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0";
   private _cookies: Record<string, string> = {};
+  private _customerIds: Record<string, string> = {};
   private _csrfToken: string = "";
   private _mutex = new Mutex();
   private _lastLogin?: [dayjs.Dayjs, boolean];
   public isInitialized = false;
 
-  constructor(
+  private constructor(
     private _cookieFile: string,
-    public loginToken?: string,
+    private loginToken: string,
   ) {}
 
-  public async init() {
+  public static async createClient(cookieFile: string, token: string) {
+    const client = new QueryClient(cookieFile, token);
+    await client.init();
+    return client;
+  }
+
+  private async init() {
+    if (this.isInitialized) return;
+
     try {
       if (await exists(this._cookieFile, { baseDir: BASE_DIRECTORY })) {
         const content = await readTextFile(this._cookieFile, { baseDir: BASE_DIRECTORY });
@@ -39,8 +47,11 @@ class QueryClient {
         this._cookies = cookies;
       }
     } catch (error) {
-      warn(`Failed to load cookies: ${error}`);
+      warn(`[Alexa] Failed to load cookies: ${error}`);
     }
+
+    this.isInitialized = true;
+    info("[Alexa] Initialized with cookies for users: " + Object.keys(this._cookies).join(", "));
   }
 
   private async _parseCookies(json: AlexaLoginResponse) {
@@ -57,31 +68,60 @@ class QueryClient {
     return cookies;
   }
 
-  public async checkStatus(userId: string) {
-    const response = await fetch("https://alexa.amazon.co.uk/api/bootstrap?version=0", {
+  public async checkStatus(userId: string): Promise<boolean> {
+    if (!this._cookies[userId]) return false;
+
+    const response = await fetch("https://alexa.amazon.co.uk/api/customer-status", {
       method: "GET",
       headers: {
         DNT: "1",
         "User-Agent": QueryClient._browser,
+        Connection: "keep-alive",
         Cookie: this._cookies[userId],
         Origin: "https://alexa.amazon.co.uk",
       },
       ...DANGEROUS_OPTIONS,
     });
 
-    return response.status == 200;
+    if (response.status === 200) {
+      // Also fetch and store customer ID
+      const usersResponse = await fetch("https://alexa.amazon.co.uk/api/users/me", {
+        method: "GET",
+        headers: {
+          DNT: "1",
+          "User-Agent": QueryClient._browser,
+          Connection: "keep-alive",
+          Cookie: this._cookies[userId],
+        },
+        ...DANGEROUS_OPTIONS,
+      });
+
+      if (usersResponse.ok) {
+        const userData = await usersResponse.json();
+        this._customerIds[userId] = userData.id;
+      }
+
+      return true;
+    }
+
+    return false;
   }
 
   public async login(userId: string, token?: string) {
+    if (!this.isInitialized) throw new Error("QueryClient not initialized");
+
     const loggedIn = await this._mutex.runExclusive(async () => {
       if (this._lastLogin != null) {
         const diff = dayjs().diff(this._lastLogin[0], "seconds");
         if (diff < 15) return this._lastLogin[1];
       }
 
-      info(`Checking status for user: ${userId}`);
+      info(`[Alexa] Checking status for user: ${userId}`);
       const status = await this.checkStatus(userId);
-      if (status == true) return true;
+      if (status) {
+        info(`[Alexa] User ${userId} is already logged in`);
+        return true;
+      }
 
       token ??= this.loginToken;
       if (!token || token.trim() === "") {
@@ -89,7 +129,7 @@ class QueryClient {
         return false;
       }
 
-      info(`Logging in user: ${userId}`);
+      info(`[Alexa] Logging in user: ${userId}`);
 
       const postBody = new URLSearchParams();
       postBody.append("app_name", "Amazon Alexa");
@@ -110,7 +150,7 @@ class QueryClient {
       });
 
       if (response.status != 200) {
-        warn(`Login failed with status code: ${response.status}`);
+        warn(`[Alexa] Login failed with status code: ${response.status}`);
         return false;
       }
 
@@ -149,7 +189,7 @@ class QueryClient {
       }
 
       if (!csrfTokenExists) {
-        warn("CSRF Token not found");
+        warn("[Alexa] CSRF Token not found");
         return false;
       }
 
@@ -281,7 +321,9 @@ class QueryClient {
     const device = devices.find(device => device.accountName == deviceName) ?? ({} as Device);
     if (!device.serialNumber) return {};
 
-    const url = `https://alexa.amazon.co.uk/api/np/list-media-sessions?deviceSerialNumber=${device.serialNumber}&deviceType=${device.deviceType}`;
+    const customerId = this._customerIds[userId];
+    const url = `https://alexa.amazon.co.uk/api/np/list-media-sessions?deviceSerialNumber=${device.serialNumber}&deviceType=${device.deviceType}&mediaOwnerCustomerId=${customerId}`;
+
     const response = await fetch(url, {
       method: "GET",
       headers: {
