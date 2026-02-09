@@ -1,3 +1,4 @@
+import getOrdinal from "@/helpers/getOrdinal";
 import { ClockThemeComponent } from "@/helpers/types";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { useCallback, useEffect, useState } from "react";
@@ -44,7 +45,11 @@ const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) =>
             {clockConfig.showSeconds && <p>{now.format("ss")}</p>}
           </div>
         </div>
-        <div className={styles.date}>{now.format("dddd Do MMMM YYYY")}</div>
+        <div className={styles.date}>
+          {now.format(`dddd D`)}
+          <sup>{getOrdinal(now.date())}</sup>
+          {now.format(" MMMM YYYY")}
+        </div>
       </div>
     </div>
   );

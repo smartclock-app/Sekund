@@ -50,7 +50,11 @@ function App() {
     <ConfigEditor />
   ) : (
     <div className="container">
-      <div className="main" {...longPressProps}>
+      <div
+        className="main"
+        style={{ width: configStore.layout.sidebar.length > 0 ? undefined : "100%" }}
+        {...longPressProps}
+      >
         {configStore.layout.main.map(Widget => (
           <Widget.Component
             key={Widget.Name}
@@ -60,21 +64,23 @@ function App() {
         ))}
         <Clock />
       </div>
-      <div className="sidebar">
-        {configStore.layout.sidebar.map(Widget => {
-          if (Widget.Name === "calendar") {
-            return <Calendar key="calendar" config={configStore.config.calendar} location={WidgetLocation.Sidebar} />;
-          }
+      {configStore.layout.sidebar.length > 0 && (
+        <div className="sidebar">
+          {configStore.layout.sidebar.map(Widget => {
+            if (Widget.Name === "calendar") {
+              return <Calendar key="calendar" config={configStore.config.calendar} location={WidgetLocation.Sidebar} />;
+            }
 
-          return (
-            <Widget.Component
-              key={Widget.Name}
-              config={configStore.config.widgets[Widget.Name]}
-              location={WidgetLocation.Sidebar}
-            />
-          );
-        })}
-      </div>
+            return (
+              <Widget.Component
+                key={Widget.Name}
+                config={configStore.config.widgets[Widget.Name]}
+                location={WidgetLocation.Sidebar}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
