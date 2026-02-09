@@ -1,7 +1,6 @@
 import { BaseDirectory, exists, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { fetch } from "@tauri-apps/plugin-http";
 import { error, info, warn } from "@tauri-apps/plugin-log";
-import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
 import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "../util/types";
 
@@ -22,8 +21,8 @@ class QueryClient {
   private _cookies: Record<string, string> = {};
   private _customerIds: Record<string, string> = {};
   private _csrfToken: string = "";
-  private _mutex = new Mutex();
   private _lastLogin?: [dayjs.Dayjs, boolean];
+  private _loginPromise?: Promise<boolean>;
   public isInitialized = false;
 
   private constructor(
@@ -110,7 +109,9 @@ class QueryClient {
   public async login(userId: string, token?: string) {
     if (!this.isInitialized) throw new Error("QueryClient not initialized");
 
-    const loggedIn = await this._mutex.runExclusive(async () => {
+    if (this._loginPromise) return this._loginPromise;
+
+    this._loginPromise = (async () => {
       if (this._lastLogin != null) {
         const diff = dayjs().diff(this._lastLogin[0], "seconds");
         if (diff < 15) return this._lastLogin[1];
@@ -184,8 +185,6 @@ class QueryClient {
           csrfTokenExists = true;
           break;
         }
-
-        if (csrfTokenExists) break;
       }
 
       if (!csrfTokenExists) {
@@ -196,10 +195,15 @@ class QueryClient {
       await writeTextFile(this._cookieFile, JSON.stringify(this._cookies), { baseDir: BASE_DIRECTORY });
 
       return true;
-    });
+    })();
 
-    this._lastLogin = [dayjs(), loggedIn];
-    return loggedIn;
+    try {
+      const loggedIn = await this._loginPromise;
+      this._lastLogin = [dayjs(), loggedIn];
+      return loggedIn;
+    } finally {
+      this._loginPromise = undefined;
+    }
   }
 
   public async getDevices(userId: string) {
