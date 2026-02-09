@@ -1,5 +1,19 @@
 import type { Moment } from "moment";
 
+export interface AlexaLoginResponse {
+  response: {
+    tokens: {
+      cookies: Record<
+        string,
+        Array<{
+          Name: string;
+          Value: string;
+        }>
+      >;
+    };
+  };
+}
+
 export interface Device {
   accountName: string;
   deviceType: string;

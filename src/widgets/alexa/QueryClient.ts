@@ -3,7 +3,7 @@ import { fetch } from "@tauri-apps/plugin-http";
 import { error, info, warn } from "@tauri-apps/plugin-log";
 import { Mutex } from "async-mutex";
 import moment, { type Moment } from "moment";
-import { Device, Memory, Notification, Queue } from "./types";
+import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "./types";
 
 const BASE_DIRECTORY = BaseDirectory.AppData;
 
@@ -43,7 +43,7 @@ class QueryClient {
     }
   }
 
-  private async _parseCookies(json: any) {
+  private async _parseCookies(json: AlexaLoginResponse) {
     const cookiesMap: any = json["response"]["tokens"]["cookies"];
 
     let cookies = "";
