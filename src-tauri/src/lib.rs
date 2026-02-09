@@ -1,5 +1,6 @@
 mod http_server;
 mod mdns;
+mod migrations;
 
 use mdns::{start_mdns, MdnsState};
 use std::collections::HashMap;
@@ -11,14 +12,20 @@ use http_server::{http_respond, start_http_server, stop_http_server, HttpServerS
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default().plugin(
-        tauri_plugin_log::Builder::new()
-            .level(tauri_plugin_log::log::LevelFilter::Info)
-            .target(tauri_plugin_log::Target::new(
-                tauri_plugin_log::TargetKind::Webview,
-            ))
-            .build(),
-    );
+    let mut builder = tauri::Builder::default()
+        .plugin(
+            tauri_plugin_sql::Builder::new()
+                .add_migrations("sqlite:database.sqlite", migrations::get_migrations())
+                .build(),
+        )
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(tauri_plugin_log::log::LevelFilter::Info)
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Webview,
+                ))
+                .build(),
+        );
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
