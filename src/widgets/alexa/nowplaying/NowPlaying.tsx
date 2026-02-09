@@ -4,13 +4,13 @@ import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { error, info } from "@tauri-apps/plugin-log";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Config } from ".";
+import { Config } from "..";
+import fetchLyrics from "../util/fetchLyrics";
+import Lrc from "../util/Lrc";
+import { Queue } from "../util/types";
+import useQueryClient from "../util/useQueryClient";
 import styles from "./nowplaying.module.scss";
 import NowPlayingLyrics from "./NowPlayingLyrics";
-import fetchLyrics from "./util/fetchLyrics";
-import Lrc from "./util/Lrc";
-import { Queue } from "./util/types";
-import useQueryClient from "./util/useQueryClient";
 
 interface NowPlayingProps {
   config: Config;

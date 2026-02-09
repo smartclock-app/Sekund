@@ -1,5 +1,5 @@
-import { Config } from ".";
-import Lrc from "./util/Lrc";
+import { Config } from "..";
+import Lrc from "../util/Lrc";
 
 import styles from "./nowplaying.module.scss";
 

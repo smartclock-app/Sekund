@@ -1,11 +1,13 @@
 import { WidgetComponent } from "@/helpers/types";
 import { Config } from ".";
-import NowPlaying from "./NowPlaying";
+import Notifications from "./notifications/Notifications";
+import NowPlaying from "./nowplaying/NowPlaying";
 
 const Component: WidgetComponent<Config> = ({ config }) => {
   return (
     <>
-      <NowPlaying config={config} />
+      {config.features.nowplaying && <NowPlaying config={config} />}
+      <Notifications config={config} />
     </>
   );
 };

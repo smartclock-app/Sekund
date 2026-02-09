@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import QueryClient from "../QueryClient";
+import QueryClient from "./QueryClient";
 
 interface QueryClientStoreState {
   isInitialized: boolean;

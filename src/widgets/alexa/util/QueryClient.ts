@@ -3,7 +3,7 @@ import { fetch } from "@tauri-apps/plugin-http";
 import { error, info, warn } from "@tauri-apps/plugin-log";
 import { Mutex } from "async-mutex";
 import dayjs from "dayjs";
-import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "./util/types";
+import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "../util/types";
 
 const BASE_DIRECTORY = BaseDirectory.AppData;
 
