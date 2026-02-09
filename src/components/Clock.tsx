@@ -5,7 +5,7 @@ import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 
 const DefaultTheme = ({ now }: { now: dayjs.Dayjs }) => {
-  return <>{now.format("HH:mm:ss")}</>;
+  return <div style={{ background: "#fff8f8f8" }}>{now.format("HH:mm:ss")}</div>;
 };
 
 const Clock = () => {

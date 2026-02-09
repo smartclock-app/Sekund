@@ -1,0 +1,21 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+
+  .icon {
+    font-family: "WeatherIcons";
+    font-size: 3rem;
+    line-height: 0.85;
+  }
+}
+
+.temp,
+.wind {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  font-size: 2rem;
+}

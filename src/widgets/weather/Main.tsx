@@ -1,19 +1,11 @@
-import { useEffect, useState } from "react";
-import { Config } from ".";
-import fetchWeather, { WeatherIcon } from "./fetchWeather";
+import { WeatherIcon } from "./fetchWeather";
 import styles from "./main.module.scss";
 
-const WeatherMain = ({ config }: { config: Config }) => {
-  const [weatherData, setWeatherData] = useState<{ icon: WeatherIcon; temp: string; windSpeed: string }>();
-
-  useEffect(() => {
-    fetchWeather(config).then(data => {
-      if (data.icon && data.temp && data.windSpeed) {
-        setWeatherData(data);
-      }
-    });
-  }, [config]);
-
+const WeatherMain = ({
+  weatherData,
+}: {
+  weatherData: { icon: WeatherIcon; temp: string; windSpeed: string } | undefined;
+}) => {
   return (
     <div className={styles.container}>
       <div className={styles.temp}>
