@@ -15,7 +15,10 @@ env:
 jobs:
   build-linux-aarch64:
     name: Build Linux ARM64 (Raspberry Pi)
-    runs-on: ubuntu-22.04-arm
+    runs-on: ubuntu-latest-arm
+    timeout-minutes: 60
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -45,7 +48,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-${{ runner.arch }}-cargo-
 
-      - name: Install Tauri dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -59,16 +62,20 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf \
-            libfuse2
+            libfuse2 \
+            xdg-utils \
+            libgtk-3-dev \
+            libsoup-3.0-dev \
+            libjavascriptcoregtk-4.1-dev
 
       - name: Install Tauri CLI
         run: cargo install tauri-cli --version '^2.0.0' --locked
 
-      - name: Build frontend
-        run: bun run build
-
       - name: Build Tauri app
-        run: cargo tauri build --bundles deb,appimage
+        run: |
+          echo "Building on native ARM64 runner"
+          echo "This should take ~10 minutes..."
+          cargo tauri build --bundles deb,appimage
 
       - name: Rename and organize artifacts
         run: |
@@ -82,6 +89,7 @@ jobs:
           fi
 
           echo "Version: $VERSION"
+          echo ""
 
           cd src-tauri/target/release/bundle
 
@@ -97,12 +105,10 @@ jobs:
 
           # Copy and rename AppImage
           if [ -d "appimage" ]; then
-            for file in appimage/*.AppImage; do
-              if [ -f "$file" ]; then
-                cp "$file" "$GITHUB_WORKSPACE/release-artifacts/smart-clock_${VERSION}_aarch64.AppImage"
-                chmod +x "$GITHUB_WORKSPACE/release-artifacts/smart-clock_${VERSION}_aarch64.AppImage"
-                echo "✓ Created: smart-clock_${VERSION}_aarch64.AppImage"
-              fi
+            find appimage -name "*.AppImage" -type f | while read -r file; do
+              cp "$file" "$GITHUB_WORKSPACE/release-artifacts/smart-clock_${VERSION}_aarch64.AppImage"
+              chmod +x "$GITHUB_WORKSPACE/release-artifacts/smart-clock_${VERSION}_aarch64.AppImage"
+              echo "✓ Created: smart-clock_${VERSION}_aarch64.AppImage"
             done
           fi
 
@@ -122,6 +128,9 @@ jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
@@ -176,6 +185,10 @@ jobs:
 
       - name: Setup signing for release builds
         if: github.event_name != 'pull_request' && (startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           echo "=========================================="
           echo "Setting up Android signing"
@@ -183,7 +196,7 @@ jobs:
 
           # Decode keystore from base64
           echo "Decoding keystore from GitHub secret..."
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > /tmp/upload-keystore.jks
+          echo "$KEYSTORE_B64" | base64 --decode > /tmp/upload-keystore.jks
 
           # Verify keystore exists and has content
           if [ ! -f /tmp/upload-keystore.jks ]; then
@@ -201,10 +214,10 @@ jobs:
 
           # Create keystore.properties
           echo "Creating keystore.properties..."
-          cat > src-tauri/gen/android/keystore.properties << 'EOF'
+          cat > src-tauri/gen/android/keystore.properties << EOF
           storeFile=/tmp/upload-keystore.jks
-          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          password=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyAlias=$KEY_ALIAS
+          password=$KEYSTORE_PASS
           EOF
 
           echo "✓ Keystore configured successfully"
@@ -337,6 +350,7 @@ jobs:
     needs: [build-linux-aarch64, build-android]
     runs-on: ubuntu-22.04
     if: startsWith(github.ref, 'refs/tags/v')
+    timeout-minutes: 15
     permissions:
       contents: write
 
@@ -421,6 +435,9 @@ jobs:
     needs: [build-linux-aarch64, build-android]
     runs-on: ubuntu-22.04
     if: always()
+    timeout-minutes: 5
+    permissions:
+      contents: read
 
     steps:
       - name: Generate summary
@@ -429,7 +446,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Platform | Runner | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|----------|--------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Linux ARM64 (Raspberry Pi) | ubuntu-22.04-arm | ${{ needs.build-linux-aarch64.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Linux ARM64 (Raspberry Pi) | ubuntu-latest-arm | ${{ needs.build-linux-aarch64.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Android APK | ubuntu-22.04 (x86_64) | ${{ needs.build-android.result == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Trigger:** \`${{ github.event_name }}\`" >> $GITHUB_STEP_SUMMARY
