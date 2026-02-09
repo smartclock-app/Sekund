@@ -1,3 +1,4 @@
+import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef } from "react";
 
 export enum EventType {
@@ -7,6 +8,7 @@ export enum EventType {
 }
 
 export const dispatchEvent = (eventName: EventType) => {
+  if (eventName !== EventType.Tick) info(`[Event] Dispatching ${eventName}`);
   window.dispatchEvent(new Event(eventName));
 };
 

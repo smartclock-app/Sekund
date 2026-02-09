@@ -1,5 +1,5 @@
 import { ClockThemeComponent } from "@/helpers/types";
-import useEventListener, { EventType } from "@/hooks/event";
+import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { useCallback, useEffect, useState } from "react";
 import { Config } from ".";
 import fetchImages from "./fetchImages";

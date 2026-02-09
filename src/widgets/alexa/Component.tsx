@@ -1,12 +1,11 @@
 import { WidgetComponent } from "@/helpers/types";
 import { Config } from ".";
+import NowPlaying from "./NowPlaying";
 
-const Component: WidgetComponent<Config> = ({ config, location }) => {
+const Component: WidgetComponent<Config> = ({ config }) => {
   return (
     <>
-      <h1>Alexa Widget</h1>
-      <p>Location: {location}</p>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
+      <NowPlaying config={config} />
     </>
   );
 };

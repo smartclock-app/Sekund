@@ -1,5 +1,5 @@
-import useConfigStore from "@/hooks/config";
-import useRouter from "@/hooks/router";
+import useConfigStore from "@/hooks/useConfigStore";
+import useRouter from "@/hooks/useRouter";
 import { useState } from "react";
 
 const ConfigEditor = () => {

@@ -1,6 +1,5 @@
-import useConfigStore from "@/hooks/config";
-import { dispatchEvent, EventType } from "@/hooks/event";
-import { info } from "@tauri-apps/plugin-log";
+import useConfigStore from "@/hooks/useConfigStore";
+import { dispatchEvent, EventType } from "@/hooks/useEventListener";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 
@@ -19,7 +18,6 @@ const Clock = () => {
       if (now.second() !== time.second()) {
         dispatchEvent(EventType.Tick);
         if (time.second() % 30 === 0) {
-          info("Dispatching refresh event");
           dispatchEvent(EventType.Refresh);
         }
       }

@@ -1,7 +1,7 @@
 import "@/App.scss";
 import LoadConfig from "@/helpers/config";
-import useConfigStore from "./hooks/config";
-import useMDNSStore from "./hooks/mdns";
+import useConfigStore from "./hooks/useConfigStore";
+import useMDNSStore from "./hooks/useMDNSStore";
 
 import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef } from "react";
@@ -9,9 +9,9 @@ import Calendar from "./components/Calendar";
 import Clock from "./components/Clock";
 import ConfigEditor from "./components/ConfigEditor";
 import { WidgetLocation } from "./helpers/types";
-import useLongPress from "./hooks/longPress";
-import useRemoteStore, { useHttpRequestListener } from "./hooks/remote";
-import useRouter, { RouterScreen } from "./hooks/router";
+import useLongPress from "./hooks/useLongPress";
+import useRemoteStore, { useHttpRequestListener } from "./hooks/useRemoteStore";
+import useRouter, { RouterScreen } from "./hooks/useRouter";
 
 function App() {
   const routerStore = useRouter();
