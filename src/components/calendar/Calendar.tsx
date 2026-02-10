@@ -2,12 +2,12 @@ import type { CalendarConfig } from "@/helpers/baseConfig";
 import { CalendarEvent, WidgetComponent } from "@/helpers/types";
 import useConfigStore from "@/hooks/useConfigStore";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import Card from "../Card";
 import EventItem from "./EventItem";
 import fetchEvents from "./fetchEvents";
 
-const Calendar: WidgetComponent<CalendarConfig> = () => {
+const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
   const configStore = useConfigStore();
   const [events, setEvents] = useState<Record<string, CalendarEvent[]>>({});
 
@@ -48,6 +48,6 @@ const Calendar: WidgetComponent<CalendarConfig> = () => {
       ))}
     </>
   );
-};
+});
 
 export default Calendar;
