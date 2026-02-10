@@ -3,11 +3,12 @@ import { CalendarEvent, WidgetComponent } from "@/helpers/types";
 import useConfigStore from "@/hooks/useConfigStore";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { useEffect, useState } from "react";
+import Card from "../Card";
 import fetchEvents from "./fetchEvents";
 
 const Calendar: WidgetComponent<CalendarConfig> = () => {
   const configStore = useConfigStore();
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<Record<string, CalendarEvent[]>>({});
 
   useEffect(() => {
     let isMounted = true;
@@ -24,8 +25,19 @@ const Calendar: WidgetComponent<CalendarConfig> = () => {
 
   return (
     <>
-      <h1>Calendar</h1>
-      <pre>{JSON.stringify(events, null, 2)}</pre>
+      {Object.entries(events).map(([month, events]) => (
+        <Card key={month}>
+          <h2>{month}</h2>
+          {events.map(event => (
+            <div key={event.id}>
+              <strong>{event.title}</strong>
+              <div>
+                {event.start.format("YYYY-MM-DD HH:mm")} - {event.end.format("YYYY-MM-DD HH:mm")}
+              </div>
+            </div>
+          ))}
+        </Card>
+      ))}
     </>
   );
 };
