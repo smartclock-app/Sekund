@@ -1,7 +1,5 @@
 import "@/App.scss";
-import LoadConfig from "@/helpers/config";
 import useConfigStore from "./hooks/useConfigStore";
-import useMDNSStore from "./hooks/useMDNSStore";
 
 import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef, useState } from "react";
@@ -10,15 +8,12 @@ import Clock from "./components/clock/Clock";
 import ConfigEditor from "./components/ConfigEditor";
 import { WidgetLocation } from "./helpers/types";
 import useLongPress from "./hooks/useLongPress";
-import useRemoteStore, { useHttpRequestListener } from "./hooks/useRemoteStore";
+import { useHttpRequestListener } from "./hooks/useRemoteStore";
 import useRouter, { RouterScreen } from "./hooks/useRouter";
 
 function App() {
   const routerStore = useRouter();
-  const configLoaded = useRef(false);
   const configStore = useConfigStore();
-  const mdnsStore = useMDNSStore();
-  const remoteStore = useRemoteStore();
   const longPressProps = useLongPress(() => {
     info("Long press detected");
     routerStore.navigate(RouterScreen.Editor);
@@ -43,23 +38,6 @@ function App() {
     info(JSON.stringify(event));
     return { status: "ok", result: { message: "Hello from SmartClock!" } };
   });
-
-  useEffect(() => {
-    if (configLoaded.current) return;
-    configLoaded.current = true;
-    LoadConfig()
-      .then(loadedConfig => {
-        configStore.setConfig(loadedConfig);
-        if (loadedConfig.config.remoteConfig?.enabled) {
-          if (!mdnsStore.broadcasting)
-            mdnsStore.startBroadcast(mdnsStore.broadcasting, loadedConfig.config.remoteConfig);
-          if (!remoteStore.running) remoteStore.startServer(loadedConfig.config.remoteConfig.port);
-        }
-      })
-      .catch(err => info(`Error loading config: ${err.toString()}`));
-  }, []);
-
-  if (!configLoaded.current) return null;
 
   return routerStore.currentScreen === RouterScreen.Editor ? (
     <ConfigEditor />
