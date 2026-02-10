@@ -28,7 +28,17 @@ const Calendar: WidgetComponent<CalendarConfig> = () => {
     <>
       {Object.entries(events).map(([month, events]) => (
         <Card key={month}>
-          <h2>{month}</h2>
+          <h1
+            style={{
+              fontSize: "38px",
+              fontWeight: "bold",
+              borderBottom: "2px solid #ddd",
+              borderRadius: "1px",
+              marginBottom: "1rem",
+            }}
+          >
+            {month}
+          </h1>
           <div className="events" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
             {events.map(event => (
               <EventItem key={`${event.title}-${event.start.toISOString()}`} event={event} />
