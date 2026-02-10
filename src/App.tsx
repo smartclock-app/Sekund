@@ -20,7 +20,7 @@ function App() {
   });
 
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const [sidebarHasChildren, setSidebarHasChildren] = useState(true);
+  const [sidebarHasChildren, setSidebarHasChildren] = useState(false);
 
   useEffect(() => {
     if (!sidebarRef.current) return;
