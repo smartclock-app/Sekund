@@ -4,6 +4,7 @@ import useConfigStore from "@/hooks/useConfigStore";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { useEffect, useState } from "react";
 import Card from "../Card";
+import EventItem from "./EventItem";
 import fetchEvents from "./fetchEvents";
 
 const Calendar: WidgetComponent<CalendarConfig> = () => {
@@ -28,14 +29,11 @@ const Calendar: WidgetComponent<CalendarConfig> = () => {
       {Object.entries(events).map(([month, events]) => (
         <Card key={month}>
           <h2>{month}</h2>
-          {events.map(event => (
-            <div key={event.id}>
-              <strong>{event.title}</strong>
-              <div>
-                {event.start.format("YYYY-MM-DD HH:mm")} - {event.end.format("YYYY-MM-DD HH:mm")}
-              </div>
-            </div>
-          ))}
+          <div className="events" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {events.map(event => (
+              <EventItem key={`${event.title}-${event.start.toISOString()}`} event={event} />
+            ))}
+          </div>
         </Card>
       ))}
     </>

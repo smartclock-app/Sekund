@@ -1,8 +1,10 @@
 import { CalendarEvent, WidgetOfType, WidgetType } from "@/helpers/types";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
+import utc from "dayjs/plugin/utc";
 
 dayjs.extend(isoWeek);
+dayjs.extend(utc);
 
 const MONTHS = [
   "January",
@@ -37,9 +39,9 @@ const fetchEvents = async (
     return a.title.localeCompare(b.title);
   });
 
-  const currentTime = dayjs();
+  const currentTime = dayjs.utc();
   const currentWeek = currentTime.isoWeek();
-  const weekReference = dayjs("2024-01-01"); // Must be a Monday for isEven calculation below
+  const weekReference = dayjs.utc("2024-01-01"); // Must be a Monday for isEven calculation below
   const sortedEvents: Record<string, CalendarEvent[]> = {};
 
   for (const event of events.slice(0, config.calendar.maxEvents)) {

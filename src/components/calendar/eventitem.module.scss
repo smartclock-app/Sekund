@@ -1,0 +1,20 @@
+.event {
+  border-left: 8px solid var(--event-color, #007bff);
+  border-radius: 4px;
+  padding-inline: 0.5rem;
+
+  p.title {
+    font-size: 38px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    font-weight: bold;
+  }
+
+  p.date {
+    font-size: 34px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+}
