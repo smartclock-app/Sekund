@@ -5,7 +5,7 @@ import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { useEffect, useState } from "react";
 import fetchEvents from "./fetchEvents";
 
-const Calendar: WidgetComponent<CalendarConfig> = ({ config }) => {
+const Calendar: WidgetComponent<CalendarConfig> = () => {
   const configStore = useConfigStore();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
@@ -25,7 +25,6 @@ const Calendar: WidgetComponent<CalendarConfig> = ({ config }) => {
   return (
     <>
       <h1>Calendar</h1>
-      <pre>{JSON.stringify(config, null, 2)}</pre>
       <pre>{JSON.stringify(events, null, 2)}</pre>
     </>
   );

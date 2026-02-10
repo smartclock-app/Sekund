@@ -7,7 +7,7 @@ const fetchEvents = async (
   const events = [];
 
   for (const name of config.calendar.extensions) {
-    const eventsFromExtension = await extensions[name].Component(config.widgets[name]);
+    const eventsFromExtension = await extensions[name].Component(config.widgets[name], config.calendar);
     events.push(...eventsFromExtension);
   }
 

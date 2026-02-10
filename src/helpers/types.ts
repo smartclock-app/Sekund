@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { ZodAny } from "zod";
-import { ClockConfig } from "./baseConfig";
+import { CalendarConfig, ClockConfig } from "./baseConfig";
 
 export enum WidgetLocation {
   Main = "main",
@@ -60,7 +60,10 @@ export interface CalendarEvent {
 }
 
 export type WidgetComponent<Config = {}> = React.FC<{ config: Config; location: WidgetLocation }>;
-export type CalendarExtensionComponent<Config = {}> = (config: Config) => CalendarEvent[] | Promise<CalendarEvent[]>;
+export type CalendarExtensionComponent<Config = {}> = (
+  config: Config,
+  calendarConfig: CalendarConfig,
+) => CalendarEvent[] | Promise<CalendarEvent[]>;
 export type ClockThemeComponent<Config = {}> = React.FC<{
   config: Config;
   clockConfig: ClockConfig;

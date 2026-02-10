@@ -59,7 +59,7 @@ function App() {
       .catch(err => info(`Error loading config: ${err.toString()}`));
   }, []);
 
-  if (!configStore.initialized) return null;
+  if (!configLoaded.current) return null;
 
   return routerStore.currentScreen === RouterScreen.Editor ? (
     <ConfigEditor />
