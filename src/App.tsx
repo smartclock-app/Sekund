@@ -6,7 +6,9 @@ import { memo, useEffect, useRef, useState } from "react";
 import Calendar from "./components/calendar/Calendar";
 import Clock from "./components/clock/Clock";
 import ConfigEditor from "./components/ConfigEditor";
+import useOptionsModal from "./components/OptionsModal";
 import RemoteConfig from "./components/RemoteConfig";
+import VariablesEditor from "./components/VeriablesEditor";
 import { WidgetLocation, WidgetOfType, WidgetType } from "./helpers/types";
 import useLongPress from "./hooks/useLongPress";
 import useRouter, { RouterScreen } from "./hooks/useRouter";
@@ -24,14 +26,15 @@ const MemoizedWidget = memo(
 );
 
 function App() {
-  const routerStore = useRouter();
+  const currentScreen = useRouter(state => state.currentScreen);
   const layout = useConfigStore(state => state.layout);
   const widgetConfigs = useConfigStore(state => state.config.widgets);
   const calendarConfig = useConfigStore(state => state.config.calendar);
   const longPressProps = useLongPress(() => {
     info("Long press detected");
-    routerStore.navigate(RouterScreen.Editor);
+    setShowOptions(true);
   });
+  const { setShowOptions, OptionsModal } = useOptionsModal();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [sidebarHasChildren, setSidebarHasChildren] = useState(false);
@@ -48,39 +51,44 @@ function App() {
     return () => observer.disconnect();
   });
 
-  return routerStore.currentScreen === RouterScreen.Editor ? (
+  return currentScreen === RouterScreen.ConfigEditor ? (
     <ConfigEditor />
+  ) : currentScreen === RouterScreen.VariablesEditor ? (
+    <VariablesEditor />
   ) : (
-    <div className="container">
-      <RemoteConfig />
-      <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
-        {layout.main.map(Widget => (
-          <MemoizedWidget
-            key={Widget.Name}
-            Component={Widget.Component}
-            config={widgetConfigs[Widget.Name]}
-            location={WidgetLocation.Main}
-          />
-        ))}
-        <Clock />
-      </div>
-      <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
-        {layout.sidebar.map(Widget => {
-          if (Widget.Name === "calendar") {
-            return <Calendar key="calendar" config={calendarConfig} location={WidgetLocation.Sidebar} />;
-          }
-
-          return (
+    <>
+      <OptionsModal />
+      <div className="container">
+        <RemoteConfig />
+        <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
+          {layout.main.map(Widget => (
             <MemoizedWidget
               key={Widget.Name}
               Component={Widget.Component}
               config={widgetConfigs[Widget.Name]}
-              location={WidgetLocation.Sidebar}
+              location={WidgetLocation.Main}
             />
-          );
-        })}
+          ))}
+          <Clock />
+        </div>
+        <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
+          {layout.sidebar.map(Widget => {
+            if (Widget.Name === "calendar") {
+              return <Calendar key="calendar" config={calendarConfig} location={WidgetLocation.Sidebar} />;
+            }
+
+            return (
+              <MemoizedWidget
+                key={Widget.Name}
+                Component={Widget.Component}
+                config={widgetConfigs[Widget.Name]}
+                location={WidgetLocation.Sidebar}
+              />
+            );
+          })}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

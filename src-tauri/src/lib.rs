@@ -12,6 +12,7 @@ use http_server::{http_respond, start_http_server, stop_http_server, HttpServerS
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
         .plugin(
             tauri_plugin_sql::Builder::new()

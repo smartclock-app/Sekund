@@ -2,15 +2,16 @@ import { create } from "zustand";
 
 export enum RouterScreen {
   Main = "main",
-  Editor = "editor",
+  ConfigEditor = "configEditor",
+  VariablesEditor = "variablesEditor",
   Logs = "logs",
 }
 
 interface RouterStoreState {
   currentScreen: RouterScreen;
-  previousScreen?: RouterScreen; // Optional: track history
+  previousScreen?: RouterScreen;
   navigate: (screen: RouterScreen) => void;
-  goBack: () => void; // Optional: simple back navigation
+  goBack: () => void;
 }
 
 const useRouter = create<RouterStoreState>()(set => ({

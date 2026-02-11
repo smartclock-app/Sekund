@@ -1,4 +1,5 @@
 import { Widget, WidgetLocation, WidgetModule, WidgetOfType, WidgetType } from "@/helpers/types";
+import useVariablesStore from "@/hooks/useVariablesStore";
 import { getVersion } from "@tauri-apps/api/app";
 import { BaseDirectory, exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import { info, warn } from "@tauri-apps/plugin-log";
@@ -207,6 +208,7 @@ const loadVariables = async () => {
   let css = template;
   if (await exists(variablesPath, { baseDir: BASE_DIRECTORY })) {
     const variablesContent = await readTextFile(variablesPath, { baseDir: BASE_DIRECTORY });
+    useVariablesStore.getState().setVariables(variablesContent, false);
     css += "\n" + variablesContent;
   }
 
