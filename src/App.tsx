@@ -62,28 +62,34 @@ function App() {
         <RemoteConfig />
         <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
           {layout.main.map(Widget => (
-            <MemoizedWidget
-              key={Widget.Name}
-              Component={Widget.Component}
-              config={widgetConfigs[Widget.Name]}
-              location={WidgetLocation.Main}
-            />
+            <div id={Widget.Name} key={Widget.Name} style={{ display: "contents" }}>
+              <MemoizedWidget
+                Component={Widget.Component}
+                config={widgetConfigs[Widget.Name]}
+                location={WidgetLocation.Main}
+              />
+            </div>
           ))}
           <Clock />
         </div>
         <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
           {layout.sidebar.map(Widget => {
             if (Widget.Name === "calendar") {
-              return <Calendar key="calendar" config={calendarConfig} location={WidgetLocation.Sidebar} />;
+              return (
+                <div id={Widget.Name} key="calendar" style={{ display: "contents" }}>
+                  <Calendar config={calendarConfig} location={WidgetLocation.Sidebar} />
+                </div>
+              );
             }
 
             return (
-              <MemoizedWidget
-                key={Widget.Name}
-                Component={Widget.Component}
-                config={widgetConfigs[Widget.Name]}
-                location={WidgetLocation.Sidebar}
-              />
+              <div id={Widget.Name} key={Widget.Name} style={{ display: "contents" }}>
+                <MemoizedWidget
+                  Component={Widget.Component}
+                  config={widgetConfigs[Widget.Name]}
+                  location={WidgetLocation.Sidebar}
+                />
+              </div>
             );
           })}
         </div>
