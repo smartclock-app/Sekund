@@ -88,6 +88,7 @@ const Component: CalendarExtensionComponent<Config> = async config => {
     }
   } catch (e) {
     watchlistError = e;
+    console.log(watchlistError); // TODO: Remove this
     error(`[Watchlist] Error fetching watchlist: ${e}`);
   }
 

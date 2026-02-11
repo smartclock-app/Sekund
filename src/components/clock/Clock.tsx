@@ -1,10 +1,28 @@
+import { ClockConfig } from "@/helpers/baseConfig";
 import useConfigStore from "@/hooks/useConfigStore";
 import { dispatchEvent, EventType } from "@/hooks/useEventListener";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
+import styles from "./clock.module.scss";
+import getOrdinal from "./getOrdinal";
 
-const DefaultTheme = ({ now }: { now: dayjs.Dayjs }) => {
-  return <div style={{ background: "#fff8f8f8" }}>{now.format("HH:mm:ss")}</div>;
+const DefaultTheme = ({ config, now }: { config: ClockConfig; now: dayjs.Dayjs }) => {
+  return (
+    <div className={styles.container}>
+      <div className={styles.time}>
+        <p className={styles.main}>{now.format(`${config.format == "12h" ? "hh" : "HH"}:mm`)}</p>
+        <div className={styles.sub}>
+          <p>{now.format("A")}</p>
+          {config.showSeconds && <p>{now.format("ss")}</p>}
+        </div>
+      </div>
+      <div className={styles.date}>
+        {now.format(`dddd D`)}
+        <sup>{getOrdinal(now.date())}</sup>
+        {now.format(" MMMM YYYY")}
+      </div>
+    </div>
+  );
 };
 
 const Clock = () => {
@@ -28,7 +46,7 @@ const Clock = () => {
     return () => clearInterval(timer);
   }, []);
 
-  if (configStore.clockTheme === "default") return <DefaultTheme now={now} />;
+  if (configStore.clockTheme === "default") return <DefaultTheme config={configStore.config.clock} now={now} />;
   const Component = configStore.clockTheme.Component;
   return (
     <Component

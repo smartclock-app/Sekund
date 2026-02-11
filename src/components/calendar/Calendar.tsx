@@ -30,10 +30,10 @@ const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
         <Card key={month}>
           <h1
             style={{
-              fontSize: "38px",
+              fontSize: "2.3rem",
               fontWeight: "bold",
-              borderBottom: "2px solid #ddd",
-              borderRadius: "1px",
+              borderBottom: "0.125rem solid #ddd",
+              borderRadius: "0.06rem",
               marginBottom: "1rem",
             }}
           >

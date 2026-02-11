@@ -1,7 +1,7 @@
 .nowplaying {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .media {
@@ -9,10 +9,10 @@
   align-items: stretch;
 
   img {
-    width: 146px;
-    height: 146px;
+    width: 9rem;
+    height: 9rem;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 0.25rem;
   }
 }
 
@@ -43,15 +43,15 @@
 
 .progress {
   flex: 1;
-  height: 8px;
+  height: 0.5rem;
   background-color: #ccc;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   overflow: hidden;
 
   .progressBar {
     height: 100%;
     background-color: #1a1a1a;
-    border-radius: 4px;
+    border-radius: 0.25rem;
   }
 }
 

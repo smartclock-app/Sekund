@@ -10,8 +10,6 @@ const handleCommand = (command: string, data: any): { status: "ok"; result: Reco
     useConfigStore.getState().editConfig(data);
     setTimeout(() => window.location.reload(), 100);
     return { status: "ok", result: "Config updated" };
-  } else if (command === "skip_photo") {
-    //
   } else if (command === "refresh") {
     setTimeout(() => window.location.reload(), 100);
     return { status: "ok", result: "Refresh event dispatched" };
