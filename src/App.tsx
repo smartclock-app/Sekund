@@ -6,9 +6,9 @@ import { memo, useEffect, useRef, useState } from "react";
 import Calendar from "./components/calendar/Calendar";
 import Clock from "./components/clock/Clock";
 import ConfigEditor from "./components/ConfigEditor";
+import RemoteConfig from "./components/RemoteConfig";
 import { WidgetLocation, WidgetOfType, WidgetType } from "./helpers/types";
 import useLongPress from "./hooks/useLongPress";
-import { useHttpRequestListener } from "./hooks/useRemoteStore";
 import useRouter, { RouterScreen } from "./hooks/useRouter";
 
 const MemoizedWidget = memo(
@@ -48,15 +48,11 @@ function App() {
     return () => observer.disconnect();
   });
 
-  useHttpRequestListener(event => {
-    info(JSON.stringify(event));
-    return { status: "ok", result: { message: "Hello from SmartClock!" } };
-  });
-
   return routerStore.currentScreen === RouterScreen.Editor ? (
     <ConfigEditor />
   ) : (
     <div className="container">
+      <RemoteConfig />
       <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
         {layout.main.map(Widget => (
           <MemoizedWidget

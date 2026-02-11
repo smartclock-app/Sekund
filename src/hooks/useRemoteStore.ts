@@ -36,7 +36,9 @@ interface HttpRequest {
 }
 
 export const useHttpRequestListener = (
-  callback: (event: HttpRequest) => { status: "ok"; result: Record<string, any> } | { status: "error"; error: string },
+  callback: (
+    event: HttpRequest,
+  ) => { status: "ok"; result: Record<string, any> | string } | { status: "error"; error: string },
 ) => {
   useEffect(() => {
     const unlisten = listen<HttpRequest>("http-request", async e => {
