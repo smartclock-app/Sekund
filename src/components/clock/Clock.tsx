@@ -46,7 +46,7 @@ const Clock = () => {
     return () => clearInterval(timer);
   }, []);
 
-  if (configStore.clockTheme === "default") return <DefaultTheme config={configStore.config.clock} now={now} />;
+  if (!configStore.clockTheme) return <DefaultTheme config={configStore.config.clock} now={now} />;
   const Component = configStore.clockTheme.Component;
   return (
     <Component

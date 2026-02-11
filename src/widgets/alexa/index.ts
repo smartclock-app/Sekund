@@ -1,7 +1,6 @@
 import { WidgetLocation, WidgetType } from "@/helpers/types";
 import z from "zod";
 
-export const Name = "alexa";
 export const Type = WidgetType.Widget;
 
 export const AllowedLocations = [

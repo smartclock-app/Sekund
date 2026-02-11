@@ -27,7 +27,6 @@ export const calendarSchema = z.object({
     })
     .prefault({} as any),
   eventFilter: z.array(z.string()).catch([]),
-  extensions: z.array(z.string()).catch([]),
 });
 
 export type CalendarConfig = z.infer<typeof calendarSchema>;

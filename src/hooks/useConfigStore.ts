@@ -6,12 +6,12 @@ interface ConfigStoreState {
   initialized: boolean;
   config: Record<string, any>;
   layout: Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>;
-  clockTheme: WidgetOfType<WidgetType.ClockTheme> | "default";
+  clockTheme: WidgetOfType<WidgetType.ClockTheme> | undefined;
   calendarExtensions: Record<string, WidgetOfType<WidgetType.CalendarExtension>>;
   setConfig: (config: {
     config: Record<string, any>;
     layout: Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>;
-    clockTheme: WidgetOfType<WidgetType.ClockTheme> | "default";
+    clockTheme: WidgetOfType<WidgetType.ClockTheme> | undefined;
     calendarExtensions: Record<string, WidgetOfType<WidgetType.CalendarExtension>>;
   }) => void;
   editConfig: (config: Record<string, any>) => Promise<void>;
@@ -22,7 +22,7 @@ const useConfigStore = create<ConfigStoreState>()(set => ({
   initialized: false,
   config: {},
   layout: { main: [], sidebar: [] },
-  clockTheme: "default" as const,
+  clockTheme: undefined,
   calendarExtensions: {},
   setConfig: config => set({ ...config, initialized: true }),
   editConfig: async config => {

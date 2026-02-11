@@ -12,7 +12,7 @@ const CONFIG_BACKUP_DIR = "config-backups";
 const CONFIG_FILENAME = "config.json";
 const SCHEMA_FILENAME_PREFIX = "schema-";
 const VARIABLES_FILENAME = "variables";
-const RESERVED_WIDGET_NAMES = ["clock", "calendar", "root"];
+const RESERVED_WIDGET_NAMES = ["calendar", "clock", "default", "root"];
 
 export default async () => {
   const modules = import.meta.glob("../widgets/*/index.ts", {
@@ -47,40 +47,46 @@ export default async () => {
     const Component = componentModules[componentPath] || componentModules[altComponentPath];
     const Variables = variableModules[`../widgets/${widgetName}/Variables.css`];
 
-    if (RESERVED_WIDGET_NAMES.includes(widgetName)) {
-      throw new Error(`Widget name "${widgetName}" at ${path} is reserved and cannot be used`);
-    }
+    try {
+      if (RESERVED_WIDGET_NAMES.includes(widgetName)) {
+        throw new Error(`Widget name "${widgetName}" at ${path} is reserved and cannot be used`);
+      }
 
-    if (!mod.Type || !Object.values(WidgetType).includes(mod.Type)) {
-      throw new Error(`Widget "${widgetName}" at ${path} missing Type export or Type is not a valid WidgetType`);
-    }
+      if (!mod.Type || !Object.values(WidgetType).includes(mod.Type)) {
+        throw new Error(`Widget "${widgetName}" at ${path} missing Type export or Type is not a valid WidgetType`);
+      }
 
-    if (!mod.Schema || typeof (mod.Schema as any).parse !== "function") {
-      throw new Error(`Widget "${widgetName}" at ${path} missing Schema export or Schema is not a Zod schema`);
-    }
-
-    if (!Component || typeof Component !== "function") {
-      throw new Error(
-        `Widget "${widgetName}" at ${path} missing Component export or Component is not a valid React component`,
-      );
-    }
-
-    if (widgetSchemas[widgetName]) {
-      throw new Error(`Widget "${widgetName}" at ${path} already used by another widget, widget names must be unique`);
-    }
-
-    // Collect widget CSS variables if they export them
-    if (Variables && typeof Variables === "string") {
-      widgetVariables[widgetName] = Variables;
-    }
-
-    if (mod.Type == WidgetType.Widget) {
-      if (!mod.AllowedLocations || !Array.isArray(mod.AllowedLocations)) {
+      if (mod.Type === WidgetType.Widget && (!mod.AllowedLocations || !Array.isArray(mod.AllowedLocations))) {
         throw new Error(
           `Widget "${widgetName}" at ${path} missing AllowedLocations export or AllowedLocations is not an array`,
         );
       }
 
+      if (!mod.Schema || typeof (mod.Schema as any).parse !== "function") {
+        throw new Error(`Widget "${widgetName}" at ${path} missing Schema export or Schema is not a Zod schema`);
+      }
+
+      if (!Component || typeof Component !== "function") {
+        throw new Error(
+          `Widget "${widgetName}" at ${path} missing Component export or Component is not a valid React component`,
+        );
+      }
+
+      if (widgetSchemas[widgetName]) {
+        throw new Error(
+          `Widget "${widgetName}" at ${path} already used by another widget, widget names must be unique`,
+        );
+      }
+    } catch (error) {
+      warn(`Error loading widget at ${path}: ${(error as Error).message}`);
+      continue;
+    }
+
+    if (Variables && typeof Variables === "string") {
+      widgetVariables[widgetName] = Variables;
+    }
+
+    if (mod.Type == WidgetType.Widget) {
       for (const location of mod.AllowedLocations) {
         widgetAllowedLocations[location].push(widgetName);
       }
@@ -101,19 +107,27 @@ export default async () => {
       };
     }
 
-    if (mod.Type == WidgetType.ClockTheme) clockThemes.push(widgetName);
-    if (mod.Type == WidgetType.CalendarExtension)
+    if (mod.Type == WidgetType.ClockTheme) {
+      clockThemes.push(widgetName);
+    } else if (mod.Type == WidgetType.CalendarExtension) {
       calendarExtensions[widgetName] = widgetModules[widgetName] as WidgetOfType<WidgetType.CalendarExtension>;
+    }
     widgetSchemas[widgetName] = mod.Schema.prefault({});
   }
 
   const currentVersion = await getVersion();
   const schemaFileName = `${SCHEMA_FILENAME_PREFIX}${currentVersion}.json`;
 
-  // Backup old config if schema version has changed to prevent breaking changes from losing user config
   if (!(await exists(schemaFileName, { baseDir: BASE_DIRECTORY }))) {
     await backupConfig();
   }
+
+  baseConfig.calendar = baseConfig.calendar
+    .unwrap()
+    .extend({
+      extensions: z.array(z.enum(Object.keys(calendarExtensions))).catch([]),
+    })
+    .prefault({} as any);
 
   const configSchema = z.object({
     $schema: z.literal(schemaFileName).catch(schemaFileName),
@@ -143,21 +157,24 @@ export default async () => {
     baseDir: BASE_DIRECTORY,
   });
 
-  await generateVariablesTemplate(widgetVariables);
-  await loadVariables();
+  try {
+    await generateVariablesTemplate(widgetVariables);
+    await loadVariables();
+  } catch (error) {
+    warn(`Failed to load variables: ${(error as Error).message}`);
+  }
 
-  const layout = Object.entries(configData.layout).reduce(
+  const layout = Object.entries(configData.layout).reduce<Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>>(
     (acc, [location, widgetNames]) => {
-      acc[location as WidgetLocation] = widgetNames.map(
-        (name: string) => widgetModules[name] as WidgetOfType<WidgetType.Widget>,
-      );
+      acc[location as WidgetLocation] = widgetNames
+        .map((name: string) => widgetModules[name] as WidgetOfType<WidgetType.Widget>)
+        .filter(widget => widget !== undefined);
       return acc;
     },
-    {} as Record<WidgetLocation, WidgetOfType<WidgetType.Widget>[]>,
+    { main: [], sidebar: [] },
   );
 
-  const clockTheme =
-    (widgetModules[configData.clockTheme] as WidgetOfType<WidgetType.ClockTheme> | undefined) ?? "default";
+  const clockTheme = widgetModules[configData.clockTheme] as WidgetOfType<WidgetType.ClockTheme>;
 
   return { config: configData, layout, clockTheme, calendarExtensions } as const;
 };
@@ -166,7 +183,6 @@ const generateVariablesTemplate = async (widgetVariables: Record<string, string>
   const mergedVariables: string[] = [];
 
   Object.entries(widgetVariables).forEach(([name, css]) => {
-    // Extract content between :root { and }
     const match = css.match(/:root\s*\{([\s\S]*?)\}/);
     if (match) {
       const content = "  " + match[1].trim();
