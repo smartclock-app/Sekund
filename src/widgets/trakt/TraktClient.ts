@@ -1,0 +1,296 @@
+import useDatabaseStore from "@/hooks/useDatabaseStore";
+import { error, info } from "@tauri-apps/plugin-log";
+import dayjs from "dayjs";
+import { Config } from ".";
+import {
+  AccessTokenResponse,
+  ListItem,
+  MovieSummary,
+  ShowSummary,
+  TokenPair,
+  TraktManagerAPIError,
+} from "./TraktClientTypes";
+
+/// Based on dart package:trakt_dart, only includes the code necessary for retrieving list items. (Translated from Dart to TypeScript)
+class TraktManager {
+  static _baseURL: string = "api.trakt.tv";
+  _headers: Record<string, string>;
+
+  constructor(
+    public clientId: string,
+    public clientSecret: string,
+    public redirectURI: string,
+    public accessToken: string,
+    public refreshToken: string,
+  ) {
+    this._headers = {
+      "Content-Type": "application/json",
+      "trakt-api-version": "2",
+      "trakt-api-key": clientId,
+    };
+  }
+
+  async refreshAccessToken(): Promise<TokenPair> {
+    const response = await fetch(`https://${TraktManager._baseURL}/oauth/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        refresh_token: this.refreshToken,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+        redirect_uri: this.redirectURI,
+        grant_type: "refresh_token",
+      }),
+    });
+
+    if (![200, 201, 204].includes(response.status)) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const data = (await response.json()) as AccessTokenResponse;
+    this.accessToken = data.accessToken;
+    this.refreshToken = data.refreshToken;
+
+    return [data.accessToken, data.refreshToken];
+  }
+
+  /// Fetches the Trakt list and compares it to the watchlist database.
+  /// Returns a tuple of a boolean indicating if the list has changed and a set of item IDs.
+  async getClockList(config: Config, watchlist: any[]) {
+    let items: ListItem[];
+    let tokens: TokenPair = [this.accessToken, this.refreshToken];
+
+    const listId = config.listId;
+    try {
+      items = await this.getListItems(listId);
+    } catch (e) {
+      if (!(e instanceof TraktManagerAPIError)) throw e;
+      if (e.statusCode != 401) throw e;
+      tokens = await this.refreshAccessToken();
+      items = await this.getListItems(listId);
+    }
+
+    if (config.includeWatchlist) {
+      const watchlistItems = await this.getWatchlistItems();
+      if (watchlistItems.length > 0) {
+        items.push(...watchlistItems);
+      }
+    }
+
+    const watchlistIds = new Set(watchlist.map(e => e["id"]));
+
+    const itemTypes = new Set(["show", "movie", ...(config.includeEpisodesAsShow ? ["episode"] : [])]);
+
+    const itemIds = new Set(
+      items
+        .filter(e => itemTypes.has(e.type))
+        .map(e => {
+          if (e.type == "show" || e.type == "episode") {
+            return `tv--${e.show?.ids.slug}`;
+          } else {
+            return `movie--${e.movie?.ids.slug}`;
+          }
+        }),
+    );
+
+    const setsHaveChanged = itemIds.difference(watchlistIds).size > 0 || watchlistIds.difference(itemIds).size > 0;
+    return [setsHaveChanged, itemIds, tokens] as [boolean, Set<string>, TokenPair?];
+  }
+
+  async getListItems(listId: string) {
+    const request = `users/me/lists/${listId}/items`;
+    const headers = this._headers;
+    headers["Authorization"] = `Bearer ${this.accessToken}`;
+
+    const url = new URL(`https://${TraktManager._baseURL}/${request}`);
+    const response = await fetch(url, { headers });
+
+    if (![200, 201, 204].includes(response.status)) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const jsonResult = await response.json();
+
+    if (Array.isArray(jsonResult)) return jsonResult;
+    return [];
+  }
+
+  async getShowSummary(slug: string) {
+    const request = `shows/${slug}`;
+    const headers = this._headers;
+    headers["Authorization"] = `Bearer ${this.accessToken}`;
+
+    const url = new URL(`https://${TraktManager._baseURL}/${request}`);
+
+    const response = await fetch(url, { headers });
+
+    if (![200, 201, 204].includes(response.status)) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const jsonResult = (await response.json()) as ShowSummary;
+    return jsonResult;
+  }
+
+  async getShowNextEpisode(slug: string) {
+    const request = `shows/${slug}/next_episode`;
+    const headers = this._headers;
+    headers["Authorization"] = `Bearer ${this.accessToken}`;
+    const url = new URL(`https://${TraktManager._baseURL}/${request}`);
+
+    const response = await fetch(url, { headers });
+    if (response.status == 204) return null;
+
+    if (![200, 201].includes(response.status)) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const jsonResult = await response.json();
+    return jsonResult["first_aired"] as string;
+  }
+
+  async getTodayEpisode(slug: string) {
+    const request = `shows/${slug}/last_episode`;
+    const headers = this._headers;
+    headers["Authorization"] = `Bearer ${this.accessToken}`;
+
+    const query = new URLSearchParams({ extended: "full" });
+    const url = new URL(`https://${TraktManager._baseURL}/${request}?${query.toString()}`);
+
+    const response = await fetch(url, { headers });
+    if (response.status == 204) return null;
+
+    if (![200, 201].includes(response.status)) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const jsonResult = await response.json();
+    const airedDate = jsonResult["first_aired"];
+
+    // if (await isEpisodeWatched(jsonResult["ids"]["trakt"])) {
+    //   return null;
+    // }
+
+    if (!dayjs(airedDate).isSame(dayjs(), "day")) {
+      return null;
+    }
+
+    return airedDate as string;
+  }
+
+  ///
+  /// Plans to use this function to remove episodes from the watchlist once watched.
+  /// Currently not used as it would require frequent polling of the Trakt API to check if episodes have been watched.
+  ///
+
+  // Future<bool> isEpisodeWatched(int traktId) async {
+  //   final request = "sync/history/episodes/$traktId";
+  //   final headers = _headers;
+  //   headers["Authorization"] = "Bearer $accessToken";
+
+  //   final url = Uri.https(_baseURL, request, {"extended": "full"});
+  //   final response = await client.get(url, headers: _headers);
+
+  //   if (response.statusCode == 204) {
+  //     return false;
+  //   }
+
+  //   if (![200, 201].contains(response.statusCode)) {
+  //     throw TraktManagerAPIError(response.statusCode, response.reasonPhrase, response);
+  //   }
+
+  //   final jsonResult = jsonDecode(response.body);
+  //   return (jsonResult is Iterable && jsonResult.isNotEmpty);
+  // }
+
+  async getMovieSummary(slug: string) {
+    const request = `movies/${slug}`;
+    const headers = this._headers;
+    headers["Authorization"] = `Bearer ${this.accessToken}`;
+
+    const url = new URL(`https://${TraktManager._baseURL}/${request}?extended=full`);
+    const response = await fetch(url, { headers });
+
+    if (![200, 201, 204].includes(response.status)) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const jsonResult = (await response.json()) as MovieSummary;
+    return jsonResult;
+  }
+
+  async getWatchlistItems() {
+    const request = "sync/watchlist/all/released/desc";
+    const headers = this._headers;
+    headers["Authorization"] = `Bearer ${this.accessToken}`;
+
+    const url = new URL(`https://${TraktManager._baseURL}/${request}`);
+    const response = await fetch(url, { headers });
+
+    if (![200, 201, 204].includes(response.status)) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const jsonResult = await response.json();
+    if (Array.isArray(jsonResult)) {
+      return jsonResult as ListItem[];
+    }
+
+    return [];
+  }
+
+  // async updateWatchlist({config, items, database}: {config: Config, items: Set<string>, database: Database}) {
+  async updateWatchlist(items: Set<string>) {
+    const database = useDatabaseStore.getState();
+    if (!database.db) {
+      await database.init();
+    }
+
+    info("[Watchlist] Refetching list item details");
+    await database.write("DELETE FROM watchlist");
+
+    await Promise.allSettled(
+      Array.from(items).map(async item => {
+        const [type, slug] = item.split("--");
+
+        let data: Record<string, any>;
+        try {
+          if (type == "movie") {
+            const summary = await this.getMovieSummary(slug);
+
+            data = {
+              id: item,
+              name: summary.title,
+              status: summary.status,
+              nextAirDate: summary.released,
+            };
+          } else {
+            const [todayEpisode, nextEpisode, summary] = await Promise.all([
+              this.getTodayEpisode(slug),
+              this.getShowNextEpisode(slug),
+              this.getShowSummary(slug),
+            ]);
+
+            data = {
+              id: item,
+              name: summary.title,
+              status: summary.status,
+              nextAirDate: todayEpisode ?? nextEpisode,
+            };
+          }
+
+          await database.write("INSERT INTO watchlist (id, name, status, nextAirDate) VALUES (?, ?, ?, ?)", [
+            data["id"],
+            data["name"],
+            data["status"],
+            data["nextAirDate"],
+          ]);
+        } catch (e) {
+          error(`[Watchlist] Failed to insert item: ${e}`);
+        }
+      }),
+    );
+  }
+}
+
+export default TraktManager;
