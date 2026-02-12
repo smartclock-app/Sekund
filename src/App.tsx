@@ -6,6 +6,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import Alerts from "./components/alerts/Alerts";
 import Calendar from "./components/calendar/Calendar";
 import Clock from "./components/clock/Clock";
+import { EditorScreen } from "./components/editor";
 import RemoteConfig from "./components/RemoteConfig";
 import { WidgetLocation, WidgetOfType, WidgetType } from "./helpers/types";
 import useLongPress from "./hooks/useLongPress";
@@ -50,7 +51,7 @@ function App() {
   });
 
   return currentScreen === RouterScreen.Editor ? (
-    <></>
+    <EditorScreen />
   ) : (
     <div className="container">
       <RemoteConfig />
