@@ -3,6 +3,7 @@ import useConfigStore from "./hooks/useConfigStore";
 
 import { info } from "@tauri-apps/plugin-log";
 import { memo, useEffect, useRef, useState } from "react";
+import Alerts from "./components/alerts/Alerts";
 import Calendar from "./components/calendar/Calendar";
 import Clock from "./components/clock/Clock";
 import ConfigEditor from "./components/ConfigEditor";
@@ -73,6 +74,7 @@ function App() {
           <Clock />
         </div>
         <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
+          <Alerts />
           {layout.sidebar.map(Widget => {
             if (Widget.Name === "calendar") {
               return (
