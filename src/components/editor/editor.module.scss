@@ -103,11 +103,6 @@
 
   &.unsaved {
     font-weight: 600;
-
-    &::after {
-      content: " •";
-      color: #ff6b6b;
-    }
   }
 }
 

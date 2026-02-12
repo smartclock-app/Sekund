@@ -1,3 +1,4 @@
+import templateCss from "@/assets/variables.css?raw";
 import Editor, { OnChange, useMonaco } from "@monaco-editor/react";
 import { BaseDirectory } from "@tauri-apps/plugin-fs";
 import { useEffect, useState } from "react";
@@ -48,6 +49,7 @@ export default function EditorScreen() {
   const [errorMessage, setErrorMessage] = useState<string>("");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<(() => void) | null>(null);
+  const [filesSaved, setFilesSaved] = useState(false);
   const configStore = useConfigStore();
 
   // Load all files on mount
@@ -89,6 +91,40 @@ export default function EditorScreen() {
     };
   }, [storeLoadFile]);
 
+  useEffect(() => {
+    if (!monaco) return;
+
+    const availableVars = extractCssVariables(templateCss);
+
+    const disposable = monaco.languages.registerCompletionItemProvider("css", {
+      provideCompletionItems: (model, position) => {
+        const word = model.getWordUntilPosition(position);
+
+        const suggestions = availableVars.map((varName, index) => ({
+          label: varName,
+          kind: monaco.languages.CompletionItemKind.Variable,
+          insertText: varName,
+          range: {
+            startLineNumber: position.lineNumber,
+            endLineNumber: position.lineNumber,
+            startColumn: word.startColumn,
+            endColumn: word.endColumn,
+          },
+          sortText: String(index).padStart(4, "0"),
+          documentation: `CSS variable: ${varName}`,
+        }));
+
+        return {
+          suggestions,
+          incomplete: false,
+        };
+      },
+      triggerCharacters: ["-"],
+    });
+
+    return () => disposable.dispose();
+  }, [monaco, templateCss]);
+
   const handleEditorChange: OnChange = value => {
     if (value !== undefined) {
       updateContent(activeFile, value);
@@ -104,6 +140,7 @@ export default function EditorScreen() {
 
     if (result.success) {
       markSaved(activeFile);
+      setFilesSaved(true);
     } else {
       setErrorMessage(result.error || "Unknown error saving file");
     }
@@ -115,6 +152,11 @@ export default function EditorScreen() {
   };
 
   const handleBackClick = () => {
+    if (filesSaved) {
+      window.location.reload();
+      return;
+    }
+
     if (hasUnsaved()) {
       setPendingNavigation(() => goBack);
       setIsDrawerOpen(true);
@@ -128,7 +170,11 @@ export default function EditorScreen() {
     useEditorStore.setState({ unsavedChanges: new Set() });
     setIsDrawerOpen(false);
     if (pendingNavigation) {
-      pendingNavigation();
+      if (filesSaved) {
+        window.location.reload();
+      } else {
+        pendingNavigation();
+      }
       setPendingNavigation(null);
     }
   };
@@ -158,7 +204,7 @@ export default function EditorScreen() {
               onClick={() => handleTabClick(file.name)}
             >
               {file.name}
-              {unsavedChanges.has(file.name) && <span className={styles.dot}>•</span>}
+              {unsavedChanges.has(file.name) && <span className={styles.dot} />}
             </button>
           ))}
         </div>
@@ -245,4 +291,10 @@ export default function EditorScreen() {
       )}
     </div>
   );
+}
+
+function extractCssVariables(cssContent: string): string[] {
+  const varRegex = /--[\w-]+/g;
+  const matches = cssContent.match(varRegex) || [];
+  return [...new Set(matches)]; // Remove duplicates
 }
