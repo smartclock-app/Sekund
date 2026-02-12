@@ -7,7 +7,7 @@ const Component: WidgetComponent<Config> = ({ config }) => {
   return (
     <>
       {config.features.nowplaying && <NowPlaying config={config} />}
-      <Notifications config={config} />
+      {(config.features.alarms || config.features.timers) && <Notifications config={config} />}
     </>
   );
 };

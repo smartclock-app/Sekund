@@ -1,5 +1,4 @@
-import { BASE_DIRECTORY } from "@/helpers/types";
-import { exists, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import useConfigStore from "@/hooks/useConfigStore";
 import { fetch } from "@tauri-apps/plugin-http";
 import { error, info, warn } from "@tauri-apps/plugin-log";
 import dayjs from "dayjs";
@@ -17,40 +16,15 @@ const DANGEROUS_OPTIONS = {
 
 class QueryClient {
   private static _browser = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:1.0) bash-script/1.0";
-  private _cookies: Record<string, string> = {};
   private _customerIds: Record<string, string> = {};
   private _csrfToken: string = "";
   private _lastLogin?: [dayjs.Dayjs, boolean];
   private _loginPromise?: Promise<boolean>;
-  public isInitialized = false;
 
-  private constructor(
-    private _cookieFile: string,
+  constructor(
+    private _cookies: Record<string, string>,
     private _loginToken: string,
   ) {}
-
-  public static async createClient(cookieFile: string, token: string) {
-    const client = new QueryClient(cookieFile, token);
-    await client.init();
-    return client;
-  }
-
-  private async init() {
-    if (this.isInitialized) return;
-
-    try {
-      if (await exists(this._cookieFile, { baseDir: BASE_DIRECTORY })) {
-        const content = await readTextFile(this._cookieFile, { baseDir: BASE_DIRECTORY });
-        const cookies = JSON.parse(content);
-        this._cookies = cookies;
-      }
-    } catch (error) {
-      warn(`[Alexa] Failed to load cookies: ${error}`);
-    }
-
-    this.isInitialized = true;
-    info("[Alexa] Initialized with cookies for users: " + Object.keys(this._cookies).join(", "));
-  }
 
   private async _parseCookies(json: AlexaLoginResponse) {
     const cookiesMap: Record<string, any[]> = json["response"]["tokens"]["cookies"];
@@ -106,8 +80,6 @@ class QueryClient {
   }
 
   public async login(userId: string, token?: string) {
-    if (!this.isInitialized) throw new Error("QueryClient not initialized");
-
     if (this._loginPromise) return this._loginPromise;
 
     this._loginPromise = (async () => {
@@ -191,7 +163,7 @@ class QueryClient {
         return false;
       }
 
-      await writeTextFile(this._cookieFile, JSON.stringify(this._cookies), { baseDir: BASE_DIRECTORY });
+      await useConfigStore.getState().editConfigByPath("widgets.alexa.cookies", this._cookies);
 
       return true;
     })();

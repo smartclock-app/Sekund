@@ -1,17 +1,18 @@
 import { create } from "zustand";
+import { Config } from "..";
 import QueryClient from "./QueryClient";
 
 interface QueryClientStoreState {
   isInitialized: boolean;
   client: QueryClient | null;
-  init: (token: string) => Promise<void>;
+  init: (config: Config) => void;
 }
 
 const useQueryClient = create<QueryClientStoreState>()(set => ({
   isInitialized: false,
   client: null,
-  init: async token => {
-    const client = await QueryClient.createClient("cookies.json", token);
+  init: config => {
+    const client = new QueryClient(config.cookies, config.token);
     set({ isInitialized: true, client });
   },
 }));

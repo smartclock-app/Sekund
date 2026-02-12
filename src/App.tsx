@@ -63,37 +63,29 @@ function App() {
         <RemoteConfig />
         <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
           {layout.main.map(Widget => (
-            <div id={Widget.Name} key={Widget.Name} style={{ display: "contents" }}>
-              <MemoizedWidget
-                Component={Widget.Component}
-                config={widgetConfigs[Widget.Name]}
-                location={WidgetLocation.Main}
-              />
-            </div>
+            <MemoizedWidget
+              key={Widget.Name}
+              Component={Widget.Component}
+              config={widgetConfigs[Widget.Name]}
+              location={WidgetLocation.Main}
+            />
           ))}
-          <div id="clock" style={{ display: "contents" }}>
-            <Clock />
-          </div>
+          <Clock />
         </div>
         <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
           <Alerts />
           {layout.sidebar.map(Widget => {
             if (Widget.Name === "calendar") {
-              return (
-                <div id={Widget.Name} key="calendar" style={{ display: "contents" }}>
-                  <Calendar config={calendarConfig} location={WidgetLocation.Sidebar} />
-                </div>
-              );
+              return <Calendar key={Widget.Name} config={calendarConfig} location={WidgetLocation.Sidebar} />;
             }
 
             return (
-              <div id={Widget.Name} key={Widget.Name} style={{ display: "contents" }}>
-                <MemoizedWidget
-                  Component={Widget.Component}
-                  config={widgetConfigs[Widget.Name]}
-                  location={WidgetLocation.Sidebar}
-                />
-              </div>
+              <MemoizedWidget
+                key={Widget.Name}
+                Component={Widget.Component}
+                config={widgetConfigs[Widget.Name]}
+                location={WidgetLocation.Sidebar}
+              />
             );
           })}
         </div>

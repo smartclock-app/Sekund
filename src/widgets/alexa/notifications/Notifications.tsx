@@ -62,8 +62,8 @@ const Notifications: React.FC<NotificationsProps> = ({ config }) => {
 
   useEffect(() => {
     const initialize = async () => {
-      if (!queryClientStore.client?.isInitialized) {
-        await queryClientStore.init(config.token);
+      if (!queryClientStore.isInitialized) {
+        queryClientStore.init(config);
       }
 
       if (runOnce.current) return;
@@ -73,7 +73,7 @@ const Notifications: React.FC<NotificationsProps> = ({ config }) => {
     };
 
     initialize();
-  }, [config, queryClientStore.client]);
+  }, [config, queryClientStore.isInitialized]);
 
   useEventListener(EventType.Refresh, () => {
     getNotifications();

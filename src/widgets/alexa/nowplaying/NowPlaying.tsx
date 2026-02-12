@@ -36,10 +36,7 @@ const NowPlaying: React.FC<NowPlayingProps> = ({ config }) => {
   }, [queue]);
 
   const getQueue = useCallback(async () => {
-    if (!queryClientStore.client) {
-      error("[Alexa] Query client not initialized");
-      return;
-    }
+    if (!queryClientStore.isInitialized) return;
 
     if (queue?.playerState == "REFRESHING") return;
 
@@ -76,8 +73,8 @@ const NowPlaying: React.FC<NowPlayingProps> = ({ config }) => {
 
   useEffect(() => {
     const initialize = async () => {
-      if (!queryClientStore.client?.isInitialized) {
-        await queryClientStore.init(config.token);
+      if (!queryClientStore.isInitialized) {
+        queryClientStore.init(config);
       }
 
       if (runOnce.current) return;
@@ -87,7 +84,7 @@ const NowPlaying: React.FC<NowPlayingProps> = ({ config }) => {
     };
 
     initialize();
-  }, [config, queryClientStore.client]);
+  }, [config, queryClientStore.isInitialized]);
 
   useEventListener(EventType.Tick, () => {
     if (queue == null || queue!.progress == null) return setProgress(0);
