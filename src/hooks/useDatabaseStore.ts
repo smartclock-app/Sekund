@@ -8,8 +8,8 @@ interface DatabaseStoreState {
   write: WriteDatabase;
 }
 
-export type ReadDatabase = <T>(query: string, params?: any[]) => Promise<T>;
-export type WriteDatabase = (query: string, params?: any[]) => Promise<void>;
+export type ReadDatabase = <T>(query: string, params?: string[]) => Promise<T>;
+export type WriteDatabase = (query: string, params?: string[]) => Promise<void>;
 
 const useDatabaseStore = create<DatabaseStoreState>()(set => ({
   db: null,
@@ -17,13 +17,13 @@ const useDatabaseStore = create<DatabaseStoreState>()(set => ({
     const db = await Database.load("sqlite:database.sqlite");
     set({ db });
   },
-  read: async <T>(query: string, params?: any[]): Promise<T> => {
+  read: async <T>(query: string, params?: string[]): Promise<T> => {
     let { db, init } = useDatabaseStore.getState();
     if (!db) await init();
     db = useDatabaseStore.getState().db;
     return db!.select<T>(query, params);
   },
-  write: async (query: string, params?: any[]) => {
+  write: async (query: string, params?: string[]) => {
     let { db, init } = useDatabaseStore.getState();
     if (!db) await init();
     db = useDatabaseStore.getState().db;

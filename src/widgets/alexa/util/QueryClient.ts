@@ -53,7 +53,7 @@ class QueryClient {
   }
 
   private async _parseCookies(json: AlexaLoginResponse) {
-    const cookiesMap: any = json["response"]["tokens"]["cookies"];
+    const cookiesMap: Record<string, any[]> = json["response"]["tokens"]["cookies"];
 
     let cookies = "";
     for (const domain of Object.keys(cookiesMap)) {

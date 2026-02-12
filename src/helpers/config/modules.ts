@@ -40,7 +40,7 @@ export default async () => {
         );
       }
 
-      if (!mod.Schema || typeof (mod.Schema as any).parse !== "function") {
+      if (!mod.Schema || typeof mod.Schema.parse !== "function") {
         throw new Error(`Widget "${widgetName}" at ${path} missing Schema export or Schema is not a Zod schema`);
       }
 
