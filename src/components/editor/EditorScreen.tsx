@@ -64,18 +64,28 @@ export default function EditorScreen() {
       }
     };
 
-    // Suppress NotAllowedError from Monaco
+    // Suppress NotAllowedError and source map 404 errors from Monaco
     const handleError = (event: ErrorEvent) => {
-      if (event.error?.message?.includes("NotAllowedError")) {
+      const errorMsg = event.error?.message || "";
+      if (errorMsg.includes("NotAllowedError") || (event.message && event.message.includes(".map"))) {
+        event.preventDefault();
+      }
+    };
+
+    // Suppress unhandled promise rejections related to source maps
+    const handleRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.message?.includes(".map") || event.reason?.includes?.(".map")) {
         event.preventDefault();
       }
     };
 
     window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleRejection);
     initializeFiles();
 
     return () => {
       window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleRejection);
     };
   }, [storeLoadFile]);
 
@@ -133,7 +143,7 @@ export default function EditorScreen() {
 
   return (
     <div className={styles.editorScreen}>
-      {/* Header with back button */}
+      {/* Header with back button, tabs, and save button */}
       <div className={styles.header}>
         <button className={styles.backButton} onClick={handleBackClick} title="Go back">
           ← Back
@@ -152,6 +162,16 @@ export default function EditorScreen() {
             </button>
           ))}
         </div>
+        {!isReadOnly && (
+          <button
+            className={styles.saveButton}
+            onClick={handleSaveCurrentFile}
+            disabled={!unsavedChanges.has(activeFile)}
+            title="Save current file"
+          >
+            Save
+          </button>
+        )}
       </div>
 
       {/* Error message */}
@@ -174,8 +194,6 @@ export default function EditorScreen() {
                 if (configStore.configSchema && configStore.version) {
                   const schemaData = configStore.configSchema.toJSONSchema();
                   const schemaUri = `inmemory://model/schema-${configStore.version}.json`;
-
-                  console.log("Setting Monaco schema for config.json:", schemaUri, schemaData);
 
                   m.json.jsonDefaults.setDiagnosticsOptions({
                     validate: true,
@@ -207,19 +225,6 @@ export default function EditorScreen() {
           />
         )}
       </div>
-
-      {/* Save button (only for non-readonly files) */}
-      {!isReadOnly && (
-        <div className={styles.footer}>
-          <button
-            className={styles.saveButton}
-            onClick={handleSaveCurrentFile}
-            disabled={!unsavedChanges.has(activeFile)}
-          >
-            Save
-          </button>
-        </div>
-      )}
 
       {/* Confirmation dialog for discarding changes */}
       {isDrawerOpen && (
