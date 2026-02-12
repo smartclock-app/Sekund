@@ -59,13 +59,13 @@ export interface Order {
     drn_id: string;
     requested_quantity: number;
   }[];
-  archived_items: [];
-  drivers: [];
+  archived_items: any[];
+  drivers: any[];
   ugc_review: null;
   reviewable: boolean;
   should_display_rating: boolean;
-  fee_breakdown: [];
-  payment_breakdown: [];
+  fee_breakdown: any[];
+  payment_breakdown: any[];
   zone: null;
 }
 
@@ -79,7 +79,7 @@ interface OrderStatusRelationship {
 
 export interface OrderStatus {
   data: {
-    type: "consumer_order_status";
+    type: string;
     id: string;
     attributes: {
       title: string;
@@ -124,7 +124,7 @@ export interface OrderStatus {
       order: OrderStatusRelationship;
       banner: OrderStatusRelationship;
       riders: {
-        data: [];
+        data: any[];
       };
       retry_payment_links: OrderStatusRelationship;
       post_order_tipping_banner: OrderStatusRelationship;
@@ -132,79 +132,4 @@ export interface OrderStatus {
       scrollable_header: OrderStatusRelationship;
     };
   };
-  included: [
-    {
-      id: string;
-      drn_id: string;
-      type: string;
-      attributes: {
-        order_number: string;
-        short_drn: string;
-        sharing_enabled: boolean;
-        customer_name: string;
-        address: string;
-        country: string;
-        description: string;
-        description_drn: string;
-        image_url: string;
-        items: string;
-        full_items: {
-          id: string;
-          name: string;
-          modifiers_description: string;
-          quantity: number;
-          requested_quantity: number;
-          available_quantity: number;
-          total_price: string;
-          final_quantity: number;
-          modifiers: {
-            name: string;
-            requested_quantity: number;
-            final_quantity: number;
-          }[];
-        }[];
-        show_modifiers_in_new_lines: boolean;
-        restaurant_name: string;
-        restaurant_drn_id: string;
-        restaurant_id: number;
-        price_details: {
-          iso_currency_code: string;
-          fractional_amount: number;
-        };
-        totals: {
-          label: string;
-          type: string;
-          amount: string;
-        }[];
-        placed_at_message: string;
-        title: string;
-        first_presented_eta_lower_bound: {
-          "^t": number;
-        };
-        first_presented_eta_upper_bound: {
-          "^t": number;
-        };
-        delivery_prioritisation: string;
-      };
-    },
-    {
-      id: string;
-      drn_id: string;
-      type: string;
-      attributes: {
-        short_message: string;
-        show_detail_indicator: boolean;
-        short_message_subtitle: string;
-      };
-    },
-    {
-      id: string;
-      drn_id: string;
-      type: string;
-      attributes: {
-        collapsed_title: string;
-        collapsed_subtitle: string;
-      };
-    },
-  ];
 }

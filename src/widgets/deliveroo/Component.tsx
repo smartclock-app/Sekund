@@ -4,17 +4,18 @@ import useEventListener, { EventType } from "@/hooks/useEventListener";
 import dayjs, { type Dayjs } from "dayjs";
 import { useEffect, useRef, useState } from "react";
 import { Config } from ".";
+import styles from "./deliveroo.module.scss";
 import DeliverooClient from "./DeliverooClient";
 import { OrderStatus } from "./types";
 
 const Deliveroo: WidgetComponent<Config> = ({ config }) => {
   const [client] = useState(() => new DeliverooClient(config.token));
-  const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
+  const [orderStatus, setOrderStatus] = useState<OrderStatus | null>();
   const lastUpdate = useRef(dayjs());
 
   const fetchOrderData = async () => {
     const latestOrder = await client.getLatestOrder();
-    if (!latestOrder || latestOrder.status !== "delivered") return setOrderStatus(null);
+    if (!latestOrder || latestOrder.status !== "DELIVERED") return setOrderStatus(null);
 
     const status = await client.getOrderStatus(latestOrder.id);
     setOrderStatus(status);
@@ -38,10 +39,16 @@ const Deliveroo: WidgetComponent<Config> = ({ config }) => {
   if (!orderStatus) return null;
 
   return (
-    <Card>
-      <h1>Deliveroo</h1>
-      <h2>{orderStatus.data.attributes.title}</h2>
-      <p>{orderStatus.data.attributes.message}</p>
+    <Card padding={false}>
+      <div className={styles.container}>
+        <div className={styles.code}>
+          <span>{orderStatus.data.attributes.rider_validation_code}</span>
+        </div>
+        <div className={styles.details}>
+          <h2>{orderStatus.data.attributes.title}</h2>
+          <p>{orderStatus.data.attributes.message}</p>
+        </div>
+      </div>
     </Card>
   );
 };
