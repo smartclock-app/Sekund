@@ -19,11 +19,8 @@ export default async () => {
   const clockThemes: string[] = ["default"];
   const calendarExtensions: Record<string, WidgetOfType<WidgetType.CalendarExtension>> = {};
 
-  console.log({ modules });
-
   for (let [path, mod] of Object.entries(modules)) {
     const widgetName = path.match(/\/src\/widgets\/(.+)\/index\.ts$/)![1];
-    console.log(path, widgetName);
     const componentPath = `/src/widgets/${widgetName}/Component.tsx`;
     const altComponentPath = `/src/widgets/${widgetName}/Component.ts`;
     const Component = componentModules[componentPath] || componentModules[altComponentPath];
