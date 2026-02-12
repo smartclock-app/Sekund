@@ -2,8 +2,7 @@ import { create } from "zustand";
 
 export enum RouterScreen {
   Main = "main",
-  ConfigEditor = "configEditor",
-  VariablesEditor = "variablesEditor",
+  Editor = "editor",
   Logs = "logs",
 }
 
