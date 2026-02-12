@@ -57,7 +57,9 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
 
   return (
     <div className={styles.event} style={{ "--event-color": event.color } as React.CSSProperties}>
-      <p className={styles.title}>{event.title}</p>
+      <p className={styles.title}>
+        {typeof event.title === "string" ? <span>{event.title}</span> : event.title.map(t => <span key={t}>{t}</span>)}
+      </p>
       <p className={styles.date}>{dateString}</p>
     </div>
   );

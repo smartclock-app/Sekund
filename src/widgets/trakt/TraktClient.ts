@@ -136,7 +136,7 @@ class TraktManager {
     const request = `shows/${slug}/next_episode`;
     const headers = this._headers;
     headers["Authorization"] = `Bearer ${this.accessToken}`;
-    const url = new URL(`https://${TraktManager._baseURL}/${request}`);
+    const url = new URL(`https://${TraktManager._baseURL}/${request}?extended=full`);
 
     const response = await fetch(url, { headers });
     if (response.status == 204) return null;
@@ -178,31 +178,6 @@ class TraktManager {
     return airedDate as string;
   }
 
-  ///
-  /// Plans to use this function to remove episodes from the watchlist once watched.
-  /// Currently not used as it would require frequent polling of the Trakt API to check if episodes have been watched.
-  ///
-
-  // Future<bool> isEpisodeWatched(int traktId) async {
-  //   final request = "sync/history/episodes/$traktId";
-  //   final headers = _headers;
-  //   headers["Authorization"] = "Bearer $accessToken";
-
-  //   final url = Uri.https(_baseURL, request, {"extended": "full"});
-  //   final response = await client.get(url, headers: _headers);
-
-  //   if (response.statusCode == 204) {
-  //     return false;
-  //   }
-
-  //   if (![200, 201].contains(response.statusCode)) {
-  //     throw TraktManagerAPIError(response.statusCode, response.reasonPhrase, response);
-  //   }
-
-  //   final jsonResult = jsonDecode(response.body);
-  //   return (jsonResult is Iterable && jsonResult.isNotEmpty);
-  // }
-
   async getMovieSummary(slug: string) {
     const request = `movies/${slug}`;
     const headers = this._headers;
@@ -239,7 +214,6 @@ class TraktManager {
     return [];
   }
 
-  // async updateWatchlist({config, items, database}: {config: Config, items: Set<string>, database: Database}) {
   async updateWatchlist(items: Set<string>) {
     const database = useDatabaseStore.getState();
     if (!database.db) {
@@ -249,47 +223,54 @@ class TraktManager {
     info("[Watchlist] Refetching list item details");
     await database.write("DELETE FROM watchlist");
 
-    await Promise.allSettled(
-      Array.from(items).map(async item => {
-        const [type, slug] = item.split("--");
+    const insertPromises = Array.from(items).map(async item => {
+      const [type, slug] = item.split("--");
 
-        let data: Record<string, any>;
-        try {
-          if (type == "movie") {
-            const summary = await this.getMovieSummary(slug);
+      let data: Record<string, any>;
+      try {
+        if (type == "movie") {
+          const summary = await this.getMovieSummary(slug);
 
-            data = {
-              id: item,
-              name: summary.title,
-              status: summary.status,
-              nextAirDate: summary.released,
-            };
-          } else {
-            const [todayEpisode, nextEpisode, summary] = await Promise.all([
-              this.getTodayEpisode(slug),
-              this.getShowNextEpisode(slug),
-              this.getShowSummary(slug),
-            ]);
-
-            data = {
-              id: item,
-              name: summary.title,
-              status: summary.status,
-              nextAirDate: todayEpisode ?? nextEpisode,
-            };
-          }
-
-          await database.write("INSERT INTO watchlist (id, name, status, nextAirDate) VALUES (?, ?, ?, ?)", [
-            data["id"],
-            data["name"],
-            data["status"],
-            data["nextAirDate"],
+          data = {
+            id: item,
+            name: summary.title,
+            status: summary.status,
+            nextAirDate: summary.released,
+          };
+        } else {
+          const [todayEpisode, nextEpisode, summary] = await Promise.all([
+            this.getTodayEpisode(slug),
+            this.getShowNextEpisode(slug),
+            this.getShowSummary(slug),
           ]);
-        } catch (e) {
-          error(`[Watchlist] Failed to insert item: ${e}`);
+
+          console.log("TV ITEM:", slug, { todayEpisode, nextEpisode, summary });
+
+          data = {
+            id: item,
+            name: summary.title,
+            status: summary.status,
+            nextAirDate: todayEpisode ?? nextEpisode,
+          };
         }
-      }),
-    );
+
+        return data;
+      } catch (e) {
+        error(`[Watchlist] Failed to insert ${item}: ${e}`);
+        throw new Error(`${item}: ${e}`);
+      }
+    });
+
+    const allData = await Promise.allSettled(insertPromises);
+    const successfulData = allData.filter(r => r.status === "fulfilled").map(r => r.value);
+    for (const d of successfulData) {
+      await database.write("INSERT INTO watchlist (id, name, status, nextAirDate) VALUES (?, ?, ?, ?)", [
+        d.id,
+        d.name,
+        d.status,
+        d.nextAirDate,
+      ]);
+    }
   }
 }
 

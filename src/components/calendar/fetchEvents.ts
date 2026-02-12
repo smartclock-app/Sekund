@@ -36,7 +36,16 @@ const fetchEvents = async (
   events.sort((a, b) => {
     if (a.start.isBefore(b.start)) return -1;
     if (a.start.isAfter(b.start)) return 1;
-    return a.title.localeCompare(b.title);
+
+    let aTitle, bTitle;
+
+    if (Array.isArray(a.title)) aTitle = a.title.join("\n");
+    else aTitle = a.title;
+
+    if (Array.isArray(b.title)) bTitle = b.title.join("\n");
+    else bTitle = b.title;
+
+    return aTitle.localeCompare(bTitle);
   });
 
   const currentTime = dayjs.utc();

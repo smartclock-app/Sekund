@@ -45,7 +45,7 @@ const Component: CalendarExtensionComponent<Config> = async config => {
     const watchlist = await database.read<any>(
       "SELECT * FROM watchlist WHERE nextAirDate IS NOT NULL ORDER BY nextAirDate",
     );
-    const watchlistEvents: Map<dayjs.Dayjs, string[]> = new Map();
+    const watchlistEvents: Map<string, string[]> = new Map();
     for (const item of watchlist) {
       if ((item["nextAirDate"] as string) == null) continue;
 
@@ -54,9 +54,9 @@ const Component: CalendarExtensionComponent<Config> = async config => {
 
       let start;
       if (nextAirDate.isBefore(dayjs().add(1, "day"))) {
-        start = nextAirDate;
+        start = nextAirDate.toISOString();
       } else {
-        start = nextAirDate.startOf("day");
+        start = nextAirDate.startOf("day").toISOString();
       }
 
       if (!watchlistEvents.has(start)) {
@@ -67,20 +67,20 @@ const Component: CalendarExtensionComponent<Config> = async config => {
     }
 
     for (const [start, names] of watchlistEvents.entries()) {
-      let end = start.isBefore(dayjs().add(1, "day")) ? start : start.add(1, "day");
+      let end = dayjs(start).isBefore(dayjs().add(1, "day")) ? start : dayjs(start).add(1, "day");
 
-      if (start.isBefore(dayjs().add(1, "day"))) {
-        end = start;
+      if (dayjs(start).isBefore(dayjs().add(1, "day"))) {
+        end = dayjs(start);
       } else {
-        end = start.add(1, "day");
+        end = dayjs(start).add(1, "day");
       }
 
       names.sort();
 
       const event: CalendarEvent = {
         id: crypto.randomUUID(),
-        title: config.prefix.trim() !== "" ? `${config.prefix}\n${names.join("\n")}` : names.join("\n"),
-        start: start,
+        title: [config.prefix.trim(), ...names].filter(s => s !== ""),
+        start: dayjs(start),
         end: end,
         color: config.color,
       };

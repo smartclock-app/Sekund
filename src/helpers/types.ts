@@ -56,7 +56,7 @@ export type WidgetOfType<T extends WidgetType> = Extract<Widget, { Type: T }>;
 
 export interface CalendarEvent {
   id: string;
-  title: string;
+  title: string | string[];
   start: dayjs.Dayjs;
   end: dayjs.Dayjs;
   color: string;
