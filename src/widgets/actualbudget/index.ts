@@ -5,6 +5,7 @@ export const Type = WidgetType.Widget;
 export const AllowedLocations = [WidgetLocation.Sidebar] as const;
 
 export const Schema = z.object({
+  actualHttpApiUrl: z.url().or(z.literal("")).catch(""),
   budgets: z
     .array(
       z.object({
@@ -12,6 +13,7 @@ export const Schema = z.object({
         accounts: z
           .array(
             z.object({
+              id: z.string().catch(""),
               name: z.string().catch("Account"),
               icon: z.url().or(z.literal("")).catch(""),
             }),
