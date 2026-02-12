@@ -17,23 +17,23 @@
   gap: 1rem;
 
   .main {
-    font-size: 13rem;
+    font-size: calc(13rem * var(--clock-scale, 1));
     line-height: 0.85;
   }
 
   .sub {
-    height: 10rem;
+    height: calc(10rem * var(--clock-scale, 1));
     display: flex;
     flex-direction: column-reverse;
     align-items: center;
     justify-content: space-between;
-    font-size: 5.5rem;
+    font-size: calc(5.5rem * var(--clock-scale, 1));
     line-height: 0.85;
   }
 }
 
 .date {
-  font-size: 3rem;
+  font-size: calc(2.8rem * var(--clock-scale, 1));
   line-height: 0.85;
   text-align: center;
 }

@@ -71,7 +71,9 @@ function App() {
               />
             </div>
           ))}
-          <Clock />
+          <div id="clock" style={{ display: "contents" }}>
+            <Clock />
+          </div>
         </div>
         <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
           <Alerts />

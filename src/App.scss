@@ -16,6 +16,8 @@ body {
 }
 
 .container {
+  user-select: none;
+  -webkit-user-select: none;
   display: flex;
   align-items: stretch;
   justify-content: center;
