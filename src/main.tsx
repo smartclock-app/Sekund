@@ -1,5 +1,5 @@
 import LoadConfig from "@/helpers/config";
-import { attachConsole, error } from "@tauri-apps/plugin-log";
+import { attachConsole, error, info } from "@tauri-apps/plugin-log";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -23,6 +23,11 @@ try {
 } catch (e) {
   error(`Failed to load config on startup: ${(e as Error).message}`);
 }
+
+const viewport = document.querySelector("html");
+info(
+  `Viewport size: ${viewport?.clientWidth}x${viewport?.clientHeight} (${(viewport?.clientWidth ?? 1) / (viewport?.clientHeight ?? 1)})`,
+);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

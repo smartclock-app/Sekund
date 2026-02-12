@@ -16,6 +16,7 @@ body {
 }
 
 .container {
+  container-type: size;
   user-select: none;
   -webkit-user-select: none;
   display: flex;
@@ -44,7 +45,7 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: max(100vh, 50vw);
+    width: 100cqh;
   }
 
   .sidebar {
