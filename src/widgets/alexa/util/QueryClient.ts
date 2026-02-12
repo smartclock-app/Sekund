@@ -1,10 +1,9 @@
-import { BaseDirectory, exists, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
+import { BASE_DIRECTORY } from "@/helpers/types";
+import { exists, readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { fetch } from "@tauri-apps/plugin-http";
 import { error, info, warn } from "@tauri-apps/plugin-log";
 import dayjs from "dayjs";
 import { AlexaLoginResponse, Device, Memory, Notification, Queue } from "../util/types";
-
-const BASE_DIRECTORY = BaseDirectory.AppData;
 
 const DANGEROUS_OPTIONS = {
   // danger: {

@@ -1,4 +1,4 @@
-import type { CalendarConfig } from "@/helpers/baseConfig";
+import type { CalendarConfig } from "@/helpers/config/base";
 import { CalendarEvent, WidgetComponent } from "@/helpers/types";
 import useConfigStore from "@/hooks/useConfigStore";
 import useEventListener, { EventType } from "@/hooks/useEventListener";

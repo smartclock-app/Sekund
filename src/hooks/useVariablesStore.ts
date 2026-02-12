@@ -1,4 +1,6 @@
-import { BaseDirectory, writeTextFile } from "@tauri-apps/plugin-fs";
+import { VARIABLES_FILENAME } from "@/helpers/config/cssVariables";
+import { BASE_DIRECTORY } from "@/helpers/types";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import { create } from "zustand";
 
 interface VariablesStoreState {
@@ -10,7 +12,7 @@ const useVariablesStore = create<VariablesStoreState>()(set => ({
   variables: "",
   setVariables: async (variables, writeToDisk = true) => {
     if (writeToDisk) {
-      await writeTextFile("variables.css", variables, { baseDir: BaseDirectory.AppData });
+      await writeTextFile(`${VARIABLES_FILENAME}.css`, variables, { baseDir: BASE_DIRECTORY });
     }
     set({ variables });
   },

@@ -1,4 +1,4 @@
-import { ClockConfig } from "@/helpers/baseConfig";
+import { ClockConfig } from "@/helpers/config/base";
 import useConfigStore from "@/hooks/useConfigStore";
 import { dispatchEvent, EventType } from "@/hooks/useEventListener";
 import dayjs from "dayjs";

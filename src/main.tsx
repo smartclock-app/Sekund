@@ -20,8 +20,8 @@ try {
     if (!mdnsStore.broadcasting) mdnsStore.startBroadcast(mdnsStore.broadcasting, config.config.remoteConfig);
     if (!remoteStore.running) remoteStore.startServer(config.config.remoteConfig.port);
   }
-} catch {
-  error("Failed to load config on startup");
+} catch (e) {
+  error(`Failed to load config on startup: ${(e as Error).message}`);
 }
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

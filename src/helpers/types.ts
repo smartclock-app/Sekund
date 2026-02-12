@@ -1,6 +1,9 @@
+import { BaseDirectory } from "@tauri-apps/plugin-fs";
 import dayjs from "dayjs";
 import { ZodAny } from "zod";
-import { CalendarConfig, ClockConfig } from "./baseConfig";
+import { CalendarConfig, ClockConfig } from "./config/base";
+
+export const BASE_DIRECTORY = BaseDirectory.AppData;
 
 export enum WidgetLocation {
   Main = "main",
