@@ -30,8 +30,22 @@ const OptionsModal = ({ show, onClose }: { show: boolean; onClose: () => void })
     >
       <div style={{ backgroundColor: "white", padding: "1rem", borderRadius: "8px", width: "300px" }}>
         <h2>Options</h2>
-        <button onClick={() => routerStore.navigate(RouterScreen.ConfigEditor)}>Config Editor</button>
-        <button onClick={() => routerStore.navigate(RouterScreen.VariablesEditor)}>Variables Editor</button>
+        <button
+          onClick={() => {
+            onClose();
+            routerStore.navigate(RouterScreen.ConfigEditor);
+          }}
+        >
+          Config Editor
+        </button>
+        <button
+          onClick={() => {
+            onClose();
+            routerStore.navigate(RouterScreen.VariablesEditor);
+          }}
+        >
+          Variables Editor
+        </button>
       </div>
     </div>
   );

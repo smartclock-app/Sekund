@@ -76,7 +76,7 @@ export default async () => {
 
   const clockTheme = widgetModules[configData.clockTheme] as WidgetOfType<WidgetType.ClockTheme>;
 
-  return { config: configData, layout, clockTheme, calendarExtensions } as const;
+  return { configSchema, config: configData, layout, clockTheme, calendarExtensions, version: currentVersion } as const;
 };
 
 export const saveConfig = async (config: Record<string, any>) => {
