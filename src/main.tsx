@@ -1,4 +1,5 @@
 import LoadConfig from "@/helpers/config";
+import { path } from "@tauri-apps/api";
 import { attachConsole, error, info } from "@tauri-apps/plugin-log";
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -23,6 +24,9 @@ try {
 } catch (e) {
   error(`Failed to load config on startup: ${(e as Error).message}`);
 }
+
+const appDirectory = await path.appDataDir()
+info(`App Data Directory: ${appDirectory}`);
 
 const viewport = document.querySelector("html");
 info(

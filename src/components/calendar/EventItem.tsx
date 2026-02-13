@@ -29,10 +29,8 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
   };
 
   const formatDate = (date: dayjs.Dayjs, format: string) => {
-    const difference = date.diff(dayjs(), "day", true);
-
-    if (difference < 1 && difference >= 0) return "Today";
-    if (difference < 2 && difference >= 1) return "Tomorrow";
+    if (date.isSame(dayjs(), 'day')) return "Today";
+    if (date.isSame(dayjs().add(1, 'day'), 'day')) return "Tomorrow";
 
     return date.format(format);
   };
