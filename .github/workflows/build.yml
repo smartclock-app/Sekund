@@ -115,10 +115,21 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src-tauri/target
+          key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-android-
+
       - name: Install Rust and Android targets
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+          targets: aarch64-linux-android
 
       - name: Install Bun
         run: |
@@ -136,7 +147,7 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           mkdir -p src-tauri/gen/android
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > src-tauri/gen/android/keystore.jks
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > src-tauri/gen/android/app/keystore.jks
           cat > src-tauri/gen/android/keystore.properties <<EOF
           storeFile=keystore.jks
           storePassword=$ANDROID_KEYSTORE_PASSWORD
