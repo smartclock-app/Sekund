@@ -59,11 +59,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+      - name: Cache Docker image
+        uses: actions/cache@v4
+        id: docker-cache
+        with:
+          path: /tmp/docker-image.tar
+          key: docker-image-dannypeaky-tauri-build-rpi-1.0.0
+
+      - name: Load cached Docker image
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/docker-image.tar
 
       - name: Pull Build Docker Image
+        if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker pull dannypeaky/tauri-build-rpi:1.0.0
+
+      - name: Save Docker image to cache
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-rpi:1.0.0
 
       - name: Build AppImage inside Docker
         env:
@@ -80,7 +93,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: appimage
-          path: src-tauri/target/release/bundle/appimage/Smart Clock_*.AppImage
+          path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/appimage/*.sig
 
   release:
     name: Create Tag & Release
@@ -108,5 +123,8 @@ jobs:
         with:
           tag_name: v${{ needs.prepare.outputs.version }}
           name: Smart Clock v${{ needs.prepare.outputs.version }}
+          files: |
+            appimage/*.AppImage
+            appimage/*.sig
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
