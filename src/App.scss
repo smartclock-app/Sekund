@@ -29,8 +29,9 @@ body {
   // width: 1280px;
   // height: 800px;
 
-  padding: calc(1rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right))
-    calc(1rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
+  // padding: calc(1rem + env(safe-area-inset-top)) calc(1rem + env(safe-area-inset-right))
+  //   calc(1rem + env(safe-area-inset-bottom)) calc(1rem + env(safe-area-inset-left));
+  padding: 1rem;
 
   gap: 1rem;
 

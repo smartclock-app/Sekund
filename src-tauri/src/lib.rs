@@ -11,13 +11,14 @@ use std::sync::Mutex;
 
 use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
 
-use android_updates::{check_for_update, download_apk, install_apk};
+use android_updates::{download_apk, install_apk};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_os::init())
         .setup(|_app| {
-            #[cfg(desktop)]
+            #[cfg(not(target_os = "android"))]
             _app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
             Ok(())
@@ -51,7 +52,6 @@ pub fn run() {
             start_http_server,
             stop_http_server,
             http_respond,
-            check_for_update,
             download_apk,
             install_apk
         ])

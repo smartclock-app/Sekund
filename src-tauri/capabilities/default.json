@@ -11,13 +11,13 @@
     "sql:allow-select",
     "sql:allow-execute",
     "sql:allow-close",
+    "fs:allow-exists",
     "fs:allow-app-read-recursive",
     "fs:allow-app-write-recursive",
-    "fs:allow-exists",
-    {
-      "identifier": "fs:scope",
-      "allow": [{ "path": "$APPDATA/**/*" }]
-    },
+    "fs:allow-appdata-read-recursive",
+    "fs:allow-appdata-write-recursive",
+    "fs:allow-download-read-recursive",
+    "fs:allow-download-write-recursive",
     {
       "identifier": "http:default",
       "allow": [{ "url": "https://*" }]

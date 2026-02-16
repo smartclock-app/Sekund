@@ -193,6 +193,10 @@ jobs:
               "linux-aarch64": {
                 "signature": "$(cat appimage/*.sig)",
                 "url": "https://github.com/0x5045414b/ClockBeta/releases/download/v${{ needs.prepare.outputs.version }}/Smart.Clock_${{ needs.prepare.outputs.version }}_aarch64.AppImage"
+              },
+              "android": {
+                "signature": "N/A",
+                "url": "https://github.com/0x5045414b/ClockBeta/releases/download/v${{ needs.prepare.outputs.version }}/Smart.Clock_${{ needs.prepare.outputs.version }}_universal.apk"
               }
             }
           }
