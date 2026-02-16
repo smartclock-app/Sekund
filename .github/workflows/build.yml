@@ -182,6 +182,22 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
 
+      - name: Generate latest.json
+        run: |
+          cat > latest.json <<EOF
+          {
+            "version": "v${{ needs.prepare.outputs.version }}",
+            "notes": "Release v${{ needs.prepare.outputs.version }}",
+            "pub_date": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "platforms": {
+              "linux-aarch64": {
+                "signature": "$(cat appimage/*.sig)",
+                "url": "https://github.com/0x5045414b/ClockBeta/releases/download/v${{ needs.prepare.outputs.version }}/SmartClock-v${{ needs.prepare.outputs.version }}.AppImage"
+              }
+            }
+          }
+          EOF
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
@@ -191,5 +207,6 @@ jobs:
             appimage/*.AppImage
             appimage/*.sig
             apk/*.apk
+            latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

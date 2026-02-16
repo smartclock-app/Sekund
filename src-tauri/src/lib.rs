@@ -1,3 +1,4 @@
+mod android_updates;
 mod http_server;
 mod mdns;
 mod migrations;
@@ -10,10 +11,17 @@ use std::sync::Mutex;
 
 use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
 
+use android_updates::{check_for_update, download_apk, install_apk};
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    #[allow(unused_mut)]
-    let mut builder = tauri::Builder::default()
+    tauri::Builder::default()
+        .setup(|app| {
+            #[cfg(desktop)]
+            app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
+            Ok(())
+        })
         .plugin(
             tauri_plugin_sql::Builder::new()
                 .add_migrations("sqlite:database.sqlite", migrations::get_migrations())
@@ -26,14 +34,7 @@ pub fn run() {
                     tauri_plugin_log::TargetKind::Webview,
                 ))
                 .build(),
-        );
-
-    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    {
-        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
-    }
-
-    builder
+        )
         .plugin(tauri_plugin_websocket::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
@@ -49,7 +50,10 @@ pub fn run() {
             start_mdns,
             start_http_server,
             stop_http_server,
-            http_respond
+            http_respond,
+            check_for_update,
+            download_apk,
+            install_apk
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
