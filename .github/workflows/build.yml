@@ -26,7 +26,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq git
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Determine version and tag state
         id: set
@@ -34,31 +34,24 @@ jobs:
           VERSION=$(jq -r .version package.json)
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-          # default outputs
           SHOULD_BUILD=false
           SHOULD_RELEASE=false
 
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             SHOULD_BUILD=true
-          else
-            # only consider releases on pushes to main
-            if [ "$GITHUB_REF" = "refs/heads/main" ]; then
-              git fetch --tags origin
-              if git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
-                SHOULD_BUILD=false
-                SHOULD_RELEASE=false
-              else
-                SHOULD_BUILD=true
-                SHOULD_RELEASE=true
-              fi
+          elif [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            git fetch --tags origin
+            if ! git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+              SHOULD_BUILD=true
+              SHOULD_RELEASE=true
             fi
           fi
 
           echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
           echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
 
-  build_rpi:
-    name: Build RPi AppImage (ARM)
+  build_linux:
+    name: Build Linux (AppImage)
     needs: prepare
     runs-on: ubuntu-22.04-arm
     if: needs.prepare.outputs.should_build == 'true'
@@ -70,149 +63,50 @@ jobs:
         uses: docker/setup-buildx-action@v1
 
       - name: Pull Build Docker Image
-        run: docker pull dannypeaky/tauri-build-rpi:latest
+        run: docker pull dannypeaky/tauri-build-rpi:1.0.0
 
       - name: Build AppImage inside Docker
-        run: docker run --rm -v $(pwd):/app -w /app dannypeaky/tauri-build-rpi:latest
-
-      - name: Find AppImage
-        id: find_appimage
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: |
-          set -e
-          # common locations for Tauri bundles
-          FILES=$(ls -1 target/release/bundle/*.AppImage 2>/dev/null || true)
-          FILES2=$(ls -1 src-tauri/target/release/bundle/*.AppImage 2>/dev/null || true)
-          ALL="$FILES $FILES2"
-          if [ -z "$ALL" ]; then
-            echo "no_appimage=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          # pick the first match
-          PATH=$(echo $ALL | awk '{print $1}')
-          echo "appimage_path=$PATH" >> $GITHUB_OUTPUT
+          docker run --rm \
+            -e TAURI_SIGNING_PRIVATE_KEY \
+            -e TAURI_SIGNING_PRIVATE_KEY_PASSWORD \
+            -v $(pwd):/app \
+            -w /app dannypeaky/tauri-build-rpi:1.0.0
 
-      - name: Upload AppImage artifact (for PRs and sharing)
-        if: always()
+      - name: Upload AppImage artifact
         uses: actions/upload-artifact@v4
         with:
           name: appimage
-          path: |
-            target/release/bundle/*.AppImage
-            src-tauri/target/release/bundle/*.AppImage
-
-  build_android:
-    name: Build Android APK
-    needs: prepare
-    runs-on: ubuntu-latest
-    if: needs.prepare.outputs.should_build == 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: "temurin"
-          java-version: "17"
-
-      - name: Setup Android SDK and Build Tools
-        uses: android-actions/setup-android@v2
-        with:
-          api-level: 33
-          build-tools: 33.0.2
-
-      - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash -s -- --no-profile
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
-
-      - name: Install dependencies and build frontend (bun)
-        run: |
-          bun install
-          bun run build
-
-      - name: Prepare Android keystore
-        run: |
-          set -e
-          mkdir -p src-tauri/gen/android
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > src-tauri/gen/android/keystore.jks
-          cat > src-tauri/gen/android/keystore.properties <<EOF
-          storeFile=keystore.jks
-          storePassword=$ANDROID_KEYSTORE_PASSWORD
-          keyAlias=$ANDROID_KEY_ALIAS
-          keyPassword=$ANDROID_KEY_PASSWORD
-          EOF
-        env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-
-      - name: Make gradlew executable
-        run: chmod +x src-tauri/gen/android/gradlew
-
-      - name: Build release APK
-        run: |
-          cd src-tauri/gen/android
-          ./gradlew assembleRelease --no-daemon -Dorg.gradle.jvmargs='-Xmx2g'
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: apk
-          path: src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          path: src-tauri/target/release/bundle/appimage/Smart Clock_*.AppImage
 
   release:
     name: Create Tag & Release
-    needs: [prepare, build_rpi, build_android]
+    needs: [prepare, build_linux]
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.should_release == 'true'
     steps:
-      - name: Checkout (for pushing tag)
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Create annotated tag
-        env:
-          VERSION: ${{ needs.prepare.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin "refs/tags/v$VERSION"
+          git tag -a "v${{ needs.prepare.outputs.version }}" -m "Release v${{ needs.prepare.outputs.version }}"
+          git push origin "refs/tags/v${{ needs.prepare.outputs.version }}"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
 
       - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.prepare.outputs.version }}
-          release_name: Smart Clock v${{ needs.prepare.outputs.version }}
-          draft: false
-          prerelease: false
-
-      - name: Download built AppImage
-        uses: actions/download-artifact@v4
-        with:
-          name: appimage
-
-      - name: Download built APK
-        uses: actions/download-artifact@v4
-        with:
-          name: apk
-
-      - name: Upload AppImage to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./appimage
-          asset_name: SmartClock-v${{ needs.prepare.outputs.version }}.AppImage
-          asset_content_type: application/octet-stream
-
-      - name: Upload APK to Release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./apk
-          asset_name: SmartClock-v${{ needs.prepare.outputs.version }}.apk
-          asset_content_type: application/vnd.android.package-archive
+          name: Smart Clock v${{ needs.prepare.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
