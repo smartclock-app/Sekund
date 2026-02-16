@@ -153,7 +153,7 @@ jobs:
         run: bun tauri android build --apk --target aarch64 --target armv7
 
       - name: Rename APK
-        run: mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/SmartClock-v${{ needs.prepare.outputs.version }}.apk
+        run: mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/Smart.Clock_${{ needs.prepare.outputs.version }}_universal.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -192,7 +192,7 @@ jobs:
             "platforms": {
               "linux-aarch64": {
                 "signature": "$(cat appimage/*.sig)",
-                "url": "https://github.com/0x5045414b/ClockBeta/releases/download/v${{ needs.prepare.outputs.version }}/SmartClock-v${{ needs.prepare.outputs.version }}.AppImage"
+                "url": "https://github.com/0x5045414b/ClockBeta/releases/download/v${{ needs.prepare.outputs.version }}/Smart.Clock_${{ needs.prepare.outputs.version }}_aarch64.AppImage"
               }
             }
           }
