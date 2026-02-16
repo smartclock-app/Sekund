@@ -4464,7 +4464,7 @@ dependencies = [
 
 [[package]]
 name = "smart-clock"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "hostname",
  "local-ip-address",

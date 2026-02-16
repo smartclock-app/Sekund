@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/0x5045414b/ClockBeta"
   },
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -116,20 +116,14 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Cache Rust dependencies
-        uses: actions/cache@v4
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            src-tauri/target
-          key: ${{ runner.os }}-cargo-android-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-android-
+          workspaces: src-tauri
 
       - name: Install Rust and Android targets
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-linux-android
+          targets: aarch64-linux-android,armv7-linux-androideabi
 
       - name: Install Bun
         run: |
@@ -156,13 +150,16 @@ jobs:
           EOF
 
       - name: Build release APK
-        run: bun tauri android build
+        run: bun tauri android build --apk --target aarch64 --target armv7
+
+      - name: Rename APK
+        run: mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/SmartClock-v${{ needs.prepare.outputs.version }}.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: apk
-          path: src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
 
   release:
     name: Create Tag & Release
