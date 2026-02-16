@@ -97,9 +97,65 @@ jobs:
             src-tauri/target/release/bundle/appimage/*.AppImage
             src-tauri/target/release/bundle/appimage/*.sig
 
+  build_android:
+    name: Build Android (APK)
+    needs: prepare
+    runs-on: ubuntu-latest
+    if: needs.prepare.outputs.should_build == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Rust and Android targets
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Install Bun
+        run: |
+          curl -fsSL https://bun.sh/install | bash
+          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Prepare Android keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          mkdir -p src-tauri/gen/android
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > src-tauri/gen/android/keystore.jks
+          cat > src-tauri/gen/android/keystore.properties <<EOF
+          storeFile=keystore.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          password=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Build release APK
+        run: bun tauri android build
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: src-tauri/gen/android/app/build/outputs/apk/release/*.apk
+
   release:
     name: Create Tag & Release
-    needs: [prepare, build_linux]
+    needs: [prepare, build_linux, build_android]
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.should_release == 'true'
     steps:
@@ -126,5 +182,6 @@ jobs:
           files: |
             appimage/*.AppImage
             appimage/*.sig
+            apk/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
