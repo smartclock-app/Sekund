@@ -61,9 +61,9 @@ pub async fn download_apk(url: String, path: String) -> Result<()> {
 #[tauri::command]
 #[cfg(target_os = "android")]
 pub async fn install_apk(path: String) -> Result<()> {
-    use jni::objects::JValue;
+    use jni::objects::{JObject, JValue};
 
-    tauri::async_runtime::spawn_blocking(move || {
+    let _ = tauri::async_runtime::spawn_blocking(move || {
         let ctx = ndk_context::android_context();
         let vm = unsafe { jni::JavaVM::from_raw(ctx.vm().cast()) }.map_err(|e| e.to_string())?;
         let mut env = vm.attach_current_thread().map_err(|e| e.to_string())?;
@@ -79,10 +79,10 @@ pub async fn install_apk(path: String) -> Result<()> {
             .new_string("android.intent.action.VIEW")
             .map_err(|e| e.to_string())?;
         env.call_method(
-            intent,
+            &intent,
             "setAction",
             "(Ljava/lang/String;)Landroid/content/Intent;",
-            &[JValue::Object(action.into())],
+            &[JValue::Object(&action.into())],
         )
         .map_err(|e| e.to_string())?;
 
@@ -97,15 +97,17 @@ pub async fn install_apk(path: String) -> Result<()> {
                 uri_class,
                 "parse",
                 "(Ljava/lang/String;)Landroid/net/Uri;",
-                &[JValue::Object(uri_string.into())],
+                &[JValue::Object(&uri_string.into())],
             )
+            .map_err(|e| e.to_string())?
+            .l()
             .map_err(|e| e.to_string())?;
 
         env.call_method(
-            intent,
+            &intent,
             "setData",
             "(Landroid/net/Uri;)Landroid/content/Intent;",
-            &[uri],
+            &[JValue::Object(&uri)],
         )
         .map_err(|e| e.to_string())?;
 
@@ -113,19 +115,19 @@ pub async fn install_apk(path: String) -> Result<()> {
             .new_string("application/vnd.android.package-archive")
             .map_err(|e| e.to_string())?;
         env.call_method(
-            intent,
+            &intent,
             "setType",
             "(Ljava/lang/String;)Landroid/content/Intent;",
-            &[JValue::Object(mime_type.into())],
+            &[JValue::Object(&mime_type.into())],
         )
         .map_err(|e| e.to_string())?;
 
-        let context = ctx.app_context();
+        let context = unsafe { JObject::from_raw(ctx.context() as jni::sys::jobject) };
         env.call_method(
-            context,
+            &context,
             "startActivity",
             "(Landroid/content/Intent;)V",
-            &[JValue::Object(intent.into())],
+            &[JValue::Object(&intent.into())],
         )
         .map_err(|e| e.to_string())?;
 
