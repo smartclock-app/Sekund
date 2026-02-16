@@ -1,0 +1,46 @@
+# Using Ubuntu 22.04 as it is the most stable target for Tauri's GTK dependencies
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 1. Install System Dependencies
+# These are required for Rust, Bun, and the Tauri/WebKitGTK build process
+RUN apt-get update && apt-get install -y \
+    unzip \
+    curl \
+    wget \
+    file \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    # Tauri v2 System Dependencies
+    libgtk-3-dev \
+    libwebkit2gtk-4.1-dev \
+    librsvg2-dev \
+    libjavascriptcoregtk-4.1-dev \
+    libsoup-3.0-dev \
+    # Essential for AppImage bundling
+    squashfs-tools \
+    patchelf \
+    libfuse2 \
+    xdg-utils \
+    libxdo-dev \
+    libayatana-appindicator3-dev \
+    # Used by some Tauri plugins/bundlers
+    libarchive-tools \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Install Rust (Latest Stable)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# 3. Install Bun (Latest)
+# Bun provides its own ARM64 binary, so this will work natively
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+WORKDIR /app
+
+# Final build command
+CMD ["/bin/bash", "-c", "bun install && bun tauri build -b appimage"]
