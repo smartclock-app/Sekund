@@ -1,3 +1,4 @@
+import Card from "@/components/Card";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { path } from "@tauri-apps/api";
 import { exists } from "@tauri-apps/plugin-fs";
@@ -40,11 +41,11 @@ const Android = ({ config }: { config: Config }) => {
   if (!updateInfo) return null;
 
   return (
-    <div>
+    <Card>
       <h1>Update Available: {updateInfo?.version}</h1>
       <button onClick={() => downloadUpdate(updateInfo!.url)}>Install Update</button>
       <p>Download Progress: {downloadProgress.toFixed(2)}%</p>
-    </div>
+    </Card>
   );
 };
 

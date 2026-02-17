@@ -34,7 +34,7 @@ const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
               fontWeight: "bold",
               borderBottom: "0.125rem solid #ddd",
               borderRadius: "0.06rem",
-              marginBottom: "1rem",
+              marginBottom: "var(--card-padding, 1rem)",
             }}
           >
             {month}

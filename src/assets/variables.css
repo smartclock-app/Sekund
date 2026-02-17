@@ -1,4 +1,6 @@
 :root {
   --font-scale: 1;
   --clock-scale: 1;
+  --card-padding: 1rem;
+  --card-radius: 0.6rem;
 }

@@ -8,8 +8,8 @@ const Card: React.FC<CardProps> = ({ children, padding = true }) => {
     <div
       style={{
         backgroundColor: "rgb(236, 236, 236)",
-        borderRadius: "0.6rem",
-        padding: padding ? "1rem" : undefined,
+        borderRadius: "var(--card-radius, 0.6rem)",
+        padding: padding ? "var(--card-padding, 1rem)" : undefined,
       }}
     >
       {children}
