@@ -60,6 +60,10 @@ export default async () => {
       continue;
     }
 
+    if (mod.OnInit) {
+      mod.OnInit();
+    }
+
     if (mod.Type == WidgetType.Widget) {
       for (const location of mod.AllowedLocations) {
         widgetAllowedLocations[location].push(widgetName);

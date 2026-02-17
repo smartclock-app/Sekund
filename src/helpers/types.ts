@@ -21,14 +21,17 @@ export type WidgetModule =
       Type: WidgetType.Widget;
       AllowedLocations: WidgetLocation[];
       Schema: ZodAny;
+      OnInit?: () => void;
     }
   | {
       Type: WidgetType.CalendarExtension;
       Schema: ZodAny;
+      OnInit?: () => void;
     }
   | {
       Type: WidgetType.ClockTheme;
       Schema: ZodAny;
+      OnInit?: () => void;
     };
 export type WidgetComponentModule = WidgetComponent | CalendarExtensionComponent | ClockThemeComponent;
 export type Widget =
