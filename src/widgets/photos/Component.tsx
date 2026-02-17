@@ -34,6 +34,7 @@ const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) =>
   }, [photos]);
 
   useEventListener(EventType.Refresh, nextImage);
+  useEventListener(EventType.SkipPhoto, nextImage);
 
   return (
     <div className={styles.container} style={{ backgroundImage: loadedImage ? `url(${loadedImage})` : undefined }}>

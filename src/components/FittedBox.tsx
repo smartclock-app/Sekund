@@ -23,8 +23,6 @@ const FittedBox: React.FC<FittedBoxProps> = ({ children, className }) => {
       const containerWidth = container.offsetWidth;
       const textWidth = text.scrollWidth;
 
-      console.log(`Container width: ${containerWidth}px, Text width: ${textWidth}px`);
-
       if (containerWidth > 0 && textWidth > containerWidth) {
         const currentSizePx = parseFloat(window.getComputedStyle(text).fontSize);
         const ratio = containerWidth / textWidth;

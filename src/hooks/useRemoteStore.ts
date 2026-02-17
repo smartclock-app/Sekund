@@ -38,11 +38,11 @@ interface HttpRequest {
 export const useHttpRequestListener = (
   callback: (
     event: HttpRequest,
-  ) => { status: "ok"; result: Record<string, any> | string } | { status: "error"; error: string },
+  ) => Promise<{ status: "ok"; result: Record<string, any> | string } | { status: "error"; error: string }>,
 ) => {
   useEffect(() => {
     const unlisten = listen<HttpRequest>("http-request", async e => {
-      const response = callback(e.payload);
+      const response = await callback(e.payload);
       console.log(response);
       await invoke("http_respond", {
         id: e.payload.id,
