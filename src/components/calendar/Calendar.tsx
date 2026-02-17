@@ -32,7 +32,7 @@ const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
             style={{
               fontSize: "2.3rem",
               fontWeight: "bold",
-              borderBottom: "0.125rem solid #ddd",
+              borderBottom: "0.125rem solid rgb(193, 193, 193)",
               borderRadius: "0.06rem",
               marginBottom: "var(--card-padding, 1rem)",
             }}

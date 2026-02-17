@@ -1,76 +1,54 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef } from "react";
 
 interface FittedBoxProps {
   children: React.ReactNode;
-  minFontSize?: number;
-  maxFontSize?: number;
-  width?: string | number;
-  height?: string | number;
   className?: string;
 }
 
-const FittedBox: React.FC<FittedBoxProps> = ({
-  children,
-  minFontSize = 8,
-  maxFontSize = 100,
-  width = "100%",
-  height = "100%",
-  className = "",
-}) => {
+const FittedBox: React.FC<FittedBoxProps> = ({ children, className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [fontSize, setFontSize] = useState(maxFontSize);
+  const textRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const container = containerRef.current;
-    const content = contentRef.current;
+    const text = textRef.current;
+    if (!container || !text) return;
 
-    if (!container || !content) return;
+    // We use requestAnimationFrame to ensure the browser has
+    // calculated the initial layout.
+    const frameId = requestAnimationFrame(() => {
+      // 1. Set the initial "ideal" size from your CSS variable
+      text.style.fontSize = "2rem";
 
-    // Binary search for the optimal font size
-    let low = minFontSize;
-    let high = maxFontSize;
-    let bestFontSize = maxFontSize;
+      const containerWidth = container.offsetWidth;
+      const textWidth = text.scrollWidth;
 
-    while (low <= high) {
-      const mid = (low + high) / 2;
-      content.style.fontSize = `${mid}px`;
+      console.log(`Container width: ${containerWidth}px, Text width: ${textWidth}px`);
 
-      // Check if content fits
-      const fits = content.scrollWidth <= container.clientWidth && content.scrollHeight <= container.clientHeight;
+      if (containerWidth > 0 && textWidth > containerWidth) {
+        const currentSizePx = parseFloat(window.getComputedStyle(text).fontSize);
+        const ratio = containerWidth / textWidth;
 
-      if (fits) {
-        bestFontSize = mid;
-        low = mid + 0.5;
-      } else {
-        high = mid - 0.5;
+        // Apply the shrink ratio
+        text.style.fontSize = `${currentSizePx * ratio}px`;
       }
-    }
+    });
 
-    setFontSize(Math.max(minFontSize, bestFontSize));
-  }, [children, minFontSize, maxFontSize]);
+    return () => cancelAnimationFrame(frameId);
+  }, [children]);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width,
-        height,
-        display: "flex",
-        overflow: "hidden",
-      }}
-      className={className}
-    >
-      <div
-        ref={contentRef}
+    <div ref={containerRef} style={{ width: "100%", overflow: "hidden" }}>
+      <span
+        className={className}
+        ref={textRef}
         style={{
-          fontSize: `${fontSize}px`,
+          display: "inline-block",
           whiteSpace: "nowrap",
-          transition: "font-size 0.2s ease-out",
         }}
       >
         {children}
-      </div>
+      </span>
     </div>
   );
 };

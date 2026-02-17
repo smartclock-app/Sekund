@@ -59,9 +59,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
       <p className={styles.title}>
         {typeof event.title === "string" ? <span>{event.title}</span> : event.title.map(t => <span key={t}>{t}</span>)}
       </p>
-      <FittedBox maxFontSize={32} minFontSize={16} className={styles.date}>
-        {dateString}
-      </FittedBox>
+      <FittedBox className={styles.date}>{dateString}</FittedBox>
     </div>
   );
 };
