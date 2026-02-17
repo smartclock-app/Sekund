@@ -3,13 +3,13 @@ import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 import { create } from "zustand";
 
-interface RemoteStoreState {
+interface HttpStoreState {
   running: boolean;
   startServer: (port: number) => void;
   stopServer: () => void;
 }
 
-const useRemoteStore = create<RemoteStoreState>()(set => ({
+const useHttpStore = create<HttpStoreState>()(set => ({
   running: false,
   startServer: async (port: number) => {
     try {
@@ -25,7 +25,7 @@ const useRemoteStore = create<RemoteStoreState>()(set => ({
   },
 }));
 
-export default useRemoteStore;
+export default useHttpStore;
 
 interface HttpRequest {
   id: number;

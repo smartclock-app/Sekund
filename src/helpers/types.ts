@@ -16,6 +16,11 @@ export enum WidgetType {
   ClockTheme = "clockTheme",
 }
 
+export type RemoteConfigResult =
+  | { status: "ok"; result: Record<string, any> | string }
+  | { status: "error"; error: string };
+export type RemoteConfigHandler = (data: any) => Promise<RemoteConfigResult> | RemoteConfigResult;
+
 export type WidgetModule =
   | {
       Type: WidgetType.Widget;

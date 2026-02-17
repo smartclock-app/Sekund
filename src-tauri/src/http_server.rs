@@ -23,7 +23,7 @@ pub fn start_http_server(
     let mut running = state.running.lock().unwrap();
 
     if *running {
-        log::info!("Server already running");
+        log::info!("[HTTP] Server already running");
         return Ok(());
     }
 
@@ -36,11 +36,11 @@ pub fn start_http_server(
         let addr = format!("0.0.0.0:{}", port);
         let server = match tiny_http::Server::http(&addr) {
             Ok(s) => {
-                log::info!("Server started on {}", addr);
+                log::info!("[HTTP] Server started on {}", addr);
                 s
             }
             Err(e) => {
-                log::error!("Failed to start server: {}", e);
+                log::error!("[HTTP] Failed to start server: {}", e);
                 *running_clone.lock().unwrap() = false;
                 return;
             }
@@ -109,16 +109,16 @@ pub fn stop_http_server(state: State<HttpServerState>) -> Result<(), String> {
     let mut running = state.running.lock().unwrap();
 
     if !*running {
-        log::warn!("Server not running");
+        log::warn!("[HTTP] Server not running");
         return Ok(());
     }
 
     *running = false;
     if let Some(handle) = state.handle.lock().unwrap().take() {
         let _ = handle.join();
-        log::info!("Server stopped");
+        log::info!("[HTTP] Server stopped");
     } else {
-        log::warn!("No server thread to join");
+        log::warn!("[HTTP] No server thread to join");
     }
 
     Ok(())
@@ -135,6 +135,6 @@ pub fn http_respond(
         let _ = tx.send(response_body);
         Ok(())
     } else {
-        Err(format!("No pending request with id {}", id))
+        Err(format!("[HTTP] No pending request with id {}", id))
     }
 }
