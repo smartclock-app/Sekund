@@ -12,7 +12,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "build:android": "bun tauri android build --apk --target aarch64 --target armv7"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
