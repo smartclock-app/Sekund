@@ -4723,6 +4723,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
+ "tauri-plugin-apk-intent",
  "tauri-plugin-fs",
  "tauri-plugin-http",
  "tauri-plugin-log",
@@ -5409,6 +5410,17 @@ dependencies = [
  "tauri-utils",
  "toml 0.9.11+spec-1.1.0",
  "walkdir",
+]
+
+[[package]]
+name = "tauri-plugin-apk-intent"
+version = "0.1.0"
+source = "git+https://github.com/smartclock-app/tauri-plugin-apk-intent.git#0f5c0bad45327ba00cd92d9c8373eb619e8ba953"
+dependencies = [
+ "serde",
+ "tauri",
+ "tauri-plugin",
+ "thiserror 2.0.18",
 ]
 
 [[package]]

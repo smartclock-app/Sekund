@@ -40,55 +40,10 @@ export async function downloadApk(url: string, path: string, onProgress: (progre
   }
 }
 
-// export async function downloadApk(url: string, path: string, onProgress: (progress: number) => void): Promise<void> {
-//   const request = await fetch(url, {
-//     headers: {
-//       Authorization: `Bearer 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`,
-//       Accept: "application/octet-stream",
-//     },
-//   });
-
-//   if (!request.ok) {
-//     throw new Error(`HTTP error! status: ${request.status}`);
-//   }
-
-//   const contentLength = request.headers.get("content-length");
-//   const total = contentLength ? parseInt(contentLength, 10) : 0;
-//   let loaded = 0;
-
-//   const reader = request.body!.getReader();
-//   const chunks: Uint8Array[] = [];
-
-//   try {
-//     while (true) {
-//       const { done, value } = await reader.read();
-//       if (done) break;
-
-//       chunks.push(value);
-//       loaded += value.length;
-
-//       if (total > 0) {
-//         onProgress((loaded / total) * 100);
-//       }
-//     }
-//   } finally {
-//     reader.releaseLock();
-//   }
-
-//   console.log("Download complete, combining chunks...");
-
-//   const uint8Array = new Uint8Array(loaded);
-//   let position = 0;
-//   for (const chunk of chunks) {
-//     uint8Array.set(chunk, position);
-//     position += chunk.length;
-//   }
-
-//   console.log("Writing file to:", path);
-//   await writeFile(path, uint8Array);
-//   console.log("File write complete");
-// }
-
 export async function installApk(path: string): Promise<void> {
-  return invoke<void>("install_apk", { path });
+  return invoke("plugin:apk-intent|install_apk", {
+    payload: {
+      path,
+    },
+  });
 }

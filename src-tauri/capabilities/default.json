@@ -6,6 +6,7 @@
   "permissions": [
     "core:default",
     "opener:default",
+    "apk-intent:allow-install-apk",
     "log:allow-log",
     "sql:allow-load",
     "sql:allow-select",

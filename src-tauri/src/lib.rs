@@ -17,6 +17,7 @@ use android_updates::{download_apk, install_apk};
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_apk_intent::init())
         .setup(|_app| {
             #[cfg(not(target_os = "android"))]
             _app.handle()
