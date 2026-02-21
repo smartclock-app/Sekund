@@ -25,7 +25,7 @@ Calendar extensions are not placed in `layout`. Add `"trakt"` to `calendar.exten
         "clientSecret": "your-client-secret",
         "accessToken": "your-access-token",
         "refreshToken": "your-refresh-token",
-        "redirectUri": "urn:ietf:wg:oauth:2.0:oob"
+        "redirectUri": "http://localhost:3000/trakt/callback"
       },
       "listId": "",
       "includeWatchlist": false,
