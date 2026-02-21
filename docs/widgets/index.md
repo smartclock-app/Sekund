@@ -29,7 +29,7 @@ The large central area below the clock. Widgets here typically show more detail.
 
 ### `sidebar`
 
-The right-hand panel. Multiple widgets can be stacked vertically. The sidebar always includes `calendar` as a built-in entry; additional widgets are listed after it.
+The right-hand panel. Multiple widgets can be stacked vertically. Widgets are displayed in the order they are listed.
 
 ## Calendar Extensions
 
@@ -53,7 +53,7 @@ A clock theme (`clockTheme` type) replaces the default clock face. Set `clockThe
 }
 ```
 
-Only one clock theme can be active at a time. Use `"default"` to restore the built-in clock face.
+Only one clock theme can be active at a time. Use `"default"` to use the default clock face.
 
 ## Built-in Widgets
 
