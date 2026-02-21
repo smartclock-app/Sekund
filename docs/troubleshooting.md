@@ -2,14 +2,14 @@
 
 ## App won't start / blank screen
 
-- Check the app log at `<AppData>/Smart Clock.log` (or via the in-app editor log tab).
+- Check the app log at `<AppData>/Smart Clock.log`.
 - Ensure all Tauri system dependencies are installed for your OS. See [Development Setup](development/setup.md).
 - Delete `config.json` and restart. The app will recreate it with defaults.
 
 ## Config changes have no effect
 
-- If you edited `config.json` manually (outside the in-app editor), you must **restart the app** for changes to take effect.
-- Changes made through the in-app editor are applied immediately without a restart.
+- If you edited `config.json` manually (outside the in-app editor), you must **reload the app** for changes to take effect.
+- Changes made through the in-app editor trigger an automatic reload.
 - Changes sent via the Remote Config API (`set_config` command) trigger an automatic reload.
 
 ## In-app editor shows validation errors
@@ -31,20 +31,19 @@ The editor validates `config.json` against the Zod schema. Common causes:
 
 - Ensure `remoteConfig.enabled` is `true`.
 - Confirm the port (`remoteConfig.port`, default `8080`) is not blocked by a firewall.
-- If `remoteConfig.useBonjour` is `true`, the service will be advertised on the local network as `_http._tcp` under the name set in `remoteConfig.bonjourName`.
-- Test with: `curl http://<device-ip>:8080/api/command -d '{"command":"refresh","data":null}'`
+- If `remoteConfig.useBonjour` is `true`, the service will be advertised on the local network as `_smartclock._tcp` under the name set in `remoteConfig.bonjourName`.
+- Test with: `curl http://<device-ip>:<port>/api/command -d '{"command":"refresh","data":null}'`
 
 ## CSS variables not updating
 
 - Edit `variables.css` in the AppData directory (or use the in-app editor's Variables tab), **not** `variables.template.css`.
 - `variables.template.css` is overwritten on every app startup.
-- A full restart is required when editing `variables.css` outside the in-app editor.
+- A reload is required when editing `variables.css` outside the in-app editor.
 
 ## App is not receiving updates
 
 - The `updater` widget must be present in `layout.sidebar`.
 - Updates are fetched from `https://github.com/0x5045414b/ClockBeta/releases/latest/download/latest.json`.
-- On Android, automatic updates are not supported.
 
 ## Finding the log file
 
@@ -54,4 +53,4 @@ The editor validates `config.json` against the Zod schema. Common causes:
 | Linux | `~/.local/share/uk.co.danpeak.smartclock.clock/logs/Smart Clock.log` |
 | Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\logs\Smart Clock.log` |
 
-The last 100 lines of the log are also accessible via the Remote Config API (`get_logs` command) and in the in-app editor log tab.
+The last 100 lines of the log are also accessible via the Remote Config API (`get_logs` command) and full logs in the in-app editor log tab.
