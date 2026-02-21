@@ -41,7 +41,7 @@ export const OnInit = () => {
 };
 ```
 
-> **Tip:** Always use `.catch(<default>)` (or `.prefault({})` for objects/arrays) so that missing or invalid values are silently replaced rather than causing a validation error. `prefault` is a project-level Zod extension that applies `.catch` semantics to object/array types and is available on all schemas.
+> **Tip:** Always use `.catch(<default>)` (or `.prefault({} as any)` for objects, `.prefault([])` for arrays) so that missing values are silently filled rather than causing a validation error.
 
 ### `src/widgets/<name>/Component.tsx` (or `.ts`)
 
