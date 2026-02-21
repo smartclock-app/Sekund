@@ -2,6 +2,9 @@
 
 Smart Clock is configured via a single JSON file (`config.json`) stored in the AppData directory. The schema is validated by [Zod](https://zod.dev/) on every startup, and any missing or invalid fields are silently replaced with their defaults.
 
+> [!WARNING]  
+> Only primitive values will be silently replaced. Any object or array will throw an error and that widget will fail to load.
+
 ## Config File Location
 
 The config directory lives under the Tauri AppData base directory for the identifier `uk.co.danpeak.smartclock.clock`:
@@ -11,6 +14,7 @@ The config directory lives under the Tauri AppData base directory for the identi
 | macOS | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
 | Linux | `~/.local/share/uk.co.danpeak.smartclock.clock/` |
 | Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\` |
+| Android / iOS | Cannot be edited directly and must use the in-app editor | 
 
 ## Editing the Config
 
@@ -63,11 +67,11 @@ On every startup the app:
   "clock": { ... },                     // see Clock section below
   "calendar": { ... },                  // see Calendar section below
   "clockTheme": "default",              // name of a ClockTheme widget, or "default"
+  "widgets": { ... },                   // per-widget config objects, keyed by widget name
   "layout": {
     "main": [],                         // ordered list of widget names for the main area
     "sidebar": ["updater"]              // ordered list of widget names for the sidebar
-  },
-  "widgets": { ... }                    // per-widget config objects, keyed by widget name
+  }
 }
 ```
 
@@ -99,16 +103,16 @@ On every startup the app:
 | `eventFilter` | string[] | `[]` | List of event title substrings to hide |
 | `extensions` | string[] | `[]` | CalendarExtension widget names to activate |
 
+### `widgets`
+
+An object where each key is a widget name and the value is the widget-specific config object. Unknown keys are ignored and silently deleted; missing keys are filled with defaults. See individual [widget pages](widgets/index.md) for field references.
+
 ### `layout`
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `main` | string[] | `[]` | Ordered widget names for the main zone |
 | `sidebar` | string[] | `["updater"]` | Ordered widget names for the sidebar zone |
-
-### `widgets`
-
-An object where each key is a widget name and the value is the widget-specific config object. Unknown keys are ignored; missing keys are filled with defaults. See individual [widget pages](widgets/index.md) for field references.
 
 ## CSS Variables
 
@@ -117,8 +121,12 @@ Smart Clock supports full CSS variable theming via two files in the AppData dire
 | File | Description |
 |------|-------------|
 | `variables.template.css` | **Auto-generated** on every startup from each widget's `Variables.css` and the root `src/assets/variables.css`. Do not edit — it is overwritten each time. |
-| `variables.css` | Your customisations. Created automatically with all variables commented out. Edit this file to override any variable. |
+| `variables.css` | Your customisations. Created automatically on first run. Edit this file to override any variable. |
 
 Both files are loaded and injected into the page at startup. `variables.css` takes precedence because it is appended after the template.
 
 The in-app editor's **Variables** tab lets you edit `variables.css` directly.
+
+> [!NOTE]  
+> `variables.css` is not updated when the template changes. Any new variables will have to be added manually to override the defaults.
+> The in-app editor provides auto-complete for valid variable names.
