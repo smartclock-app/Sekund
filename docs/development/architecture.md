@@ -85,7 +85,5 @@ The Rust backend (`src-tauri/src/`) runs an embedded HTTP server (via `tiny_http
 | `useConfigStore` | `src/hooks/useConfigStore.ts` | Holds parsed config and `configSchema`; exposes `editConfig()` |
 | `useVariablesStore` | `src/hooks/useVariablesStore.ts` | Holds `variables.css` content; exposes `setVariables()` |
 | `useRemoteConfigStore` | `src/hooks/useRemoteConfig.ts` | Registry of remote-config command handlers |
-| `useHttpStore` | `src/hooks/useHttpStore.ts` | Listens for HTTP requests from the Tauri backend |
-| `useMDNSStore` | `src/hooks/useMDNSStore.ts` | mDNS/Bonjour service registration |
 | `useAlertsStore` | `src/hooks/useAlertsStore.ts` | In-app alert/notification queue |
 | `useDatabaseStore` | `src/hooks/useDatabaseStore.ts` | SQLite database handle (via `plugin-sql`) |
