@@ -1,6 +1,23 @@
-# Tauri + React + Typescript
+# Smart Clock
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+A full-screen clock application built with Tauri v2, React, and TypeScript, designed for always-on displays.
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md)
+- [Configuration Reference](docs/configuration.md)
+- [Widgets](docs/widgets/index.md)
+- [Development Setup](docs/development/setup.md)
+- [Architecture Overview](docs/development/architecture.md)
+- [Adding Widgets](docs/development/adding-widgets.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+## Quick Start
+
+```bash
+bun install
+bun tauri dev
+```
 
 ## Recommended IDE Setup
 

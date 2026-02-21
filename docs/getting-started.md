@@ -1,0 +1,94 @@
+# Getting Started
+
+Smart Clock is a full-screen clock application built with Tauri v2, React, and TypeScript. It is intended to run on always-on displays such as Raspberry Pis or tablets mounted on a wall.
+
+## Prerequisites
+
+- A supported OS (macOS, Windows, Linux, or Android via the APK build)
+- [Bun](https://bun.sh/) (JavaScript runtime / package manager)
+- [Rust + Cargo](https://www.rust-lang.org/tools/install) (required by Tauri)
+- [Tauri CLI v2](https://v2.tauri.app/reference/cli/) (installed automatically via `bun tauri`)
+
+## Installation
+
+### Running from source
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/0x5045414b/ClockBeta.git
+   cd ClockBeta
+   ```
+
+2. Install JavaScript dependencies:
+   ```bash
+   bun install
+   ```
+
+3. Start the development server (Tauri + Vite hot-reload):
+   ```bash
+   bun tauri dev
+   ```
+
+### Building for production
+
+```bash
+bun tauri build
+```
+
+For Android (APK targeting ARM64 and ARMv7):
+
+```bash
+bun run build:android
+```
+
+## First Launch
+
+On first launch the app creates its configuration directory in your system's **AppData** folder under the identifier `uk.co.danpeak.smartclock.clock`. The exact path varies by OS:
+
+| OS | Path |
+|----|------|
+| macOS | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
+| Linux | `~/.local/share/uk.co.danpeak.smartclock.clock/` |
+| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\` |
+
+The following files are created automatically on startup:
+
+| File | Description |
+|------|-------------|
+| `config.json` | Main configuration file |
+| `schema-<version>.json` | JSON Schema for the current app version |
+| `variables.template.css` | Auto-generated CSS variable template (do not edit) |
+| `variables.css` | Your custom CSS variable overrides (safe to edit) |
+| `config-backups/` | Automatic backups taken on version upgrade |
+
+## Quick Configuration
+
+The easiest way to configure Smart Clock is through the **in-app editor**. Long-press (or right-click) anywhere on the clock face to open the editor overlay. The editor provides:
+
+- A Monaco-based JSON editor for `config.json` with live Zod schema validation.
+- A CSS editor for `variables.css`.
+- A read-only log viewer.
+
+Alternatively, edit `config.json` directly in the AppData directory. Changes take effect after restarting the app.
+
+For a full reference of every configuration option see [Configuration](configuration.md).
+
+## Adding Widgets
+
+Widgets are placed in the `layout` section of `config.json`. There are two layout zones:
+
+- **`main`** – the large central area.
+- **`sidebar`** – the right-hand panel.
+
+Each zone accepts an ordered array of widget names, e.g.:
+
+```json
+{
+  "layout": {
+    "main": ["weather"],
+    "sidebar": ["calendar", "alexa", "updater"]
+  }
+}
+```
+
+See [Widgets](widgets/index.md) for available widgets and their allowed locations.
