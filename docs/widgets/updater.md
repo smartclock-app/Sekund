@@ -1,6 +1,6 @@
 # Updater Widget
 
-Display the current app version and check for updates from GitHub Releases.
+Check for updates from GitHub Releases.
 
 ## Details
 
@@ -37,4 +37,4 @@ Display the current app version and check for updates from GitHub Releases.
 
 - Updates are distributed via GitHub Releases using the Tauri updater plugin.
 - The update endpoint is configured in `src-tauri/tauri.conf.json` and points to `https://github.com/0x5045414b/ClockBeta/releases/latest/download/latest.json`.
-- This widget is not available on Android builds (the Tauri updater plugin is excluded for the `android` target).
+- This widget is currently only available on Android builds (the Tauri updater plugin is planned to be used for desktop targets).
