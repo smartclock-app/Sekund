@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
+    "@sentry/react": "^10.39.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-fs": "~2",
     "@tauri-apps/plugin-http": "~2",
@@ -29,6 +30,7 @@
     "dayjs": "^1.11.19",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "tauri-plugin-sentry-api": "^0.5.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },

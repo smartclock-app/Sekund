@@ -8,6 +8,7 @@
     "opener:default",
     "apk-intent:allow-install-apk",
     "log:allow-log",
+    "sentry:default",
     "sql:allow-load",
     "sql:allow-select",
     "sql:allow-execute",
