@@ -25,8 +25,8 @@ local-ip-address = "0.6"
 log = "0.4"
 mdns-sd = "0.17"
 ndk-context = "0.1"
-reqwest = { version = "0.11", features = ["json", "rustls-tls", "stream"], default-features = false }
-sentry = "0.42"
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream"], default-features = false }
+sentry = { version = "0.42", default-features = false, features = ["rustls", "backtrace", "contexts", "panic", "debug-images"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = { version = "2", features = [] }
@@ -35,7 +35,6 @@ tauri-plugin-http = { version = "2", features = ["unsafe-headers", "dangerous-se
 tauri-plugin-log = "2"
 tauri-plugin-opener = "2"
 tauri-plugin-os = "2"
-tauri-plugin-sentry = "0.5"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 tauri-plugin-websocket = "2"
 tiny_http = "0.12.0"

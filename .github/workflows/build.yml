@@ -82,10 +82,12 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
           docker run --rm \
             -e TAURI_SIGNING_PRIVATE_KEY \
             -e TAURI_SIGNING_PRIVATE_KEY_PASSWORD \
+            -e SENTRY_AUTH_TOKEN \
             -v $(pwd):/app \
             -w /app dannypeaky/tauri-build-rpi:1.0.0
 
