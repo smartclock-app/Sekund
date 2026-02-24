@@ -56,5 +56,24 @@ describe("useRemoteConfig", () => {
       const result = useRemoteConfigStore.getState().getHandler("set_config")!({});
       expect((result as any).status).toBe("ok");
     });
+
+    it("set_variables returns ok status and result message", () => {
+      const result = useRemoteConfigStore.getState().getHandler("set_variables")!(":root {}");
+      expect((result as any).status).toBe("ok");
+      expect((result as any).result).toBe("Variables updated");
+    });
+
+    it("refresh returns ok status and result message", () => {
+      const result = useRemoteConfigStore.getState().getHandler("refresh")!({});
+      expect((result as any).status).toBe("ok");
+      expect((result as any).result).toBe("Refresh event dispatched");
+    });
+
+    it("get_logs returns ok status with log content", async () => {
+      // IPC mock returns "" for plugin:fs|read_text_file
+      const result = await (useRemoteConfigStore.getState().getHandler("get_logs")!({}) as Promise<any>);
+      expect(result.status).toBe("ok");
+      expect(typeof result.result).toBe("string");
+    });
   });
 });

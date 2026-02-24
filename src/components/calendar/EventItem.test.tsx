@@ -74,6 +74,45 @@ describe("EventItem", () => {
     expect(screen.queryByText(/:/)).not.toBeInTheDocument();
   });
 
+  it("shows date range for multi-day all-day events within the same month", () => {
+    // isAllDay(false) branch: starts and ends at midnight but spans more than 1 day
+    const start = dayjs("2025-06-20T00:00:00");
+    const end = dayjs("2025-06-23T00:00:00"); // 3 days
+    render(<EventItem event={makeEvent({ start, end })} />);
+    // Should show a range with em-dash between Friday and Sunday
+    expect(screen.getByText(/Friday/)).toBeInTheDocument();
+    expect(screen.getByText(/—/)).toBeInTheDocument();
+    expect(screen.getByText(/Sunday/)).toBeInTheDocument();
+  });
+
+  it("shows date range for multi-day all-day events crossing month boundary", () => {
+    // isAllDay(false) branch with !isSameMonth → includes month abbreviation on end date
+    const start = dayjs("2025-06-29T00:00:00");
+    const end = dayjs("2025-07-02T00:00:00");
+    render(<EventItem event={makeEvent({ start, end })} />);
+    expect(screen.getByText(/—/)).toBeInTheDocument();
+    // End side should include month abbreviation (Jul)
+    expect(screen.getByText(/Jul/)).toBeInTheDocument();
+  });
+
+  it("shows time range for multi-day timed events", () => {
+    // !event.start.isSame(event.end, "day") branch
+    const start = dayjs("2025-06-18T14:00:00");
+    const end = dayjs("2025-06-20T10:00:00");
+    render(<EventItem event={makeEvent({ start, end })} />);
+    expect(screen.getByText(/14:00/)).toBeInTheDocument();
+    expect(screen.getByText(/10:00/)).toBeInTheDocument();
+  });
+
+  it("shows only start time for point-in-time events (start equals end)", () => {
+    // event.start.isSame(event.end) branch
+    const point = dayjs("2025-06-18T09:30:00");
+    render(<EventItem event={makeEvent({ start: point, end: point })} />);
+    expect(screen.getByText(/09:30/)).toBeInTheDocument();
+    // Should appear exactly once (not as a range)
+    expect(screen.getByText(/09:30/).textContent).not.toContain(" - ");
+  });
+
   it("applies event color as CSS variable", () => {
     const { container } = render(<EventItem event={makeEvent({ color: "#123456" })} />);
     const eventDiv = container.querySelector("[style]") as HTMLElement;
