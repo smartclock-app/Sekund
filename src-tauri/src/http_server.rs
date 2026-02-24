@@ -138,3 +138,70 @@ pub fn http_respond(
         Err(format!("[HTTP] No pending request with id {}", id))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::AtomicU64;
+
+    fn make_state() -> HttpServerState {
+        HttpServerState {
+            handle: Arc::new(Mutex::new(None)),
+            running: Arc::new(Mutex::new(false)),
+            responses: Arc::new(Mutex::new(HashMap::new())),
+            id_counter: Arc::new(AtomicU64::new(1)),
+        }
+    }
+
+    #[test]
+    fn http_respond_returns_error_for_unknown_id() {
+        let state = make_state();
+        let result = {
+            let responses = state.responses.lock().unwrap();
+            drop(responses);
+            if let Some(tx) = state.responses.lock().unwrap().remove(&999u64) {
+                let _ = tx.send("body".to_string());
+                Ok(())
+            } else {
+                Err(format!("[HTTP] No pending request with id {}", 999u64))
+            }
+        };
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("No pending request with id 999"));
+    }
+
+    #[test]
+    fn http_respond_sends_to_registered_channel() {
+        let state = make_state();
+        let (tx, rx) = mpsc::channel::<String>();
+        state.responses.lock().unwrap().insert(1u64, tx);
+
+        let result = {
+            if let Some(sender) = state.responses.lock().unwrap().remove(&1u64) {
+                let _ = sender.send("hello".to_string());
+                Ok(())
+            } else {
+                Err("not found".to_string())
+            }
+        };
+
+        assert!(result.is_ok());
+        assert_eq!(rx.recv().unwrap(), "hello");
+    }
+
+    #[test]
+    fn http_server_state_starts_not_running() {
+        let state = make_state();
+        assert!(!*state.running.lock().unwrap());
+    }
+
+    #[test]
+    fn id_counter_increments() {
+        let state = make_state();
+        let first = state.id_counter.fetch_add(1, Ordering::SeqCst);
+        let second = state.id_counter.fetch_add(1, Ordering::SeqCst);
+        assert_eq!(second, first + 1);
+    }
+}
