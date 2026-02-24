@@ -4365,6 +4365,7 @@ version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "989425268ab5c011e06400187eed6c298272f8ef913e49fcadc3fda788b45030"
 dependencies = [
+ "httpdate",
  "reqwest 0.12.28",
  "rustls",
  "sentry-backtrace",
@@ -4373,6 +4374,7 @@ dependencies = [
  "sentry-debug-images",
  "sentry-panic",
  "sentry-tracing",
+ "tokio",
  "ureq",
 ]
 
@@ -4723,7 +4725,7 @@ dependencies = [
 
 [[package]]
 name = "smart-clock"
-version = "0.3.8"
+version = "0.3.9"
 dependencies = [
  "futures",
  "hostname",
