@@ -12,6 +12,25 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
   prepare:
     name: Prepare (version & tag check)
     runs-on: ubuntu-latest
@@ -52,7 +71,7 @@ jobs:
 
   build_linux:
     name: Build Linux (AppImage)
-    needs: prepare
+    needs: [prepare, test]
     runs-on: ubuntu-22.04-arm
     if: needs.prepare.outputs.should_build == 'true'
     steps:
@@ -101,7 +120,7 @@ jobs:
 
   build_android:
     name: Build Android (APK)
-    needs: prepare
+    needs: [prepare, test]
     runs-on: ubuntu-latest
     if: needs.prepare.outputs.should_build == 'true'
     steps:

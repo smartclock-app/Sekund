@@ -1,37 +1,42 @@
 import "@testing-library/jest-dom";
-import { vi } from "vitest";
+import { clearMocks, mockIPC, mockWindows } from "@tauri-apps/api/mocks";
+import { afterEach, beforeEach } from "vitest";
 
-// Mock Tauri plugin APIs that aren't available in jsdom
-vi.mock("@tauri-apps/plugin-log", () => ({
-  info: vi.fn(),
-  warn: vi.fn(),
-  error: vi.fn(),
-  debug: vi.fn(),
-  trace: vi.fn(),
-}));
+// Set up Tauri mocks per https://v2.tauri.app/develop/tests/
+// mockIPC intercepts all IPC calls from @tauri-apps/api/core's invoke()
+// mockWindows sets up the window metadata needed by Tauri APIs
+beforeEach(() => {
+  mockWindows("main");
+  mockIPC((cmd) => {
+    // plugin:log — all log levels
+    if (cmd === "plugin:log|log") return null;
 
-vi.mock("@tauri-apps/plugin-fs", () => ({
-  BaseDirectory: { AppData: 0, AppLog: 1 },
-  exists: vi.fn().mockResolvedValue(false),
-  readTextFile: vi.fn().mockResolvedValue(""),
-  writeTextFile: vi.fn().mockResolvedValue(undefined),
-  mkdir: vi.fn().mockResolvedValue(undefined),
-  readDir: vi.fn().mockResolvedValue([]),
-  remove: vi.fn().mockResolvedValue(undefined),
-}));
+    // plugin:fs — file system operations
+    if (cmd === "plugin:fs|exists") return false;
+    if (cmd === "plugin:fs|read_text_file") return "";
+    if (cmd === "plugin:fs|write_text_file") return null;
+    if (cmd === "plugin:fs|mkdir") return null;
+    if (cmd === "plugin:fs|read_dir") return [];
+    if (cmd === "plugin:fs|remove") return null;
 
-vi.mock("@tauri-apps/api/app", () => ({
-  getVersion: vi.fn().mockResolvedValue("0.0.0"),
-}));
+    // plugin:app — app metadata
+    if (cmd === "plugin:app|version") return "0.0.0";
 
-vi.mock("@tauri-apps/api/core", () => ({
-  invoke: vi.fn().mockResolvedValue(undefined),
-}));
+    // plugin:event — event system (listen returns a numeric handler id)
+    if (cmd === "plugin:event|listen") return 1;
+    if (cmd === "plugin:event|unlisten") return null;
+    if (cmd === "plugin:event|emit") return null;
 
-vi.mock("@tauri-apps/api/event", () => ({
-  listen: vi.fn().mockResolvedValue(() => {}),
-}));
+    // Application IPC commands
+    if (cmd === "start_http_server") return null;
+    if (cmd === "stop_http_server") return null;
+    if (cmd === "http_respond") return null;
 
-vi.mock("@tauri-apps/plugin-opener", () => ({
-  openUrl: vi.fn(),
-}));
+    return null;
+  });
+});
+
+// Clean up Tauri mock state after each test so tests are isolated
+afterEach(() => {
+  clearMocks();
+});
