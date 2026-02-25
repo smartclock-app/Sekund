@@ -18,7 +18,7 @@ describe("validateJsonSchema", () => {
 
 describe("saveFile", () => {
   it("returns an error for the read-only log file", async () => {
-    const result = await saveFile("Smart Clock.log", "some content");
+    const result = await saveFile("Sekund.log", "some content");
     expect(result.success).toBe(false);
     expect(result.error).toBe("Cannot save read-only log file");
   });

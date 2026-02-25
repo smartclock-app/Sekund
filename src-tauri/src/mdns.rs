@@ -61,7 +61,7 @@ pub fn start_mdns(
 
     let my_local_ip = local_ip().map_err(|e| e.to_string())?;
     let service_info = ServiceInfo::new(
-        "_smartclock._tcp.local.",
+        "_sekund._tcp.local.",
         &name,
         &format!("{}.local.", hostname::get().unwrap().to_string_lossy()),
         my_local_ip.to_string().as_str(),
@@ -92,7 +92,7 @@ mod tests {
 
     #[test]
     fn valid_name_is_accepted() {
-        assert!(validate_mdns_name("Smart Clock").is_ok());
+        assert!(validate_mdns_name("Sekund").is_ok());
         assert!(validate_mdns_name("my-device").is_ok());
         assert!(validate_mdns_name("my_device").is_ok());
         assert!(validate_mdns_name("Device123").is_ok());

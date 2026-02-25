@@ -5,7 +5,7 @@ const remoteConfigSchema = z.object({
   port: z.number().catch(8080),
   password: z.string().catch(""),
   useBonjour: z.boolean().catch(true),
-  bonjourName: z.string().catch("Smart Clock"),
+  bonjourName: z.string().catch("Sekund"),
   toggleDisplayPath: z.string().catch(""),
 });
 

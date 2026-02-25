@@ -1,5 +1,5 @@
 [package]
-name = "smart-clock"
+name = "sekund"
 version = "0.3.9"
 description = "A Tauri App"
 authors = ["you"]
