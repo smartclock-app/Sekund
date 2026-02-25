@@ -1,25 +1,25 @@
 # Widgets
 
-Smart Clock supports three kinds of widgets:
+Sekund supports three kinds of widgets:
 
-| Type | Description |
-|------|-------------|
-| `widget` | Rendered in a layout zone (`main` or `sidebar`) |
+| Type                | Description                                         |
+| ------------------- | --------------------------------------------------- |
+| `widget`            | Rendered in a layout zone (`main` or `sidebar`)     |
 | `calendarExtension` | Provides additional events to the built-in calendar |
-| `clockTheme` | Replaces the default clock face |
+| `clockTheme`        | Replaces the default clock face                     |
 
 ## Available Widgets
 
-| Widget | Type | Allowed Locations |
-|--------|------|-------------------|
-| [actualbudget](actualbudget.md) | widget | sidebar |
-| [alexa](alexa.md) | widget | sidebar |
-| [google](google.md) | calendarExtension | — |
-| [homeassistant](homeassistant.md) | widget | sidebar |
-| [photos](photos.md) | clockTheme | — |
-| [trakt](trakt.md) | calendarExtension | — |
-| [updater](updater.md) | widget | sidebar |
-| [weather](weather.md) | widget | main, sidebar |
+| Widget                            | Type              | Allowed Locations |
+| --------------------------------- | ----------------- | ----------------- |
+| [actualbudget](actualbudget.md)   | widget            | sidebar           |
+| [alexa](alexa.md)                 | widget            | sidebar           |
+| [google](google.md)               | calendarExtension | —                 |
+| [homeassistant](homeassistant.md) | widget            | sidebar           |
+| [photos](photos.md)               | clockTheme        | —                 |
+| [trakt](trakt.md)                 | calendarExtension | —                 |
+| [updater](updater.md)             | widget            | sidebar           |
+| [weather](weather.md)             | widget            | main, sidebar     |
 
 ## Layout Zones
 

@@ -1,16 +1,16 @@
 # Adding / Contributing Widgets
 
-Smart Clock uses a file-system-based widget loader. Adding a new widget requires creating a directory under `src/widgets/<name>/` with a small number of required files.
+Sekund uses a file-system-based widget loader. Adding a new widget requires creating a directory under `src/widgets/<name>/` with a small number of required files.
 
 ## Widget Types
 
 Choose the type that fits your use-case:
 
-| `WidgetType` | Use when |
-|-------------|---------|
-| `widget` | Renders a UI panel in `main` or `sidebar` |
-| `calendarExtension` | Provides `CalendarEvent[]` to the built-in calendar |
-| `clockTheme` | Replaces the default clock face with a custom React component |
+| `WidgetType`        | Use when                                                      |
+| ------------------- | ------------------------------------------------------------- |
+| `widget`            | Renders a UI panel in `main` or `sidebar`                     |
+| `calendarExtension` | Provides `CalendarEvent[]` to the built-in calendar           |
+| `clockTheme`        | Replaces the default clock face with a custom React component |
 
 ## Required Files
 
@@ -130,7 +130,7 @@ Widgets can register custom remote-config commands in their `OnInit` function:
 import useRemoteConfigStore from "@/hooks/useRemoteConfig";
 
 export const OnInit = () => {
-  useRemoteConfigStore.getState().addHandler("my_command", (data) => {
+  useRemoteConfigStore.getState().addHandler("my_command", data => {
     // handle the command
     return { status: "ok", result: "done" };
   });

@@ -1,6 +1,6 @@
 # Getting Started
 
-Smart Clock is a full-screen clock application built with Tauri v2, React, and TypeScript. It is intended to run on always-on displays such as Raspberry Pis or android tablets.
+Sekund is a full-screen clock application built with Tauri v2, React, and TypeScript. It is intended to run on always-on displays such as Raspberry Pis or android tablets.
 
 ## Prerequisites
 
@@ -14,12 +14,14 @@ Smart Clock is a full-screen clock application built with Tauri v2, React, and T
 ### Running from source
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/0x5045414b/ClockBeta.git
    cd ClockBeta
    ```
 
 2. Install JavaScript dependencies:
+
    ```bash
    bun install
    ```
@@ -45,24 +47,24 @@ bun run build:android
 
 On first launch the app creates its configuration directory in your system's **AppData** folder under the identifier `uk.co.danpeak.smartclock.clock`. The exact path varies by OS:
 
-| OS | Path |
-|----|------|
-| macOS | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
-| Linux | `~/.local/share/uk.co.danpeak.smartclock.clock/` |
-| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\` |
+| OS      | Path                                                            |
+| ------- | --------------------------------------------------------------- |
+| macOS   | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
+| Linux   | `~/.local/share/uk.co.danpeak.smartclock.clock/`                |
+| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\`                     |
 
 The following files are created automatically on startup:
 
-| File | Description |
-|------|-------------|
-| `config.json` | Main configuration file |
-| `schema-<version>.json` | JSON Schema for the current app version |
+| File                     | Description                                        |
+| ------------------------ | -------------------------------------------------- |
+| `config.json`            | Main configuration file                            |
+| `schema-<version>.json`  | JSON Schema for the current app version            |
 | `variables.template.css` | Auto-generated CSS variable template (do not edit) |
-| `variables.css` | Your custom CSS variable overrides (safe to edit) |
+| `variables.css`          | Your custom CSS variable overrides (safe to edit)  |
 
 ## Quick Configuration
 
-The easiest way to configure Smart Clock is through the **in-app editor**. Long-press anywhere on the clock face to open the editor overlay. The editor provides:
+The easiest way to configure Sekund is through the **in-app editor**. Long-press anywhere on the clock face to open the editor overlay. The editor provides:
 
 - A Monaco-based JSON editor for `config.json` with live Zod schema validation.
 - A CSS editor for `variables.css`.

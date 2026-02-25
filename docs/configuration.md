@@ -1,6 +1,6 @@
 # Configuration
 
-Smart Clock is configured via a single JSON file (`config.json`) stored in the AppData directory. The schema is validated by [Zod](https://zod.dev/) on every startup, and any missing or invalid fields are silently replaced with their defaults.
+Sekund is configured via a single JSON file (`config.json`) stored in the AppData directory. The schema is validated by [Zod](https://zod.dev/) on every startup, and any missing or invalid fields are silently replaced with their defaults.
 
 > [!WARNING]  
 > Only primitive values will be silently replaced. Any object or array will throw an error and that widget will fail to load.
@@ -9,12 +9,12 @@ Smart Clock is configured via a single JSON file (`config.json`) stored in the A
 
 The config directory lives under the Tauri AppData base directory for the identifier `uk.co.danpeak.smartclock.clock`:
 
-| OS | Path |
-|----|------|
-| macOS | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
-| Linux | `~/.local/share/uk.co.danpeak.smartclock.clock/` |
-| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\` |
-| Android / iOS | Cannot be edited directly and must use the in-app editor | 
+| OS            | Path                                                            |
+| ------------- | --------------------------------------------------------------- |
+| macOS         | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
+| Linux         | `~/.local/share/uk.co.danpeak.smartclock.clock/`                |
+| Windows       | `%APPDATA%\uk.co.danpeak.smartclock.clock\`                     |
+| Android / iOS | Cannot be edited directly and must use the in-app editor        |
 
 ## Editing the Config
 
@@ -36,14 +36,14 @@ If `remoteConfig.enabled` is `true` the app exposes an HTTP server on `remoteCon
 
 Built-in commands:
 
-| Command | Description |
-|---------|-------------|
-| `get_config` | Returns the current `config.json` as JSON |
-| `set_config` | Replaces config with `data` and triggers a page reload |
-| `get_variables` | Returns the current `variables.css` content |
-| `set_variables` | Replaces `variables.css` with `data` and reloads |
-| `get_logs` | Returns the last 100 lines of the app log |
-| `refresh` | Triggers a page reload |
+| Command         | Description                                            |
+| --------------- | ------------------------------------------------------ |
+| `get_config`    | Returns the current `config.json` as JSON              |
+| `set_config`    | Replaces config with `data` and triggers a page reload |
+| `get_variables` | Returns the current `variables.css` content            |
+| `set_variables` | Replaces `variables.css` with `data` and reloads       |
+| `get_logs`      | Returns the last 100 lines of the app log              |
+| `refresh`       | Triggers a page reload                                 |
 
 Additional commands can be registered by widgets via `OnInit` (see [Adding Widgets](development/adding-widgets.md)).
 
@@ -77,31 +77,31 @@ On every startup the app:
 
 ### `remoteConfig`
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `enabled` | boolean | `true` | Enable the HTTP remote-config server |
-| `port` | number | `8080` | Port the HTTP server listens on |
-| `password` | string | `""` | Password for the HTTP API (currently unused — authentication mechanism not yet implemented) |
-| `useBonjour` | boolean | `true` | Advertise the server via mDNS/Bonjour |
-| `bonjourName` | string | `"Smart Clock"` | mDNS service name |
-| `toggleDisplayPath` | string | `""` | Filesystem path of a script/command used to toggle the display on/off (currently unused) |
+| Field               | Type    | Default    | Description                                                                                 |
+| ------------------- | ------- | ---------- | ------------------------------------------------------------------------------------------- |
+| `enabled`           | boolean | `true`     | Enable the HTTP remote-config server                                                        |
+| `port`              | number  | `8080`     | Port the HTTP server listens on                                                             |
+| `password`          | string  | `""`       | Password for the HTTP API (currently unused — authentication mechanism not yet implemented) |
+| `useBonjour`        | boolean | `true`     | Advertise the server via mDNS/Bonjour                                                       |
+| `bonjourName`       | string  | `"Sekund"` | mDNS service name                                                                           |
+| `toggleDisplayPath` | string  | `""`       | Filesystem path of a script/command used to toggle the display on/off (currently unused)    |
 
 ### `clock`
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `format` | `"12h"` \| `"24h"` | `"12h"` | Time format |
-| `showSeconds` | boolean | `true` | Display seconds |
+| Field         | Type               | Default | Description     |
+| ------------- | ------------------ | ------- | --------------- |
+| `format`      | `"12h"` \| `"24h"` | `"12h"` | Time format     |
+| `showSeconds` | boolean            | `true`  | Display seconds |
 
 ### `calendar`
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `maxEvents` | number (≥1) | `50` | Maximum number of events to display |
-| `titles.odd` | string | `""` | Label shown on odd-numbered weeks |
-| `titles.even` | string | `""` | Label shown on even-numbered weeks |
-| `eventFilter` | string[] | `[]` | List of event title substrings to hide |
-| `extensions` | string[] | `[]` | CalendarExtension widget names to activate |
+| Field         | Type        | Default | Description                                |
+| ------------- | ----------- | ------- | ------------------------------------------ |
+| `maxEvents`   | number (≥1) | `50`    | Maximum number of events to display        |
+| `titles.odd`  | string      | `""`    | Label shown on odd-numbered weeks          |
+| `titles.even` | string      | `""`    | Label shown on even-numbered weeks         |
+| `eventFilter` | string[]    | `[]`    | List of event title substrings to hide     |
+| `extensions`  | string[]    | `[]`    | CalendarExtension widget names to activate |
 
 ### `widgets`
 
@@ -109,19 +109,19 @@ An object where each key is a widget name and the value is the widget-specific c
 
 ### `layout`
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `main` | string[] | `[]` | Ordered widget names for the main zone |
+| Field     | Type     | Default       | Description                               |
+| --------- | -------- | ------------- | ----------------------------------------- |
+| `main`    | string[] | `[]`          | Ordered widget names for the main zone    |
 | `sidebar` | string[] | `["updater"]` | Ordered widget names for the sidebar zone |
 
 ## CSS Variables
 
-Smart Clock supports full CSS variable theming via two files in the AppData directory:
+Sekund supports full CSS variable theming via two files in the AppData directory:
 
-| File | Description |
-|------|-------------|
+| File                     | Description                                                                                                                                                |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `variables.template.css` | **Auto-generated** on every startup from each widget's `Variables.css` and the root `src/assets/variables.css`. Do not edit — it is overwritten each time. |
-| `variables.css` | Your customisations. Created automatically on first run. Edit this file to override any variable. |
+| `variables.css`          | Your customisations. Created automatically on first run. Edit this file to override any variable.                                                          |
 
 Both files are loaded and injected into the page at startup. `variables.css` takes precedence because it is appended after the template.
 

@@ -2,7 +2,7 @@
 
 ## App won't start / blank screen
 
-- Check the app log at `<AppData>/Smart Clock.log`.
+- Check the app log at `<AppData>/Sekund.log`.
 - Ensure all Tauri system dependencies are installed for your OS. See [Development Setup](development/setup.md).
 - Delete `config.json` and restart. The app will recreate it with defaults.
 
@@ -47,10 +47,10 @@ The editor validates `config.json` against the Zod schema. Common causes:
 
 ## Finding the log file
 
-| OS | Log path |
-|----|----------|
-| macOS | `~/Library/Logs/uk.co.danpeak.smartclock.clock/Smart Clock.log` |
-| Linux | `~/.local/share/uk.co.danpeak.smartclock.clock/logs/Smart Clock.log` |
-| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\logs\Smart Clock.log` |
+| OS      | Log path                                                        |
+| ------- | --------------------------------------------------------------- |
+| macOS   | `~/Library/Logs/uk.co.danpeak.smartclock.clock/Sekund.log`      |
+| Linux   | `~/.local/share/uk.co.danpeak.smartclock.clock/logs/Sekund.log` |
+| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\logs\Sekund.log`      |
 
 The last 100 lines of the log are also accessible via the Remote Config API (`get_logs` command) and full logs in the in-app editor log tab.

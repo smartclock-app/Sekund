@@ -1,4 +1,4 @@
-name: CI — Build & Release Smart Clock
+name: CI — Build & Release Sekund
 
 on:
   push:
@@ -226,7 +226,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ needs.prepare.outputs.version }}
-          name: Smart Clock v${{ needs.prepare.outputs.version }}
+          name: Sekund v${{ needs.prepare.outputs.version }}
           files: |
             appimage/*.AppImage
             appimage/*.sig
