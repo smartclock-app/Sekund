@@ -1,4 +1,4 @@
-package uk.co.danpeak.smartclock.clock
+package uk.co.danpeak.sekund
 
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge

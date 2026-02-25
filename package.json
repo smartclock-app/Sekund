@@ -1,6 +1,7 @@
 {
-  "name": "smart-clock",
+  "name": "sekund",
   "private": true,
+  "description": "A customizable smart clock display with widgets. Time, refined.",
   "license": "Polyform-Noncommercial-1.0.0",
   "repository": {
     "type": "git",

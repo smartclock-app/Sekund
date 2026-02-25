@@ -11,7 +11,7 @@ describe("remoteConfig schema", () => {
     expect(result.port).toBe(8080);
     expect(result.password).toBe("");
     expect(result.useBonjour).toBe(true);
-    expect(result.bonjourName).toBe("Smart Clock");
+    expect(result.bonjourName).toBe("Sekund");
     expect(result.toggleDisplayPath).toBe("");
   });
 

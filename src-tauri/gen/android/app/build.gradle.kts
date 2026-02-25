@@ -16,10 +16,10 @@ val tauriProperties = Properties().apply {
 
 android {
     compileSdk = 36
-    namespace = "uk.co.danpeak.smartclock.clock"
+    namespace = "uk.co.danpeak.sekund"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
-        applicationId = "uk.co.danpeak.smartclock.clock"
+        applicationId = "uk.co.danpeak.sekund"
         minSdk = 24
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
