@@ -2,10 +2,10 @@
   "name": "sekund",
   "private": true,
   "license": "Polyform-Noncommercial-1.0.0",
-  "description": "A customizable smart clock display with widgets. Time, refined.",
+  "description": "A customizable smart clock display with widgets",
   "repository": {
     "type": "git",
-    "url": "https://github.com/0x5045414b/ClockBeta"
+    "url": "https://github.com/0x5045414b/Sekund"
   },
   "version": "0.3.9",
   "type": "module",

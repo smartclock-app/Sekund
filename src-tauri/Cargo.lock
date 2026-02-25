@@ -4332,6 +4332,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "sekund"
+version = "0.3.9"
+dependencies = [
+ "futures",
+ "hostname",
+ "jni",
+ "local-ip-address",
+ "log",
+ "mdns-sd",
+ "ndk-context",
+ "reqwest 0.12.28",
+ "sentry",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-apk-intent",
+ "tauri-plugin-fs",
+ "tauri-plugin-http",
+ "tauri-plugin-log",
+ "tauri-plugin-opener",
+ "tauri-plugin-os",
+ "tauri-plugin-sql",
+ "tauri-plugin-updater",
+ "tauri-plugin-websocket",
+ "tiny_http",
+ "tokio",
+]
+
+[[package]]
 name = "selectors"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4721,36 +4751,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 dependencies = [
  "serde",
-]
-
-[[package]]
-name = "smart-clock"
-version = "0.3.9"
-dependencies = [
- "futures",
- "hostname",
- "jni",
- "local-ip-address",
- "log",
- "mdns-sd",
- "ndk-context",
- "reqwest 0.12.28",
- "sentry",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-apk-intent",
- "tauri-plugin-fs",
- "tauri-plugin-http",
- "tauri-plugin-log",
- "tauri-plugin-opener",
- "tauri-plugin-os",
- "tauri-plugin-sql",
- "tauri-plugin-updater",
- "tauri-plugin-websocket",
- "tiny_http",
- "tokio",
 ]
 
 [[package]]

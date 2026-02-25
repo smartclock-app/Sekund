@@ -1,7 +1,5 @@
 # Sekund
 
-**Time, refined.**
-
 A customizable smart clock display for hobbyists. Transform any display—tablet, phone, or Raspberry Pi—into a beautiful, functional timepiece with widgets.
 
 ## Features
