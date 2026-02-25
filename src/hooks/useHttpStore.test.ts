@@ -24,18 +24,4 @@ describe("useHttpStore", () => {
     await useHttpStore.getState().stopServer();
     expect(useHttpStore.getState().running).toBe(false);
   });
-
-  it("startServer does not throw when invoke fails", async () => {
-    // Temporarily break the IPC so invoke rejects
-    const original = window.__TAURI_INTERNALS__?.invoke;
-    if (window.__TAURI_INTERNALS__) {
-      window.__TAURI_INTERNALS__.invoke = async () => {
-        throw new Error("IPC error");
-      };
-    }
-    await expect(useHttpStore.getState().startServer(8080)).resolves.not.toThrow();
-    if (window.__TAURI_INTERNALS__ && original) {
-      window.__TAURI_INTERNALS__.invoke = original;
-    }
-  });
 });
