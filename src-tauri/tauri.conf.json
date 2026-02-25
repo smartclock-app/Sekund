@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Sekund",
-  "version": "0.3.9",
+  "version": "0.4.0",
   "identifier": "uk.dnpk.sekund",
   "build": {
     "beforeDevCommand": "bun run dev",
@@ -27,7 +27,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk3QTY0N0EzNTg1NjM1RjgKUldUNE5WWllvMGVtbDIvV3Q4K1ZHN1E1bm0xOHBkRmlPREMwRnJEQm9aak03QlFISlJldXhDdzIK",
-      "endpoints": ["https://github.com/0x5045414b/ClockBeta/releases/latest/download/latest.json"]
+      "endpoints": ["https://github.com/0x5045414b/Sekund/releases/latest/download/latest.json"]
     },
     "sql": {
       "preload": ["sqlite:database.sqlite"]

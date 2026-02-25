@@ -9,7 +9,7 @@ export interface UpdateInfo {
 
 // Full example usage
 export async function checkForUpdate(): Promise<UpdateInfo | null> {
-  const request = await fetch("https://api.github.com/repos/0x5045414b/ClockBeta/releases/latest", {
+  const request = await fetch("https://api.github.com/repos/0x5045414b/Sekund/releases/latest", {
     headers: {
       Authorization: `Bearer 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`,
     },
