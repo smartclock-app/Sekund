@@ -1,6 +1,6 @@
 # Sekund
 
-A customizable smart clock display for hobbyists. Transform any display—tablet, phone, or Raspberry Pi—into a beautiful, functional timepiece with widgets.
+A customizable full-screen clock display built with Tauri v2, React, and TypeScript, designed for always-on displays.
 
 ## Features
 
@@ -12,17 +12,15 @@ A customizable smart clock display for hobbyists. Transform any display—tablet
 - 📱 **Cross-Platform** - Desktop, mobile, and Raspberry Pi support
 - 🎯 **Open Source** - Built with Tauri, React, and TypeScript
 
-## Getting Started
+## Documentation
 
-See [Dockerfile.rpi](Dockerfile.rpi) for Raspberry Pi setup instructions.
-
-## Technology Stack
-
-- **Framework**: Tauri v2
-- **Frontend**: React 19 + TypeScript
-- **Build Tool**: Vite
-- **Styling**: SCSS
-- **State Management**: Zustand
+- [Getting Started](docs/getting-started.md)
+- [Configuration Reference](docs/configuration.md)
+- [Widgets](docs/widgets/index.md)
+- [Development Setup](docs/development/setup.md)
+- [Architecture Overview](docs/development/architecture.md)
+- [Adding Widgets](docs/development/adding-widgets.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ## License
 
@@ -33,7 +31,3 @@ This project is licensed under the PolyForm Strict License 1.0.0 - see [LICENSE.
 ## About the Name
 
 "Sekund" means "second" in multiple European languages (German, Swedish, Norwegian, Polish). Every second counts.
-
----
-
-Made with precision for hobbyists and makers.
