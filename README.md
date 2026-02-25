@@ -2,6 +2,9 @@
 
 A customizable full-screen clock display built with Tauri v2, React, and TypeScript, designed for always-on displays.
 
+> [!NOTE]
+> Unit tests and documentation have been AI-generated. Application code is hand-written.
+
 ## Features
 
 - 🕐 **Precision Timekeeping** - 12h/24h formats with customizable display
