@@ -12,7 +12,7 @@ const DefaultTheme = ({ config, now }: { config: ClockConfig; now: dayjs.Dayjs }
       <div className={styles.time}>
         <p className={styles.main}>{now.format(`${config.format == "12h" ? "hh" : "HH"}:mm`)}</p>
         <div className={styles.sub}>
-          <p>{now.format("A")}</p>
+          {config.format == "12h" && <p>{now.format("A")}</p>}
           {config.showSeconds && <p>{now.format("ss")}</p>}
         </div>
       </div>

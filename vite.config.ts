@@ -1,18 +1,27 @@
-import { defineConfig } from "vite";
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
+import { defineConfig } from "vitest/config";
 
-// @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [react()],
-
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  //
-  // 1. prevent Vite from obscuring rust errors
+  plugins: [
+    react(),
+    sentryVitePlugin({
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      org: "smart-clock",
+      project: "frontend",
+      url: "https://sentry.danpeak.co.uk/",
+      release: {
+        finalize: false,
+      },
+    }),
+  ],
+  build: {
+    sourcemap: true,
+  },
   clearScreen: false,
-  // 2. tauri expects a fixed port, fail if that port is not available
   server: {
     port: 1420,
     strictPort: true,
@@ -25,7 +34,6 @@ export default defineConfig(async () => ({
         }
       : undefined,
     watch: {
-      // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
   },
@@ -33,6 +41,18 @@ export default defineConfig(async () => ({
   resolve: {
     alias: {
       "@": "/src",
+    },
+  },
+
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["./src/test-setup.ts"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/main.tsx", "src/vite-env.d.ts", "src/**/*.d.ts", "src/test-setup.ts"],
     },
   },
 }));

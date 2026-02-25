@@ -2,7 +2,7 @@ import Card from "@/components/Card";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { path } from "@tauri-apps/api";
 import { getVersion } from "@tauri-apps/api/app";
-import { exists } from "@tauri-apps/plugin-fs";
+import { BaseDirectory, exists, readDir, remove } from "@tauri-apps/plugin-fs";
 import { error, info } from "@tauri-apps/plugin-log";
 import dayjs from "dayjs";
 import { useState } from "react";
@@ -45,8 +45,17 @@ const Android = ({ config }: { config: Config }) => {
 
   const downloadUpdate = async (url: string) => {
     try {
-      const filename = await path.join(await path.downloadDir(), `${updateInfo!.version}.apk`);
+      const cachePath = await path.appCacheDir();
 
+      const apks = (await readDir(cachePath)).filter(file => file.name.endsWith(".apk"));
+      // Clean up old APKs
+      for (const apk of apks) {
+        if (apk.name !== `${updateInfo!.version}.apk`) {
+          await remove(apk.name, { baseDir: BaseDirectory.AppCache });
+        }
+      }
+
+      const filename = await path.join(cachePath, `${updateInfo!.version}.apk`);
       if (!(await exists(filename))) await downloadApk(url, filename, setDownloadProgress);
 
       installApk(filename);

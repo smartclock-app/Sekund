@@ -3,18 +3,26 @@ mod http_server;
 mod mdns;
 mod migrations;
 
-use mdns::{start_mdns, MdnsState};
+use sentry;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
-
 use android_updates::{download_apk, install_apk};
+use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
+use mdns::{start_mdns, MdnsState};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    let _guard = sentry::init((
+        "https://0b0251fbf24f4418b1a6cc689fbb51e2@sentry.danpeak.co.uk/1",
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
+
     tauri::Builder::default()
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_apk_intent::init())

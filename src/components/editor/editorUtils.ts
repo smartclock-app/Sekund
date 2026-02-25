@@ -99,7 +99,7 @@ export async function saveFile(filename: string, content: string): Promise<SaveR
     return saveConfigJson(content);
   } else if (filename === "variables.css") {
     return saveVariablesCss(content);
-  } else if (filename === "Smart Clock.log") {
+  } else if (filename === "Sekund.log") {
     return { success: false, error: "Cannot save read-only log file" };
   }
   return { success: false, error: `Unknown file: ${filename}` };

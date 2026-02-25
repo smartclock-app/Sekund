@@ -1,6 +1,16 @@
-# Smart Clock
+# Sekund
 
-A full-screen clock application built with Tauri v2, React, and TypeScript, designed for always-on displays.
+A customizable full-screen clock display built with Tauri v2, React, and TypeScript, designed for always-on displays.
+
+## Features
+
+- 🕐 **Precision Timekeeping** - 12h/24h formats with customizable display
+- 🎨 **Custom Themes** - Create your own clock faces and widgets
+- 📅 **Calendar Integration** - Event filtering and display
+- 🔌 **Widget System** - Extensible architecture for custom widgets
+- 🌐 **Remote Configuration** - Configure via web interface with Bonjour discovery
+- 📱 **Cross-Platform** - Desktop, mobile, and Raspberry Pi support
+- 🎯 **Open Source** - Built with Tauri, React, and TypeScript
 
 ## Documentation
 
@@ -12,13 +22,12 @@ A full-screen clock application built with Tauri v2, React, and TypeScript, desi
 - [Adding Widgets](docs/development/adding-widgets.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
-## Quick Start
+## License
 
-```bash
-bun install
-bun tauri dev
-```
+This project is licensed under the PolyForm Strict License 1.0.0 - see [LICENSE.md](LICENSE.md) for details.
 
-## Recommended IDE Setup
+**TL;DR**: Free for personal, hobby, educational, and non-commercial use. Commercial use requires separate licensing.
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+## About the Name
+
+"Sekund" means "second" in multiple European languages (German, Swedish, Norwegian, Polish). Every second counts.

@@ -1,12 +1,17 @@
 import LoadConfig from "@/helpers/config";
+import * as Sentry from "@sentry/react";
 import { path } from "@tauri-apps/api";
-import { attachConsole, error, info } from "@tauri-apps/plugin-log";
+import { attachConsole, error, info, warn } from "@tauri-apps/plugin-log";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
 import useConfigStore from "./hooks/useConfigStore";
 import useHttpStore from "./hooks/useHttpStore";
 import useMDNSStore from "./hooks/useMDNSStore";
+
+Sentry.init({
+  dsn: "https://1d60c7dff4f94a41932ee397143fff67@sentry.danpeak.co.uk/2",
+});
 
 await attachConsole();
 
@@ -33,7 +38,13 @@ info(
   `[Config] Viewport size: ${viewport?.clientWidth}x${viewport?.clientHeight} (${(viewport?.clientWidth ?? 1) / (viewport?.clientHeight ?? 1)})`,
 );
 
-ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById("root") as HTMLElement, {
+  onUncaughtError: Sentry.reactErrorHandler((error, errorInfo) => {
+    warn(`Uncaught error:\n${error}\n${errorInfo.componentStack}`);
+  }),
+  onCaughtError: Sentry.reactErrorHandler(),
+  onRecoverableError: Sentry.reactErrorHandler(),
+}).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
