@@ -25,7 +25,7 @@ const EDITOR_FILES: EditorFile[] = [
     readonly: false,
   },
   {
-    name: "Smart Clock.log",
+    name: "Sekund.log",
     language: "log",
     baseDir: BaseDirectory.AppLog,
     content: "",

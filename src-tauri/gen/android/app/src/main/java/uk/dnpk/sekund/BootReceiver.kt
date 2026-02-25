@@ -1,4 +1,4 @@
-package uk.co.danpeak.smartclock.clock
+package uk.dnpk.sekund
 
 import android.content.BroadcastReceiver
 import android.content.Context

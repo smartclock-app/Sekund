@@ -31,7 +31,7 @@ const useRemoteConfigStore = create<RemoteConfigStoreState>()(set => ({
       return { status: "ok", result: "Variables updated" };
     },
     get_logs: async () => {
-      const logs = await readTextFile("Smart Clock.log", { baseDir: BaseDirectory.AppLog });
+      const logs = await readTextFile("Sekund.log", { baseDir: BaseDirectory.AppLog });
       const last100Lines = logs
         .split("\n")
         .slice(-100)
