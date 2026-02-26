@@ -1,4 +1,5 @@
 mod android_updates;
+mod browser;
 mod http_server;
 mod mdns;
 mod migrations;
@@ -10,6 +11,7 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use android_updates::{download_apk, install_apk};
+use browser::launch_browser;
 use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
 use mdns::{start_mdns, MdnsState};
 
@@ -76,7 +78,8 @@ pub fn run() {
             stop_http_server,
             http_respond,
             download_apk,
-            install_apk
+            install_apk,
+            launch_browser
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
