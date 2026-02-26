@@ -1,10 +1,12 @@
 import LoadConfig from "@/helpers/config";
 import * as Sentry from "@sentry/react";
 import { path } from "@tauri-apps/api";
+import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { attachConsole, error, info, warn } from "@tauri-apps/plugin-log";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
+import handleDeepLink from "./helpers/handleDeepLink";
 import useConfigStore from "./hooks/useConfigStore";
 import useHttpStore from "./hooks/useHttpStore";
 import useMDNSStore from "./hooks/useMDNSStore";
@@ -14,6 +16,7 @@ Sentry.init({
 });
 
 await attachConsole();
+await onOpenUrl(handleDeepLink);
 
 const configStore = useConfigStore.getState();
 const mdnsStore = useMDNSStore.getState();
