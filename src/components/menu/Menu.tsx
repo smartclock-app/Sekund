@@ -1,5 +1,6 @@
 import useLongPress from "@/hooks/useLongPress";
 import useRouter, { RouterScreen } from "@/hooks/useRouter";
+import { invoke } from "@tauri-apps/api/core";
 import { info } from "@tauri-apps/plugin-log";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { useState } from "react";
@@ -18,7 +19,9 @@ const Menu = (props: { show: boolean; onClose: () => void }) => {
           <button onClick={() => useRouter.getState().navigate(RouterScreen.Editor)}>Editor</button>
         </li>
         <li>
-          <button onClick={async () => await openUrl("https://www.google.co.uk")}>Browser</button>
+          <button onClick={async () => await invoke("launch_browser").catch(() => openUrl("https://www.google.com"))}>
+            Browser
+          </button>
         </li>
       </ul>
     </div>,

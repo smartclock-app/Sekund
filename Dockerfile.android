@@ -1,0 +1,57 @@
+# Using Ubuntu 22.04 for consistency
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 1. Install System Dependencies
+RUN apt-get update && apt-get install -y \
+    perl \
+    make \
+    unzip \
+    curl \
+    wget \
+    file \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    openjdk-17-jdk \
+    libwebkit2gtk-4.1-dev \
+    libxdo-dev \
+    libayatana-appindicator3-dev \
+    librsvg2-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Install Rust (Latest Stable)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# 3. Add Android targets for Rust
+RUN rustup target add aarch64-linux-android armv7-linux-androideabi
+
+# 4. Install Bun (Latest)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+# 5. Install Android SDK Command Line Tools
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
+
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    cd ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && \
+    unzip commandlinetools-linux-*_latest.zip && \
+    rm commandlinetools-linux-*_latest.zip && \
+    mv cmdline-tools latest
+
+# 6. Accept Android SDK licenses and install required components
+RUN yes | sdkmanager --licenses && \
+    sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0" "ndk;25.1.8937393"
+
+ENV NDK_HOME="${ANDROID_HOME}/ndk/25.1.8937393"
+ENV OPENSSL_STATIC=1
+
+WORKDIR /app
+
+# Final build command
+CMD ["/bin/bash", "-c", "bun install && bun build:android"]
