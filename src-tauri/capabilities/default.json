@@ -8,6 +8,7 @@
     "opener:default",
     "apk-intent:allow-install-apk",
     "deep-link:default",
+    "network:allow-get-non-empty-interfaces",
     "websocket:default",
     "log:allow-log",
     "sql:allow-load",
