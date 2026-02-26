@@ -16,7 +16,6 @@ const Component: CalendarExtensionComponent<Config> = async config => {
 
   // Get watchlist
   let newTraktTokens: [accessToken: string, refreshToken: string] | null = null;
-  let watchlistError: any = null;
   try {
     if (
       !config.auth.accessToken ||
@@ -87,8 +86,6 @@ const Component: CalendarExtensionComponent<Config> = async config => {
       events.push(event);
     }
   } catch (e) {
-    watchlistError = e;
-    console.log(watchlistError); // TODO: Remove this
     error(`[Watchlist] Error fetching watchlist: ${e}`);
   }
 

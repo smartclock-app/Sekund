@@ -43,7 +43,6 @@ export const useHttpRequestListener = (
   useEffect(() => {
     const unlisten = listen<HttpRequest>("http-request", async e => {
       const response = await callback(e.payload);
-      console.log(response);
       await invoke("http_respond", {
         id: e.payload.id,
         responseBody: JSON.stringify(response),

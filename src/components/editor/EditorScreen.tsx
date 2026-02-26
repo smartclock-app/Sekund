@@ -1,6 +1,7 @@
 import templateCss from "@/assets/variables.css?raw";
 import Editor, { OnChange, useMonaco } from "@monaco-editor/react";
 import { BaseDirectory } from "@tauri-apps/plugin-fs";
+import { warn } from "@tauri-apps/plugin-log";
 import { useEffect, useState } from "react";
 import { BASE_DIRECTORY } from "../../helpers/types";
 import useConfigStore from "../../hooks/useConfigStore";
@@ -257,7 +258,7 @@ export default function EditorScreen() {
                 }
               } catch (error) {
                 // Silently ignore schema setup errors
-                console.log("Error setting up Monaco schema:", error);
+                warn(`Error setting up Monaco schema: ${error}`);
               }
             }}
             options={{
