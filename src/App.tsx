@@ -1,15 +1,14 @@
 import "@/App.scss";
 import useConfigStore from "./hooks/useConfigStore";
 
-import { info } from "@tauri-apps/plugin-log";
 import { memo, useEffect, useRef, useState } from "react";
 import Alerts from "./components/alerts/Alerts";
 import Calendar from "./components/calendar/Calendar";
+import useOptionsMenu from "./components/calendar/Menu/Menu";
 import Clock from "./components/clock/Clock";
 import { EditorScreen } from "./components/editor";
 import RemoteConfig from "./components/RemoteConfig";
 import { WidgetLocation, WidgetOfType, WidgetType } from "./helpers/types";
-import useLongPress from "./hooks/useLongPress";
 import useRouter, { RouterScreen } from "./hooks/useRouter";
 
 const MemoizedWidget = memo(
@@ -25,15 +24,12 @@ const MemoizedWidget = memo(
 );
 
 function App() {
+  const [longPressProps, Menu] = useOptionsMenu();
+
   const currentScreen = useRouter(state => state.currentScreen);
   const layout = useConfigStore(state => state.layout);
   const widgetConfigs = useConfigStore(state => state.config.widgets);
   const calendarConfig = useConfigStore(state => state.config.calendar);
-  const router = useRouter();
-  const longPressProps = useLongPress(() => {
-    info("Long press detected");
-    router.navigate(RouterScreen.Editor);
-  });
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [sidebarHasChildren, setSidebarHasChildren] = useState(false);
@@ -54,6 +50,7 @@ function App() {
     <EditorScreen />
   ) : (
     <div className="container">
+      <Menu />
       <RemoteConfig />
       <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
         {layout.main.map(Widget => (
