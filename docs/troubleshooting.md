@@ -47,10 +47,10 @@ The editor validates `config.json` against the Zod schema. Common causes:
 
 ## Finding the log file
 
-| OS      | Log path                                                        |
-| ------- | --------------------------------------------------------------- |
-| macOS   | `~/Library/Logs/uk.co.danpeak.smartclock.clock/Sekund.log`      |
-| Linux   | `~/.local/share/uk.co.danpeak.smartclock.clock/logs/Sekund.log` |
-| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\logs\Sekund.log`      |
+| OS      | Log path                                        |
+| ------- | ----------------------------------------------- |
+| macOS   | `~/Library/Logs/uk.dnpk.sekund/Sekund.log`      |
+| Linux   | `~/.local/share/uk.dnpk.sekund/logs/Sekund.log` |
+| Windows | `%APPDATA%\uk.dnpk.sekund\logs\Sekund.log`      |
 
 The last 100 lines of the log are also accessible via the Remote Config API (`get_logs` command) and full logs in the in-app editor log tab.

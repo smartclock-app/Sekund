@@ -45,13 +45,13 @@ bun run build:android
 
 ## First Launch
 
-On first launch the app creates its configuration directory in your system's **AppData** folder under the identifier `uk.co.danpeak.smartclock.clock`. The exact path varies by OS:
+On first launch the app creates its configuration directory in your system's **AppData** folder under the identifier `uk.dnpk.sekund`. The exact path varies by OS:
 
-| OS      | Path                                                            |
-| ------- | --------------------------------------------------------------- |
-| macOS   | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
-| Linux   | `~/.local/share/uk.co.danpeak.smartclock.clock/`                |
-| Windows | `%APPDATA%\uk.co.danpeak.smartclock.clock\`                     |
+| OS      | Path                                            |
+| ------- | ----------------------------------------------- |
+| macOS   | `~/Library/Application Support/uk.dnpk.sekund/` |
+| Linux   | `~/.local/share/uk.dnpk.sekund/`                |
+| Windows | `%APPDATA%\uk.dnpk.sekund\`                     |
 
 The following files are created automatically on startup:
 

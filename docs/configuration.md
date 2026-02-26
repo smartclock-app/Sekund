@@ -7,14 +7,14 @@ Sekund is configured via a single JSON file (`config.json`) stored in the AppDat
 
 ## Config File Location
 
-The config directory lives under the Tauri AppData base directory for the identifier `uk.co.danpeak.smartclock.clock`:
+The config directory lives under the Tauri AppData base directory for the identifier `uk.dnpk.sekund`:
 
-| OS            | Path                                                            |
-| ------------- | --------------------------------------------------------------- |
-| macOS         | `~/Library/Application Support/uk.co.danpeak.smartclock.clock/` |
-| Linux         | `~/.local/share/uk.co.danpeak.smartclock.clock/`                |
-| Windows       | `%APPDATA%\uk.co.danpeak.smartclock.clock\`                     |
-| Android / iOS | Cannot be edited directly and must use the in-app editor        |
+| OS            | Path                                                     |
+| ------------- | -------------------------------------------------------- |
+| macOS         | `~/Library/Application Support/uk.dnpk.sekund/`          |
+| Linux         | `~/.local/share/uk.dnpk.sekund/`                         |
+| Windows       | `%APPDATA%\uk.dnpk.sekund\`                              |
+| Android / iOS | Cannot be edited directly and must use the in-app editor |
 
 ## Editing the Config
 
