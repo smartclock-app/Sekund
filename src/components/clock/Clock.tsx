@@ -1,12 +1,13 @@
 import { ClockConfig } from "@/helpers/config/base";
 import useConfigStore from "@/hooks/useConfigStore";
 import { dispatchEvent, EventType } from "@/hooks/useEventListener";
+import useNetworkStore from "@/hooks/useNetworkStore";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import styles from "./clock.module.scss";
 import getOrdinal from "./getOrdinal";
 
-const DefaultTheme = ({ config, now }: { config: ClockConfig; now: dayjs.Dayjs }) => {
+const DefaultTheme = ({ config, now, connected }: { config: ClockConfig; now: dayjs.Dayjs; connected: boolean }) => {
   return (
     <div className={styles.container}>
       <div className={styles.time}>
@@ -21,6 +22,7 @@ const DefaultTheme = ({ config, now }: { config: ClockConfig; now: dayjs.Dayjs }
         <sup>{getOrdinal(now.date())}</sup>
         {now.format(" MMMM YYYY")}
       </div>
+      {!connected && <div id="offline">Offline - Waiting for network</div>}
     </div>
   );
 };
@@ -28,6 +30,7 @@ const DefaultTheme = ({ config, now }: { config: ClockConfig; now: dayjs.Dayjs }
 const Clock = () => {
   const [now, setNow] = useState(dayjs());
   const configStore = useConfigStore();
+  const connected = useNetworkStore(state => state.connected);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -46,7 +49,8 @@ const Clock = () => {
     return () => clearInterval(timer);
   }, []);
 
-  if (!configStore.clockTheme) return <DefaultTheme config={configStore.config.clock} now={now} />;
+  if (!connected || !configStore.clockTheme)
+    return <DefaultTheme config={configStore.config.clock} now={now} connected={connected} />;
   const Component = configStore.clockTheme.Component;
   return (
     <Component
