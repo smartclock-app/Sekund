@@ -2298,16 +2298,6 @@ dependencies = [
 
 [[package]]
 name = "if-addrs"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cabb0019d51a643781ff15c9c8a3e5dedc365c47211270f4e8f82812fedd8f0a"
-dependencies = [
- "libc",
- "windows-sys 0.48.0",
-]
-
-[[package]]
-name = "if-addrs"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf39cc0423ee66021dc5eccface85580e4a001e0c5288bae8bea7ecb69225e90"
@@ -2353,15 +2343,6 @@ name = "ipnet"
 version = "2.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "469fb0b9cefa57e3ef31275ee7cacb78f2fdca44e4765491884a2b119d4eb130"
-
-[[package]]
-name = "ipnetwork"
-version = "0.20.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf466541e9d546596ee94f9f69590f89473455f88372423e0008fc1a7daf100e"
-dependencies = [
- "serde",
-]
 
 [[package]]
 name = "iri-string"
@@ -2683,7 +2664,7 @@ checksum = "183d7ebd9fe3815c1635cd039d1ed95f1d315731cc13e6d504e4ae039d527b8d"
 dependencies = [
  "fastrand",
  "flume",
- "if-addrs 0.14.0",
+ "if-addrs",
  "log",
  "mio",
  "socket-pktinfo",
@@ -2817,19 +2798,6 @@ dependencies = [
  "quote",
  "serde",
  "syn 2.0.114",
-]
-
-[[package]]
-name = "network-interface"
-version = "1.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a43439bf756eed340bdf8feba761e2d50c7d47175d87545cd5cbe4a137c4d1"
-dependencies = [
- "cc",
- "libc",
- "serde",
- "thiserror 1.0.69",
- "winapi",
 ]
 
 [[package]]
@@ -4426,7 +4394,7 @@ dependencies = [
 
 [[package]]
 name = "sekund"
-version = "0.4.3"
+version = "0.4.2"
 dependencies = [
  "futures",
  "hostname",
@@ -4446,7 +4414,6 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-http",
  "tauri-plugin-log",
- "tauri-plugin-network",
  "tauri-plugin-opener",
  "tauri-plugin-os",
  "tauri-plugin-single-instance",
@@ -5586,23 +5553,6 @@ dependencies = [
  "tauri-plugin",
  "thiserror 2.0.18",
  "time",
-]
-
-[[package]]
-name = "tauri-plugin-network"
-version = "2.0.2"
-source = "git+https://github.com/smartclock-app/tauri-plugin-network.git?branch=v2#12a9db35075616e4e7c986a30ea17894dd2b0378"
-dependencies = [
- "futures",
- "if-addrs 0.10.2",
- "ipnetwork",
- "lazy_static",
- "network-interface",
- "reqwest 0.12.28",
- "serde",
- "tauri",
- "tauri-plugin",
- "thiserror 1.0.69",
 ]
 
 [[package]]

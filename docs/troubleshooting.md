@@ -31,7 +31,7 @@ The editor validates `config.json` against the Zod schema. Common causes:
 
 - Ensure `remoteConfig.enabled` is `true`.
 - Confirm the port (`remoteConfig.port`, default `8080`) is not blocked by a firewall.
-- If `remoteConfig.useBonjour` is `true`, the service will be advertised on the local network as `_sekund_._tcp` under the name set in `remoteConfig.bonjourName`.
+- If `remoteConfig.useBonjour` is `true`, the service will be advertised on the local network as `_smartclock._tcp` under the name set in `remoteConfig.bonjourName`.
 - Test with: `curl http://<device-ip>:<port>/api/command -d '{"command":"refresh","data":null}'`
 
 ## CSS variables not updating

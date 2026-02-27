@@ -37,6 +37,9 @@ pub fn start_mdns(
     port: u16,
     name: String,
 ) -> Result<(), String> {
+    log::info!("[MDNS] Starting broadcast...");
+
+    // Check if already registered
     let mut mdns_state = state.lock().unwrap();
     if mdns_state.daemon.is_some() {
         log::info!("[MDNS] Service already registered");
