@@ -53,6 +53,7 @@ function App() {
     <EditorScreen />
   ) : (
     <div className="container">
+      <NetworkManager />
       <Menu />
       <RemoteConfig />
       <NetworkManager />

@@ -1,36 +1,20 @@
-type NetworkInterface = {
-  name: string;
-  v4_addrs: {
-    ip: string;
-    ip_octets: number[];
-    broadcast: string | null;
-    broadcast_octets: number[] | null;
-    netmask: string | null;
-    netmask_octets: number[] | null;
-    prefix: number | null;
-    network: string | null;
-  }[];
-  v6_addrs: {
-    ip: string;
-    ip_octets: number[];
-    broadcast: string | null;
-    broadcast_octets: number[] | null;
-    netmask: string | null;
-    netmask_octets: number[] | null;
-    prefix: number | null;
-    network: string | null;
-  }[];
-  mac_addr: string | null;
-  index: number;
-};
+export type NetworkInterfaces = Record<
+  string,
+  {
+    ipv4: string | null;
+    ipv6: string | null;
+  }
+>;
 
-const hashInterfaces = (ifaces: NetworkInterface[]) => {
-  ifaces.sort((a, b) => a.name.localeCompare(b.name));
+const hashInterfaces = (ifaces: NetworkInterfaces) => {
+  const sortedKeys = Object.keys(ifaces).sort((a, b) => a.localeCompare(b));
 
   let hash = 0;
-  for (const char of ifaces.join("|")) {
-    hash = (hash << 5) - hash + char.charCodeAt(0);
-    hash |= 0; // Constrain to 32bit integer
+  for (const key of sortedKeys) {
+    for (const char of `${key}|${ifaces[key].ipv4}|${ifaces[key].ipv6}`) {
+      hash = (hash << 5) - hash + char.charCodeAt(0);
+      hash |= 0; // Constrain to 32bit integer
+    }
   }
   return String(hash);
 };

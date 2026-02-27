@@ -1,6 +1,7 @@
 import LoadConfig from "@/helpers/config";
 import * as Sentry from "@sentry/react";
 import { path } from "@tauri-apps/api";
+import { invoke } from "@tauri-apps/api/core";
 import { onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { attachConsole, error, info, warn } from "@tauri-apps/plugin-log";
 import React from "react";
@@ -17,6 +18,7 @@ Sentry.init({
 
 await attachConsole();
 await onOpenUrl(handleDeepLink);
+await invoke("start_network_monitor");
 
 const configStore = useConfigStore.getState();
 const mdnsStore = useMDNSStore.getState();

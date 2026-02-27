@@ -11,7 +11,7 @@ pub async fn download_apk(url: String, path: String, window: tauri::WebviewWindo
     let response = client
         .get(&url)
         .header("Authorization", "Bearer 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")
-        .header("User-Agent", "SmartClock")
+        .header("User-Agent", "Sekund")
         .header("Accept", "application/octet-stream")
         .send()
         .await

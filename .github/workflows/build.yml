@@ -77,6 +77,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache Rust target
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/target
+          key: rust-target-rpi-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            rust-target-rpi-
+
       - name: Cache Docker image
         uses: actions/cache@v4
         id: docker-cache
@@ -126,37 +134,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install OpenSSL
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libssl-dev pkg-config
-
-      - name: Set up Java
-        uses: actions/setup-java@v4
+      - name: Cache Rust target
+        uses: actions/cache@v4
         with:
-          distribution: temurin
-          java-version: 17
+          path: src-tauri/target
+          key: rust-target-android-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            rust-target-android-
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v2
+      - name: Cache Docker image
+        uses: actions/cache@v4
+        id: docker-cache
         with:
-          workspaces: src-tauri
+          path: /tmp/docker-image.tar
+          key: docker-image-dannypeaky-tauri-build-android-1.0.0
 
-      - name: Install Rust and Android targets
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android,armv7-linux-androideabi
+      - name: Load cached Docker image
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/docker-image.tar
 
-      - name: Install Bun
-        run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+      - name: Pull Build Docker Image
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: docker pull dannypeaky/tauri-build-android:1.0.0
 
-      - name: Install dependencies
-        run: bun install
+      - name: Save Docker image to cache
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-android:1.0.0
 
       - name: Prepare Android keystore
         env:
@@ -174,11 +177,18 @@ jobs:
           password=$ANDROID_KEY_PASSWORD
           EOF
 
-      - name: Build release APK
-        run: bun tauri android build --apk --target aarch64 --target armv7
+      - name: Build APK inside Docker
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          docker run --rm \
+            -e SENTRY_AUTH_TOKEN \
+            -v $(pwd):/app \
+            -w /app dannypeaky/tauri-build-android:1.0.0
 
       - name: Rename APK
-        run: mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/Sekund_${{ needs.prepare.outputs.version }}_universal.apk
+        run: sudo mv app-universal-release.apk Sekund_${{ needs.prepare.outputs.version }}_universal.apk
+        working-directory: src-tauri/gen/android/app/build/outputs/apk/universal/release 
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

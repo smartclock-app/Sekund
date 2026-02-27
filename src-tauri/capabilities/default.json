@@ -8,7 +8,6 @@
     "opener:default",
     "apk-intent:allow-install-apk",
     "deep-link:default",
-    "network:allow-get-non-empty-interfaces",
     "websocket:default",
     "log:allow-log",
     "sql:allow-load",
@@ -24,7 +23,7 @@
     "fs:allow-download-write-recursive",
     {
       "identifier": "http:default",
-      "allow": [{ "url": "https://*" }]
+      "allow": [{ "url": "https://*" }, { "url": "http://www.google.com/generate_204" }]
     }
   ]
 }
