@@ -56,7 +56,7 @@ function App() {
       info("[Network] Setting up listener...");
       unlisten = await listen("network-change", event => {
         const { payload } = event;
-        info(`[Network] Change detected: ${payload}`);
+        info(`[Network] Change detected: ${JSON.stringify(payload)}`);
         useAlertsStore.getState().pushAlert("Network", JSON.stringify(payload));
       });
     };

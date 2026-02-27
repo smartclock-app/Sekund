@@ -4498,6 +4498,7 @@ dependencies = [
  "futures",
  "hostname",
  "jni",
+ "libc",
  "local-ip-address",
  "log",
  "mdns-sd",
