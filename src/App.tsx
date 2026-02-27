@@ -1,17 +1,15 @@
 import "@/App.scss";
 import useConfigStore from "./hooks/useConfigStore";
 
-import { listen } from "@tauri-apps/api/event";
-import { info } from "@tauri-apps/plugin-log";
 import { memo, useEffect, useRef, useState } from "react";
 import Alerts from "./components/alerts/Alerts";
 import Calendar from "./components/calendar/Calendar";
 import Clock from "./components/clock/Clock";
 import { EditorScreen } from "./components/editor";
 import useOptionsMenu from "./components/menu/Menu";
+import NetworkManager from "./components/network/Manager";
 import RemoteConfig from "./components/RemoteConfig";
 import { WidgetLocation, WidgetOfType, WidgetType } from "./helpers/types";
-import useAlertsStore from "./hooks/useAlertsStore";
 import useRouter, { RouterScreen } from "./hooks/useRouter";
 
 const MemoizedWidget = memo(
@@ -49,27 +47,11 @@ function App() {
     return () => observer.disconnect();
   });
 
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-
-    const setupListener = async () => {
-      info("[Network] Setting up listener...");
-      unlisten = await listen("network-change", event => {
-        const { payload } = event;
-        info(`[Network] Change detected: ${JSON.stringify(payload)}`);
-        useAlertsStore.getState().pushAlert("Network", JSON.stringify(payload));
-      });
-    };
-
-    setupListener();
-
-    return () => unlisten?.();
-  }, []);
-
   return currentScreen === RouterScreen.Editor ? (
     <EditorScreen />
   ) : (
     <div className="container">
+      <NetworkManager />
       <Menu />
       <RemoteConfig />
       <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
