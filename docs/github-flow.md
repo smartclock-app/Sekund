@@ -98,40 +98,20 @@ When you push a tag, the release workflow:
 
 ### `ci.yml`
 
-GitHub Actions Workflows
-
-### `ci.yml`
-
 Runs on every PR and main push.
 
 **Triggers:**
 
 - Pull requests to `main`
-- Pushes to `main`
 
 **Does:**
 
 - Installs dependencies
 - Runs tests with Bun
-
-**Duration:** ~2-3 minutes
-
-### `build.yml`
-
-Validates that code compiles on every PR.
-
-**Triggers:**
-
-- Pull requests to `main`
-
-**Does:**
-
 - Builds Linux AppImage (validation only, no artifacts)
 - Builds Android APK (validation only, no artifacts)
 
 **Purpose:** Ensure compilation succeeds before allowing PR merge
-
-**Duration:** ~30-45 minutes
 
 ### `release.yml`
 
@@ -148,8 +128,6 @@ Runs only on tag pushes to create releases.
 3. Builds Linux AppImage (signed, for release)
 4. Builds Android APK (signed, for release)
 5. Creates GitHub Release with artifacts and `latest.json`
-
-**Duration:** ~30-45 minutes
 
 ## Version Numbers
 
@@ -169,18 +147,6 @@ Use Semantic Versioning:
   - `src-tauri/tauri.conf.json` (Tauri config)
 
 This eliminates manual version management across three files.
-
-## Branch Protection
-
-Set up on GitHub (Settings → Branches):
-
-1. Add rule for `main` branch
-2. Require pull request before merging ✅
-3. Require status checks to pass:
-   - `Tests` (from ci.yml)
-   - `Check Linux Build` (from build.yml)
-   - `Check Android Build` (from build.yml)
-4. Include administrators ✅ (prevents accidental pushes)
 
 ## Troubleshooting
 

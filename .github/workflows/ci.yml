@@ -31,10 +31,8 @@ jobs:
     name: CI Build Linux
     needs: test
     uses: ./.github/workflows/_build-linux.yml
-    secrets: inherit
 
   build-android:
     name: CI Build Android
     needs: test
     uses: ./.github/workflows/_build-android.yml
-    secrets: inherit

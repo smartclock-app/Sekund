@@ -46,7 +46,8 @@ jobs:
         if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-rpi:1.0.0
 
-      - name: Build AppImage
+      - name: Build AppImage (signed)
+        if: github.event_name != 'pull_request'
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -58,6 +59,24 @@ jobs:
             -e SENTRY_AUTH_TOKEN \
             -v $(pwd):/app \
             -w /app dannypeaky/tauri-build-rpi:1.0.0
+
+      - name: Build AppImage (unsigned)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v $(pwd):/app \
+            -w /app dannypeaky/tauri-build-rpi:1.0.0
+
+      - name: Validate AppImage was created
+        if: github.event_name == 'pull_request'
+        run: |
+          APPIMAGE=$(find src-tauri/target/release/bundle/appimage -name "*.AppImage" | head -n1)
+          if [ -z "$APPIMAGE" ]; then
+            echo "::error::AppImage build failed - no artifact found"
+            exit 1
+          fi
+          echo "AppImage created: $APPIMAGE"
 
       - name: Upload AppImage
         if: inputs.upload-artifacts

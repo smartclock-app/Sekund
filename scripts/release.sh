@@ -4,6 +4,11 @@
 
 set -e
 
+if ! command -v jq >/dev/null 2>&1; then
+    echo "❌ 'jq' is required to update package.json. Please install jq and retry."
+    exit 1
+fi
+
 if [ -z "$1" ]; then
     echo "❌ Usage: ./scripts/release.sh v0.5.0"
     exit 1
@@ -68,7 +73,7 @@ echo ""
 echo "✅ Release initiated!"
 echo ""
 echo "📋 What's happening next:"
-echo "   1️⃣  Version Sync - Updates Cargo.toml and tauri.conf.json"
+echo "   1️⃣  Version Sync - Updates Cargo.toml from package.json"
 echo "   2️⃣  Build Linux AppImage"
 echo "   3️⃣  Build Android APK"
 echo "   4️⃣  Create GitHub Release with artifacts"

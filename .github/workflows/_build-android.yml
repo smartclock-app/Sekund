@@ -52,6 +52,7 @@ jobs:
         run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-android:1.0.0
 
       - name: Prepare keystore
+        if: github.event_name != 'pull_request'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
