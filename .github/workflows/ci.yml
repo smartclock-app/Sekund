@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   test:
-    name: Tests
+    name: CI Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,11 +28,13 @@ jobs:
         run: bun run test
 
   build-linux:
+    name: CI Build Linux
     needs: test
     uses: ./.github/workflows/_build-linux.yml
     secrets: inherit
 
   build-android:
+    name: CI Build Android
     needs: test
     uses: ./.github/workflows/_build-android.yml
     secrets: inherit
