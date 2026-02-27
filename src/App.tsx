@@ -4,7 +4,6 @@ import useConfigStore from "./hooks/useConfigStore";
 import { memo, useEffect, useRef, useState } from "react";
 import Alerts from "./components/alerts/Alerts";
 import Calendar from "./components/calendar/Calendar";
-import useOptionsMenu from "./components/calendar/Menu/Menu";
 import Clock from "./components/clock/Clock";
 import { EditorScreen } from "./components/editor";
 import useOptionsMenu from "./components/menu/Menu";

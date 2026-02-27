@@ -26,7 +26,6 @@ pub fn run() {
     ));
 
     tauri::Builder::default()
-        .plugin(tauri_plugin_network::init())
         .setup(|_app| {
             #[cfg(desktop)]
             _app.handle()
