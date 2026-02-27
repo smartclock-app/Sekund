@@ -10,6 +10,7 @@ import useOptionsMenu from "./components/menu/Menu";
 import NetworkManager from "./components/network/Manager";
 import RemoteConfig from "./components/RemoteConfig";
 import { WidgetLocation, WidgetOfType, WidgetType } from "./helpers/types";
+import useNetworkStore from "./hooks/useNetworkStore";
 import useRouter, { RouterScreen } from "./hooks/useRouter";
 
 const MemoizedWidget = memo(
@@ -28,6 +29,7 @@ function App() {
   const [longPressProps, Menu] = useOptionsMenu();
 
   const currentScreen = useRouter(state => state.currentScreen);
+  const connected = useNetworkStore(state => state.connected);
   const layout = useConfigStore(state => state.layout);
   const widgetConfigs = useConfigStore(state => state.config.widgets);
   const calendarConfig = useConfigStore(state => state.config.calendar);
@@ -54,33 +56,36 @@ function App() {
       <NetworkManager />
       <Menu />
       <RemoteConfig />
+      <NetworkManager />
       <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
-        {layout.main.map(Widget => (
-          <MemoizedWidget
-            key={Widget.Name}
-            Component={Widget.Component}
-            config={widgetConfigs[Widget.Name]}
-            location={WidgetLocation.Main}
-          />
-        ))}
-        <Clock />
-      </div>
-      <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
-        <Alerts />
-        {layout.sidebar.map(Widget => {
-          if (Widget.Name === "calendar") {
-            return <Calendar key={Widget.Name} config={calendarConfig} location={WidgetLocation.Sidebar} />;
-          }
-
-          return (
+        {connected &&
+          layout.main.map(Widget => (
             <MemoizedWidget
               key={Widget.Name}
               Component={Widget.Component}
               config={widgetConfigs[Widget.Name]}
-              location={WidgetLocation.Sidebar}
+              location={WidgetLocation.Main}
             />
-          );
-        })}
+          ))}
+        <Clock />
+      </div>
+      <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
+        <Alerts />
+        {connected &&
+          layout.sidebar.map(Widget => {
+            if (Widget.Name === "calendar") {
+              return <Calendar key={Widget.Name} config={calendarConfig} location={WidgetLocation.Sidebar} />;
+            }
+
+            return (
+              <MemoizedWidget
+                key={Widget.Name}
+                Component={Widget.Component}
+                config={widgetConfigs[Widget.Name]}
+                location={WidgetLocation.Sidebar}
+              />
+            );
+          })}
       </div>
     </div>
   );
