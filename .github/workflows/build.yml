@@ -187,7 +187,8 @@ jobs:
             -w /app dannypeaky/tauri-build-android:1.0.0
 
       - name: Rename APK
-        run: mv src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk src-tauri/gen/android/app/build/outputs/apk/universal/release/Sekund_${{ needs.prepare.outputs.version }}_universal.apk
+        run: sudo mv app-universal-release.apk Sekund_${{ needs.prepare.outputs.version }}_universal.apk
+        working-directory: src-tauri/gen/android/app/build/outputs/apk/universal/release 
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
