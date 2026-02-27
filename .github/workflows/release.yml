@@ -1,76 +1,51 @@
-name: CI — Build & Release Sekund
+name: Release
 
 on:
   push:
-    branches:
-      - main
-  pull_request:
+    tags:
+      - "v*.*.*"
 
 permissions:
   contents: write
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  test:
-    name: Frontend Tests
+  prepare:
+    name: Extract Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+  sync-version:
+    name: Sync Version
+    needs: prepare
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Bun
+      - name: Update Cargo.toml
         run: |
-          curl -fsSL https://bun.sh/install | bash
-          echo "$HOME/.bun/bin" >> $GITHUB_PATH
+          sed -i 's/^version = ".*"/version = "${{ needs.prepare.outputs.version }}"/' src-tauri/Cargo.toml
 
-      - name: Install dependencies
-        run: bun install
-
-      - name: Run tests
-        run: bun run test
-
-  prepare:
-    name: Prepare (version & release check)
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.set.outputs.version }}
-      should_build: ${{ steps.set.outputs.should_build }}
-      should_release: ${{ steps.set.outputs.should_release }}
-    steps:
-      - name: Checkout (full)
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Determine version and release state
-        id: set
+      - name: Commit and push version sync
         run: |
-          VERSION=$(jq -r .version package.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src-tauri/Cargo.toml
+          git commit -m "chore: bump version to ${{ needs.prepare.outputs.version }}" || true
+          git push origin main || true
 
-          SHOULD_BUILD=false
-          SHOULD_RELEASE=false
-
-          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-            SHOULD_BUILD=true
-          elif [ "$GITHUB_REF" = "refs/heads/main" ]; then
-            git fetch --tags origin
-            if ! git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
-              SHOULD_BUILD=true
-              SHOULD_RELEASE=true
-            fi
-          fi
-
-          echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
-          echo "should_release=$SHOULD_RELEASE" >> $GITHUB_OUTPUT
-
-  build_linux:
-    name: Build Linux (AppImage)
-    needs: [prepare, test]
+  build-linux:
+    name: Build Linux
+    needs: prepare
     runs-on: ubuntu-22.04-arm
-    if: needs.prepare.outputs.should_build == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,21 +55,20 @@ jobs:
         with:
           path: src-tauri/target
           key: rust-target-rpi-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            rust-target-rpi-
+          restore-keys: rust-target-rpi-
 
       - name: Cache Docker image
         uses: actions/cache@v4
         id: docker-cache
         with:
           path: /tmp/docker-image.tar
-          key: docker-image-dannypeaky-tauri-build-rpi-1.0.0
+          key: docker-image-tauri-rpi-1.0.0
 
       - name: Load cached Docker image
         if: steps.docker-cache.outputs.cache-hit == 'true'
         run: docker load -i /tmp/docker-image.tar
 
-      - name: Pull Build Docker Image
+      - name: Pull Docker image
         if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker pull dannypeaky/tauri-build-rpi:1.0.0
 
@@ -102,7 +76,7 @@ jobs:
         if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-rpi:1.0.0
 
-      - name: Build AppImage inside Docker
+      - name: Build AppImage
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
@@ -115,19 +89,18 @@ jobs:
             -v $(pwd):/app \
             -w /app dannypeaky/tauri-build-rpi:1.0.0
 
-      - name: Upload AppImage artifact
+      - name: Upload AppImage
         uses: actions/upload-artifact@v4
         with:
-          name: appimage
+          name: linux-artifacts
           path: |
             src-tauri/target/release/bundle/appimage/*.AppImage
             src-tauri/target/release/bundle/appimage/*.sig
 
-  build_android:
-    name: Build Android (APK)
-    needs: [prepare, test]
+  build-android:
+    name: Build Android
+    needs: prepare
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.should_build == 'true'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -137,21 +110,20 @@ jobs:
         with:
           path: src-tauri/target
           key: rust-target-android-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            rust-target-android-
+          restore-keys: rust-target-android-
 
       - name: Cache Docker image
         uses: actions/cache@v4
         id: docker-cache
         with:
           path: /tmp/docker-image.tar
-          key: docker-image-dannypeaky-tauri-build-android-1.0.0
+          key: docker-image-tauri-android-1.0.0
 
       - name: Load cached Docker image
         if: steps.docker-cache.outputs.cache-hit == 'true'
         run: docker load -i /tmp/docker-image.tar
 
-      - name: Pull Build Docker Image
+      - name: Pull Docker image
         if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker pull dannypeaky/tauri-build-android:1.0.0
 
@@ -159,7 +131,7 @@ jobs:
         if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-android:1.0.0
 
-      - name: Prepare Android keystore
+      - name: Prepare keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -175,7 +147,7 @@ jobs:
           password=$ANDROID_KEY_PASSWORD
           EOF
 
-      - name: Build APK inside Docker
+      - name: Build APK
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
@@ -185,26 +157,21 @@ jobs:
             -w /app dannypeaky/tauri-build-android:1.0.0
 
       - name: Rename APK
-        run: sudo mv app-universal-release.apk Sekund_${{ needs.prepare.outputs.version }}_universal.apk
+        run: |
+          sudo mv app-universal-release.apk Sekund_${{ needs.prepare.outputs.version }}_universal.apk
         working-directory: src-tauri/gen/android/app/build/outputs/apk/universal/release
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: apk
+          name: android-artifacts
           path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
 
   release:
-    name: Create GitHub Release
-    needs: [prepare, build_linux, build_android]
+    name: Create Release
+    needs: [prepare, build-linux, build-android]
     runs-on: ubuntu-latest
-    if: needs.prepare.outputs.should_release == 'true'
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Download artifacts
         uses: actions/download-artifact@v4
 
@@ -217,7 +184,7 @@ jobs:
             "pub_date": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
             "platforms": {
               "linux-aarch64": {
-                "signature": "$(cat appimage/*.sig)",
+                "signature": "$(cat linux-artifacts/*.sig)",
                 "url": "https://github.com/0x5045414b/Sekund/releases/download/v${{ needs.prepare.outputs.version }}/Sekund_${{ needs.prepare.outputs.version }}_aarch64.AppImage"
               },
               "android": {
@@ -234,9 +201,9 @@ jobs:
           tag_name: v${{ needs.prepare.outputs.version }}
           name: Sekund v${{ needs.prepare.outputs.version }}
           files: |
-            appimage/*.AppImage
-            appimage/*.sig
-            apk/*.apk
+            linux-artifacts/*.AppImage
+            linux-artifacts/*.sig
+            android-artifacts/*.apk
             latest.json
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
