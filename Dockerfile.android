@@ -1,0 +1,62 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 1. Install System Dependencies
+RUN apt-get update && apt-get install -y \
+    unzip \
+    curl \
+    wget \
+    file \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    openjdk-17-jdk \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# 2. Install Rust (Latest Stable)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# 3. Add Android targets for Rust
+RUN rustup target add \
+    aarch64-linux-android \
+    armv7-linux-androideabi
+
+# 4. Install Bun (Latest)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+# 5. Install Android SDK Command Line Tools
+ENV ANDROID_HOME=/opt/android-sdk
+ENV ANDROID_SDK_ROOT=${ANDROID_HOME}
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools && \
+    cd ${ANDROID_HOME}/cmdline-tools && \
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip && \
+    unzip commandlinetools-linux-11076708_latest.zip && \
+    rm commandlinetools-linux-11076708_latest.zip && \
+    mv cmdline-tools latest
+
+ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${PATH}"
+
+# 6. Accept Android SDK Licenses and Install Required Components
+# Tauri v2 requires API level 24+ and recommends NDK 26
+RUN yes | sdkmanager --licenses && \
+    sdkmanager \
+    "platform-tools" \
+    "platforms;android-34" \
+    "build-tools;34.0.0" \
+    "ndk;26.1.10909125"
+
+# 7. Set NDK Environment Variables
+ENV NDK_HOME="${ANDROID_HOME}/ndk/26.1.10909125"
+
+# 8. Set Java Home (JDK 17 is required)
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+WORKDIR /app
+
+# Final build command
+CMD ["/bin/bash", "-c", "bun install && bun build:android"]
