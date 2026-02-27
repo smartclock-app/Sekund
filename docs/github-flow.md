@@ -14,13 +14,13 @@ A simple, maintainable release workflow for Sekund following best practices for 
 ```
 Feature Branch
      ↓
-Pull Request → Tests Run ✅
-     ↓ (after approval)
-Merge to Main → Tests Run ✅
-     ↓
+Pull Request → Tests ✅ + Build Check ✅ (validates compilation)
+     ↓ (after approval & checks pass)
+Merge to Main → Tests ✅
+     ↓ (when ready to release)
 ./scripts/release.sh v0.5.0 → Version bump + commit
      ↓
-Tag Push → Version Sync ✅ → Linux Build ✅ → Android Build ✅ → Release Created ✅
+Tag Push → Version Sync ✅ → Build ✅ → Create Release ✅
 ```
 
 ## Development Workflow
@@ -51,9 +51,9 @@ The CI automatically runs tests. After approval and tests pass, merge to main.
 
 ### 4. Merge to Main
 
-After your PR is approved, merge it to main. Tests run again to ensure main is always stable.
+After your PR is approved and **both tests and build checks pass**, merge it to main. Tests run once more to ensure main is always stable.
 
-**Note**: Merging to main does NOT trigger a build. Only creating a tag triggers the full release workflow.
+**Note**: Only tag creation triggers the full release workflow with artifact generation.
 
 ## Creating a Release
 
@@ -88,20 +88,21 @@ git push origin v0.5.0
 
 ### What Happens After Tag Push
 
-The `release.yml` workflow automatically:
+When you push a tag, the release workflow:
 
 1. **Version Sync** - Updates Cargo.toml and tauri.conf.json with the version from tag
-2. **Build Linux** - Creates AppImage in Docker environment
-3. **Build Android** - Creates APK in Docker environment
-4. **Create Release** - Uploads artifacts to GitHub Releases with `latest.json`
-
-All in parallel where possible. Check progress at: https://github.com/0x5045414b/Sekund/actions
+2. **Build Artifacts** - Builds Linux AppImage and Android APK (final, signed builds)
+3. **Create Release** - Uploads artifacts to GitHub Releases with `latest.json`
 
 ## GitHub Actions Workflows
 
 ### `ci.yml`
 
-Runs on every PR and main push. Just tests.
+GitHub Actions Workflows
+
+### `ci.yml`
+
+Runs on every PR and main push.
 
 **Triggers:**
 
@@ -115,9 +116,26 @@ Runs on every PR and main push. Just tests.
 
 **Duration:** ~2-3 minutes
 
+### `build.yml`
+
+Validates that code compiles on every PR.
+
+**Triggers:**
+
+- Pull requests to `main`
+
+**Does:**
+
+- Builds Linux AppImage (validation only, no artifacts)
+- Builds Android APK (validation only, no artifacts)
+
+**Purpose:** Ensure compilation succeeds before allowing PR merge
+
+**Duration:** ~30-45 minutes
+
 ### `release.yml`
 
-Runs on tag pushes only. Builds and releases the app.
+Runs only on tag pushes to create releases.
 
 **Triggers:**
 
@@ -127,12 +145,11 @@ Runs on tag pushes only. Builds and releases the app.
 
 1. Extracts version from tag
 2. Syncs version to Cargo.toml and tauri.conf.json
-3. Builds Linux AppImage (on ARM runner for RPi support)
-4. Builds Android APK
-5. Creates GitHub Release with all artifacts
-6. Generates `latest.json` for auto-updates
+3. Builds Linux AppImage (signed, for release)
+4. Builds Android APK (signed, for release)
+5. Creates GitHub Release with artifacts and `latest.json`
 
-**Duration:** ~30-45 minutes (most CI time)
+**Duration:** ~30-45 minutes
 
 ## Version Numbers
 
@@ -161,6 +178,8 @@ Set up on GitHub (Settings → Branches):
 2. Require pull request before merging ✅
 3. Require status checks to pass:
    - `Tests` (from ci.yml)
+   - `Check Linux Build` (from build.yml)
+   - `Check Android Build` (from build.yml)
 4. Include administrators ✅ (prevents accidental pushes)
 
 ## Troubleshooting

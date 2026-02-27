@@ -4,9 +4,6 @@ on:
   pull_request:
     branches:
       - main
-  push:
-    branches:
-      - main
 
 permissions:
   contents: read
@@ -29,3 +26,13 @@ jobs:
 
       - name: Run tests
         run: bun run test
+
+  build-linux:
+    needs: test
+    uses: ./.github/workflows/_build-linux.yml
+    secrets: inherit
+
+  build-android:
+    needs: test
+    uses: ./.github/workflows/_build-android.yml
+    secrets: inherit

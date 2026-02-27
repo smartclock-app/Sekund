@@ -1,0 +1,90 @@
+name: Build Android Reusable
+
+on:
+  workflow_call:
+    inputs:
+      upload-artifacts:
+        description: "Upload artifacts to workflow"
+        required: false
+        default: false
+        type: boolean
+      version:
+        description: "Version string for artifact naming"
+        required: false
+        default: "dev"
+        type: string
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Rust target
+        uses: actions/cache@v4
+        with:
+          path: src-tauri/target
+          key: rust-target-android-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: rust-target-android-
+
+      - name: Cache Docker image
+        uses: actions/cache@v4
+        id: docker-cache
+        with:
+          path: /tmp/docker-image.tar
+          key: docker-image-tauri-android-1.0.0
+
+      - name: Load cached Docker image
+        if: steps.docker-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/docker-image.tar
+
+      - name: Pull Docker image
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: docker pull dannypeaky/tauri-build-android:1.0.0
+
+      - name: Save Docker image to cache
+        if: steps.docker-cache.outputs.cache-hit != 'true'
+        run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-android:1.0.0
+
+      - name: Prepare keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          mkdir -p src-tauri/gen/android
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > src-tauri/gen/android/app/keystore.jks
+          cat > src-tauri/gen/android/keystore.properties <<EOF
+          storeFile=keystore.jks
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          password=$ANDROID_KEY_PASSWORD
+          EOF
+
+      - name: Build APK
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          docker run --rm \
+            -e SENTRY_AUTH_TOKEN \
+            -v $(pwd):/app \
+            -w /app dannypeaky/tauri-build-android:1.0.0
+
+      - name: Rename APK
+        if: inputs.upload-artifacts
+        run: |
+          sudo mv app-universal-release.apk Sekund_${{ inputs.version }}_universal.apk
+        working-directory: src-tauri/gen/android/app/build/outputs/apk/universal/release
+
+      - name: Upload APK
+        if: inputs.upload-artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-artifacts
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk
