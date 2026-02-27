@@ -291,8 +291,9 @@ fn get_interface_addresses() -> std::collections::HashMap<String, InterfaceAddre
 pub fn start_network_monitor(app: tauri::AppHandle) {
     use tauri::Emitter;
 
-    listen_network_changes(move |event| {
+    if let Err(err) = listen_network_changes(move |event| {
         let _ = app.emit("network-change", event);
-    })
-    .unwrap();
+    }) {
+        log::error!("[Network] Failed to start monitor: {}", err);
+    }
 }

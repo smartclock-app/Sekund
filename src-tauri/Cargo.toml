@@ -26,8 +26,8 @@ local-ip-address = "0.6"
 log = "0.4"
 mdns-sd = "0.17"
 ndk-context = "0.1"
-reqwest = { version = "0.12", features = ["json", "stream"], default-features = false }
-sentry = { version = "0.42", default-features = false, features = ["reqwest", "backtrace", "contexts", "panic", "debug-images"] }
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream"], default-features = false }
+sentry = { version = "0.42", default-features = false, features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "debug-images"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = { version = "2", features = [] }
@@ -41,7 +41,6 @@ tauri-plugin-websocket = "2"
 tiny_http = "0.12.0"
 tauri-plugin-apk-intent = { git = "https://github.com/smartclock-app/tauri-plugin-apk-intent.git" }
 tauri-plugin-deep-link = "2"
-tauri-plugin-network = "2.0.4"
 
 # Updater Widget
 [target.'cfg(not(target_os = "android"))'.dependencies]
@@ -54,9 +53,6 @@ tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }
 # Network Interfaces Macos
 [target.'cfg(target_os = "macos")'.dependencies]
 system-configuration = "0.6"
-
-# Network Interfaces Linux/Android
-[target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
 
 # Unit Tests
 [dev-dependencies]

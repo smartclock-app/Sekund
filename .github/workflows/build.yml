@@ -80,7 +80,7 @@ jobs:
       - name: Cache Rust target
         uses: actions/cache@v4
         with:
-          path: src-tauri/target # Or wherever your target directory is located
+          path: src-tauri/target
           key: rust-target-rpi-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-target-rpi-
@@ -137,7 +137,7 @@ jobs:
       - name: Cache Rust target
         uses: actions/cache@v4
         with:
-          path: src-tauri/target # Or wherever your target directory is located
+          path: src-tauri/target
           key: rust-target-android-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             rust-target-android-
@@ -177,7 +177,7 @@ jobs:
           password=$ANDROID_KEY_PASSWORD
           EOF
 
-      - name: Build AppImage inside Docker
+      - name: Build APK inside Docker
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: |
