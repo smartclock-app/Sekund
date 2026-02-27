@@ -10,19 +10,13 @@ use system_configuration::{
     dynamic_store::{SCDynamicStore, SCDynamicStoreBuilder, SCDynamicStoreCallBackContext},
 };
 
-#[cfg(any(target_os = "linux", target_os = "android"))]
-use rtnetlink::new_connection;
-
-#[cfg(any(target_os = "linux", target_os = "android"))]
-use futures::stream::StreamExt;
-
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, PartialEq)]
 pub struct InterfaceAddresses {
     pub ipv4: Option<String>,
     pub ipv6: Option<String>,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, PartialEq)]
 pub struct NetworkEvent {
     pub interfaces: std::collections::HashMap<String, InterfaceAddresses>,
 }
@@ -31,6 +25,8 @@ pub fn listen_network_changes<F>(callback: F) -> Result<(), Box<dyn std::error::
 where
     F: Fn(NetworkEvent) + Send + 'static,
 {
+    log::info!("[Network] Monitoring for network changes...");
+
     #[cfg(target_os = "macos")]
     {
         listen_network_changes_macos(callback)
@@ -43,6 +39,7 @@ where
 
     #[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "android")))]
     {
+        log::warn!("[Network] Unsupported platform for network monitoring");
         Err("Unsupported platform".into())
     }
 }
@@ -53,8 +50,6 @@ where
     F: Fn(NetworkEvent) + Send + 'static,
 {
     use std::sync::Arc;
-
-    log::info!("[Network] Starting monitor on macOS");
 
     thread::spawn(move || {
         let callback = Arc::new(callback);
@@ -203,75 +198,93 @@ where
     F: Fn(NetworkEvent) + Send + 'static,
 {
     use std::sync::Arc;
+    use std::time::Duration;
 
     thread::spawn(move || {
-        let rt = tokio::runtime::Runtime::new().unwrap();
+        let callback = Arc::new(callback);
+        let mut last_state = get_interface_addresses();
 
-        rt.block_on(async {
-            let (connection, handle, _messages) = new_connection().unwrap();
+        loop {
+            thread::sleep(Duration::from_secs(1));
 
-            tokio::spawn(connection);
+            let current_state = get_interface_addresses();
 
-            let mut addresses = handle.address().get().execute();
-
-            let callback = Arc::new(callback);
-
-            // Monitor address changes
-            tokio::spawn(async move {
-                while let Some((message, _)) = addresses.try_next().await.unwrap() {
-                    if let Some(interface_name) = message.header.interface_name() {
-                        let mut interfaces = std::collections::HashMap::new();
-
-                        // Extract address from the message
-                        let mut ipv4 = None;
-                        let mut ipv6 = None;
-
-                        if let Ok(nlas) = message.nlas() {
-                            for nla in nlas {
-                                use rtnetlink::packet::address::Nla;
-                                match nla {
-                                    Nla::Address(addr) => {
-                                        if addr.len() == 4 {
-                                            ipv4 = Some(format!(
-                                                "{}.{}.{}.{}",
-                                                addr[0], addr[1], addr[2], addr[3]
-                                            ));
-                                        } else if addr.len() == 16 {
-                                            // Format IPv6 address
-                                            ipv6 = Some(format!(
-                                                "{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}:{:x}",
-                                                (addr[0] as u16) << 8 | addr[1] as u16,
-                                                (addr[2] as u16) << 8 | addr[3] as u16,
-                                                (addr[4] as u16) << 8 | addr[5] as u16,
-                                                (addr[6] as u16) << 8 | addr[7] as u16,
-                                                (addr[8] as u16) << 8 | addr[9] as u16,
-                                                (addr[10] as u16) << 8 | addr[11] as u16,
-                                                (addr[12] as u16) << 8 | addr[13] as u16,
-                                                (addr[14] as u16) << 8 | addr[15] as u16,
-                                            ));
-                                        }
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-
-                        interfaces
-                            .insert(interface_name.clone(), InterfaceAddresses { ipv4, ipv6 });
-
-                        callback(NetworkEvent { interfaces });
-                    }
-                }
-            });
-
-            // Keep the runtime alive
-            loop {
-                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+            // Check if state changed
+            if current_state != last_state {
+                callback(NetworkEvent {
+                    interfaces: current_state.clone(),
+                });
+                last_state = current_state;
             }
-        });
+        }
     });
 
     Ok(())
+}
+
+#[cfg(any(target_os = "linux", target_os = "android"))]
+fn get_interface_addresses() -> std::collections::HashMap<String, InterfaceAddresses> {
+    use libc::{freeifaddrs, getifaddrs, AF_INET, AF_INET6};
+
+    let mut interfaces = std::collections::HashMap::new();
+
+    unsafe {
+        let mut ifaddr_ptr: *mut libc::ifaddrs = std::ptr::null_mut();
+
+        if getifaddrs(&mut ifaddr_ptr) != 0 {
+            return interfaces;
+        }
+
+        let mut current = ifaddr_ptr;
+        while !current.is_null() {
+            let ifaddr = &*current;
+
+            if !ifaddr.ifa_name.is_null() {
+                let name = CStr::from_ptr(ifaddr.ifa_name)
+                    .to_string_lossy()
+                    .to_string();
+
+                let entry = interfaces.entry(name).or_insert(InterfaceAddresses {
+                    ipv4: None,
+                    ipv6: None,
+                });
+
+                if !ifaddr.ifa_addr.is_null() {
+                    let addr_family = (*ifaddr.ifa_addr).sa_family as i32;
+
+                    if addr_family == AF_INET {
+                        let sockaddr_in = ifaddr.ifa_addr as *const libc::sockaddr_in;
+                        let ip = Ipv4Addr::from(u32::from_be((*sockaddr_in).sin_addr.s_addr));
+                        entry.ipv4 = Some(ip.to_string());
+                    } else if addr_family == AF_INET6 {
+                        let sockaddr_in6 = ifaddr.ifa_addr as *const libc::sockaddr_in6;
+                        let addr_bytes = &(*sockaddr_in6).sin6_addr.s6_addr;
+                        let parts = [
+                            u16::from_be((addr_bytes[0] as u16) << 8 | addr_bytes[1] as u16),
+                            u16::from_be((addr_bytes[2] as u16) << 8 | addr_bytes[3] as u16),
+                            u16::from_be((addr_bytes[4] as u16) << 8 | addr_bytes[5] as u16),
+                            u16::from_be((addr_bytes[6] as u16) << 8 | addr_bytes[7] as u16),
+                            u16::from_be((addr_bytes[8] as u16) << 8 | addr_bytes[9] as u16),
+                            u16::from_be((addr_bytes[10] as u16) << 8 | addr_bytes[11] as u16),
+                            u16::from_be((addr_bytes[12] as u16) << 8 | addr_bytes[13] as u16),
+                            u16::from_be((addr_bytes[14] as u16) << 8 | addr_bytes[15] as u16),
+                        ];
+                        let ip = Ipv6Addr::new(
+                            parts[0], parts[1], parts[2], parts[3], parts[4], parts[5], parts[6],
+                            parts[7],
+                        );
+                        entry.ipv6 = Some(ip.to_string());
+                    }
+                }
+            }
+
+            current = ifaddr.ifa_next;
+        }
+
+        freeifaddrs(ifaddr_ptr);
+    }
+
+    interfaces
 }
 
 #[tauri::command]

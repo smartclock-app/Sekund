@@ -56,8 +56,6 @@ system-configuration = "0.6"
 
 # Network Interfaces Linux/Android
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
-rtnetlink = "0.14"
-tokio = { version = "1", features = ["full"] }
 
 # Unit Tests
 [dev-dependencies]
