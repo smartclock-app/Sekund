@@ -3,6 +3,7 @@ mod browser;
 mod http_server;
 mod mdns;
 mod migrations;
+mod network;
 
 use sentry;
 use std::collections::HashMap;
@@ -14,6 +15,7 @@ use android_updates::{download_apk, install_apk};
 use browser::launch_browser;
 use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
 use mdns::{start_mdns, MdnsState};
+use network::start_network_monitor;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -78,7 +80,8 @@ pub fn run() {
             http_respond,
             download_apk,
             install_apk,
-            launch_browser
+            launch_browser,
+            start_network_monitor
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
