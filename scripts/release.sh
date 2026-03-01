@@ -60,7 +60,7 @@ echo "📦 Updating version numbers..."
 jq ".version = \"$VERSION\"" package.json > package.json.tmp && mv package.json.tmp package.json
 
 # Update Cargo.toml
-sed -i "0,/^version = \".*\"/s//version = \"$VERSION\"/" src-tauri/Cargo.toml
+awk -v ver="$VERSION" '/^version = ".*"/ && !found {sub(/^version = ".*"/, "version = \"" ver "\""); found=1} 1' src-tauri/Cargo.toml > tmp && mv tmp src-tauri/Cargo.toml
 
 # Refresh Cargo.lock
 cargo fetch --manifest-path src-tauri/Cargo.toml
@@ -80,7 +80,6 @@ echo ""
 echo "✅ Release initiated!"
 echo ""
 echo "📋 What's happening next:"
-echo "   1️⃣  Version Sync - Updates Cargo.toml from package.json"
 echo "   2️⃣  Build Linux AppImage"
 echo "   3️⃣  Build Android APK"
 echo "   4️⃣  Create GitHub Release with artifacts"
