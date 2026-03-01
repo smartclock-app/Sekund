@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "tauri": "tauri",
-    "build:android": "bun tauri android build --apk --target aarch64 --target armv7"
+    "build:android": "bun tauri android build --apk --target aarch64 --target armv7",
+    "release": "./scripts/release.sh"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",
