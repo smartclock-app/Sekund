@@ -90,15 +90,13 @@ git push origin v0.5.0
 
 When you push a tag, the release workflow:
 
-1. **Version Sync** - Updates Cargo.toml and tauri.conf.json with the version from tag
+1. **Version Sync** - Updates Cargo.toml with the version from tag
 2. **Build Artifacts** - Builds Linux AppImage and Android APK (final, signed builds)
 3. **Create Release** - Uploads artifacts to GitHub Releases with `latest.json`
 
 ## GitHub Actions Workflows
 
 ### `ci.yml`
-
-Runs on every PR and main push.
 
 **Triggers:**
 
@@ -115,8 +113,6 @@ Runs on every PR and main push.
 
 ### `release.yml`
 
-Runs only on tag pushes to create releases.
-
 **Triggers:**
 
 - Tag push matching `v*.*.*` (e.g., `v0.5.0`, `v1.0.0`)
@@ -124,7 +120,7 @@ Runs only on tag pushes to create releases.
 **Does:**
 
 1. Extracts version from tag
-2. Syncs version to Cargo.toml and tauri.conf.json
+2. Syncs version to Cargo.toml
 3. Builds Linux AppImage (signed, for release)
 4. Builds Android APK (signed, for release)
 5. Creates GitHub Release with artifacts and `latest.json`
@@ -142,11 +138,9 @@ Use Semantic Versioning:
 `package.json` is the version source:
 
 - When you tag `v0.5.0`, the release workflow reads one version value
-- It automatically syncs to:
-  - `src-tauri/Cargo.toml` (Rust side)
-  - `src-tauri/tauri.conf.json` (Tauri config)
+- It automatically syncs to `src-tauri/Cargo.toml`
 
-This eliminates manual version management across three files.
+This eliminates manual version management across files.
 
 ## Troubleshooting
 
@@ -166,14 +160,14 @@ Delete and recreate:
 ```bash
 git tag -d v0.5.0
 git push origin :v0.5.0
-./scripts/release.sh v0.5.0
+bun release v0.5.0
 ```
 
 ### Release workflow failed
 
 Check GitHub Actions logs for which step failed:
 
-- **Sync failed?** → Check Cargo.toml/tauri.conf.json format
+- **Sync failed?** → Check Cargo.toml format
 - **Build failed?** → Check Docker availability or secrets
 - **Release failed?** → Check GitHub token permissions
 
