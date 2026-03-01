@@ -54,13 +54,20 @@ if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Update package.json version
-echo "📦 Updating package.json version..."
+echo "📦 Updating version numbers..."
+
+# Update package.json
 jq ".version = \"$VERSION\"" package.json > package.json.tmp && mv package.json.tmp package.json
+
+# Update Cargo.toml
+sed -i "0,/^version = \".*\"/s//version = \"$VERSION\"/" src-tauri/Cargo.toml
+
+# Refresh Cargo.lock
+cargo fetch --manifest-path src-tauri/Cargo.toml
 
 # Commit version bump
 echo "💾 Committing version bump..."
-git add package.json
+git add package.json src-tauri/Cargo.toml src-tauri/Cargo.lock
 git commit -m "chore: bump version to $VERSION"
 git push origin main
 

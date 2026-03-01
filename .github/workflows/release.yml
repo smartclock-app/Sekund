@@ -25,25 +25,6 @@ jobs:
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-  sync-version:
-    name: Sync Version
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Update Cargo.toml
-        run: sed -i 's/^version = ".*"/version = "${{ needs.prepare.outputs.version }}"/' src-tauri/Cargo.toml
-
-      - name: Commit and push version sync
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add src-tauri/Cargo.toml
-          git commit -m "chore: bump version to ${{ needs.prepare.outputs.version }}" || true
-          git push origin main || true
-
   build-linux:
     name: Build Linux
     needs: prepare
