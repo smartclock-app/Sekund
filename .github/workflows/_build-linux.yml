@@ -51,6 +51,9 @@ jobs:
         if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-rpi:1.0.0
 
+      - name: Clean AppImage output directory
+        run: rm -rf src-tauri/target/release/bundle/appimage
+
       - name: Build AppImage
         # Builds will fail if secrets are missing (such as in PRs), so allow this and check for artifacts in the next step
         continue-on-error: ${{ !inputs.upload-artifacts }}
