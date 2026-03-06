@@ -1,5 +1,6 @@
 import { fetch } from "@tauri-apps/plugin-http";
-import dayjs from "dayjs";
+import { info } from "@tauri-apps/plugin-log";
+import dayjs, { Dayjs } from "dayjs";
 import { Config } from ".";
 
 interface GoogleTokenResponse {
@@ -31,11 +32,10 @@ class GoogleClient {
   private refreshToken: string;
   private clientId: string;
   private clientSecret: string;
-  private tokenExpiry: number;
+  private tokenExpiry: Dayjs;
 
   constructor(config: Config) {
     if (!config.accessToken || !config.refreshToken || !config.clientId || !config.clientSecret) {
-      console.log(config);
       throw Error("[Calendar] API credentials must be set in the config file.");
     }
 
@@ -43,7 +43,7 @@ class GoogleClient {
     this.refreshToken = config.refreshToken;
     this.clientId = config.clientId;
     this.clientSecret = config.clientSecret;
-    this.tokenExpiry = dayjs(config.tokenExpiry).unix() * 1000;
+    this.tokenExpiry = dayjs(config.tokenExpiry);
   }
 
   get credentials() {
@@ -55,7 +55,7 @@ class GoogleClient {
   }
 
   private async ensureValidToken(): Promise<void> {
-    if (Date.now() < this.tokenExpiry) {
+    if (dayjs().isBefore(this.tokenExpiry)) {
       return; // Token still valid
     }
 
@@ -80,10 +80,10 @@ class GoogleClient {
 
       const data: GoogleTokenResponse = await response.json();
       this.accessToken = data.access_token;
-      this.tokenExpiry = Date.now() + data.expires_in * 1000;
+      this.tokenExpiry = dayjs().add(data.expires_in, "seconds");
 
       // TODO: Save updated token to your config file
-      console.log("[Calendar] Token refreshed");
+      info("[Calendar] Token refreshed");
     } catch (error) {
       throw new Error(`[Calendar] Failed to refresh token: ${error}`);
     }

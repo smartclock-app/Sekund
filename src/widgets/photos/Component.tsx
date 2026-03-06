@@ -34,6 +34,7 @@ const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) =>
   }, [photos]);
 
   useEventListener(EventType.Refresh, nextImage);
+  useEventListener(EventType.SkipPhoto, nextImage);
 
   return (
     <div className={styles.container} style={{ backgroundImage: loadedImage ? `url(${loadedImage})` : undefined }}>
@@ -41,7 +42,7 @@ const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) =>
         <div className={styles.time}>
           <p className={styles.main}>{now.format(`${clockConfig.format == "12h" ? "hh" : "HH"}:mm`)}</p>
           <div className={styles.sub}>
-            <p>{now.format("A")}</p>
+            {clockConfig.format == "12h" && <p>{now.format("A")}</p>}
             {clockConfig.showSeconds && <p>{now.format("ss")}</p>}
           </div>
         </div>

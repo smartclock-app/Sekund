@@ -7,6 +7,8 @@
   align-items: center;
   justify-content: center;
 
+  gap: 1rem;
+
   background-color: #f8f8f8;
 }
 
@@ -17,23 +19,23 @@
   gap: 1rem;
 
   .main {
-    font-size: calc(13rem * var(--clock-scale, 1));
+    font-size: calc(15rem * var(--clock-scale, 1));
     line-height: 0.85;
   }
 
   .sub {
-    height: calc(10rem * var(--clock-scale, 1));
+    height: calc(11rem * var(--clock-scale, 1));
     display: flex;
     flex-direction: column-reverse;
     align-items: center;
     justify-content: space-between;
-    font-size: calc(5.5rem * var(--clock-scale, 1));
+    font-size: calc(6rem * var(--clock-scale, 1));
     line-height: 0.85;
   }
 }
 
 .date {
-  font-size: calc(2.8rem * var(--clock-scale, 1));
+  font-size: calc(3rem * var(--clock-scale, 1));
   line-height: 0.85;
   text-align: center;
 }

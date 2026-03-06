@@ -1,19 +1,54 @@
+mod android_updates;
+mod browser;
 mod http_server;
 mod mdns;
 mod migrations;
+mod network;
 
-use mdns::{start_mdns, MdnsState};
+use sentry;
 use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use android_updates::{download_apk, install_apk};
+use browser::launch_browser;
 use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
+use mdns::{start_mdns, MdnsState};
+use network::start_network_monitor;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    #[allow(unused_mut)]
-    let mut builder = tauri::Builder::default()
+    let _guard = sentry::init((
+        "https://0b0251fbf24f4418b1a6cc689fbb51e2@sentry.danpeak.co.uk/1",
+        sentry::ClientOptions {
+            release: sentry::release_name!(),
+            ..Default::default()
+        },
+    ));
+
+    tauri::Builder::default()
+        .setup(|_app| {
+            #[cfg(desktop)]
+            _app.handle()
+                .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+                    use tauri::Manager;
+                    let _ = app
+                        .get_webview_window("main")
+                        .expect("no main window")
+                        .set_focus();
+                }))?;
+            Ok(())
+        })
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_apk_intent::init())
+        .setup(|_app| {
+            #[cfg(not(target_os = "android"))]
+            _app.handle()
+                .plugin(tauri_plugin_updater::Builder::new().build())?;
+            Ok(())
+        })
         .plugin(
             tauri_plugin_sql::Builder::new()
                 .add_migrations("sqlite:database.sqlite", migrations::get_migrations())
@@ -26,14 +61,7 @@ pub fn run() {
                     tauri_plugin_log::TargetKind::Webview,
                 ))
                 .build(),
-        );
-
-    #[cfg(not(any(target_os = "android", target_os = "ios")))]
-    {
-        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
-    }
-
-    builder
+        )
         .plugin(tauri_plugin_websocket::init())
         .plugin(tauri_plugin_http::init())
         .plugin(tauri_plugin_fs::init())
@@ -49,7 +77,11 @@ pub fn run() {
             start_mdns,
             start_http_server,
             stop_http_server,
-            http_respond
+            http_respond,
+            download_apk,
+            install_apk,
+            launch_browser,
+            start_network_monitor
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

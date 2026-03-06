@@ -2,6 +2,7 @@ import type { CalendarConfig } from "@/helpers/config/base";
 import { CalendarEvent, WidgetComponent } from "@/helpers/types";
 import useConfigStore from "@/hooks/useConfigStore";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
+import { error } from "@tauri-apps/plugin-log";
 import { memo, useEffect, useState } from "react";
 import Card from "../Card";
 import EventItem from "./EventItem";
@@ -13,7 +14,9 @@ const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
 
   useEffect(() => {
     let isMounted = true;
-    fetchEvents(configStore.config, configStore.calendarExtensions).then(events => isMounted && setEvents(events));
+    fetchEvents(configStore.config, configStore.calendarExtensions)
+      .then(events => isMounted && setEvents(events))
+      .catch(e => error(`[Calendar] ${e}`));
     return () => {
       isMounted = false;
     };
@@ -32,9 +35,9 @@ const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
             style={{
               fontSize: "2.3rem",
               fontWeight: "bold",
-              borderBottom: "0.125rem solid #ddd",
+              borderBottom: "0.125rem solid rgb(193, 193, 193)",
               borderRadius: "0.06rem",
-              marginBottom: "1rem",
+              marginBottom: "var(--card-padding, 1rem)",
             }}
           >
             {month}

@@ -3,13 +3,13 @@ import { listen } from "@tauri-apps/api/event";
 import { useEffect } from "react";
 import { create } from "zustand";
 
-interface RemoteStoreState {
+interface HttpStoreState {
   running: boolean;
   startServer: (port: number) => void;
   stopServer: () => void;
 }
 
-const useRemoteStore = create<RemoteStoreState>()(set => ({
+const useHttpStore = create<HttpStoreState>()(set => ({
   running: false,
   startServer: async (port: number) => {
     try {
@@ -25,7 +25,7 @@ const useRemoteStore = create<RemoteStoreState>()(set => ({
   },
 }));
 
-export default useRemoteStore;
+export default useHttpStore;
 
 interface HttpRequest {
   id: number;
@@ -38,12 +38,11 @@ interface HttpRequest {
 export const useHttpRequestListener = (
   callback: (
     event: HttpRequest,
-  ) => { status: "ok"; result: Record<string, any> | string } | { status: "error"; error: string },
+  ) => Promise<{ status: "ok"; result: Record<string, any> | string } | { status: "error"; error: string }>,
 ) => {
   useEffect(() => {
     const unlisten = listen<HttpRequest>("http-request", async e => {
-      const response = callback(e.payload);
-      console.log(response);
+      const response = await callback(e.payload);
       await invoke("http_respond", {
         id: e.payload.id,
         responseBody: JSON.stringify(response),

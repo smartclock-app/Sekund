@@ -1,4 +1,6 @@
 import { WidgetType } from "@/helpers/types";
+import { dispatchEvent, EventType } from "@/hooks/useEventListener";
+import useRemoteConfigStore from "@/hooks/useRemoteConfig";
 import z from "zod";
 
 export const Type = WidgetType.ClockTheme;
@@ -23,3 +25,10 @@ export const Schema = z.object({
 });
 
 export type Config = z.infer<typeof Schema>;
+
+export const OnInit = () => {
+  useRemoteConfigStore.getState().addHandler("skip_photo", () => {
+    dispatchEvent(EventType.SkipPhoto);
+    return { status: "ok", result: "Photo Skipped" };
+  });
+};

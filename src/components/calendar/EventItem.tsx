@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc";
 import getOrdinal from "../clock/getOrdinal";
 
+import FittedBox from "../FittedBox";
 import styles from "./eventitem.module.scss";
 
 dayjs.extend(utc);
@@ -29,10 +30,8 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
   };
 
   const formatDate = (date: dayjs.Dayjs, format: string) => {
-    const difference = date.diff(dayjs(), "day", true);
-
-    if (difference < 1 && difference >= 0) return "Today";
-    if (difference < 2 && difference >= 1) return "Tomorrow";
+    if (date.isSame(dayjs(), "day")) return "Today";
+    if (date.isSame(dayjs().add(1, "day"), "day")) return "Tomorrow";
 
     return date.format(format);
   };
@@ -60,7 +59,7 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
       <p className={styles.title}>
         {typeof event.title === "string" ? <span>{event.title}</span> : event.title.map(t => <span key={t}>{t}</span>)}
       </p>
-      <p className={styles.date}>{dateString}</p>
+      <FittedBox className={styles.date}>{dateString}</FittedBox>
     </div>
   );
 };

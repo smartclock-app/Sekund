@@ -1,6 +1,6 @@
 [package]
-name = "smart-clock"
-version = "0.2.0"
+name = "sekund"
+version = "0.4.3"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
@@ -18,26 +18,42 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
+futures = "0.3.32"
+hostname = "0.4"
+jni = "0.21"
+libc = "0.2"
+local-ip-address = "0.6"
+log = "0.4"
+mdns-sd = "0.17"
+ndk-context = "0.1"
+reqwest = { version = "0.12", features = ["json", "rustls-tls", "stream"], default-features = false }
+sentry = { version = "0.42", default-features = false, features = ["reqwest", "rustls", "backtrace", "contexts", "panic", "debug-images"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+tauri = { version = "2", features = [] }
 tauri-plugin-fs = "2"
 tauri-plugin-http = { version = "2", features = ["unsafe-headers", "dangerous-settings"] }
-tauri-plugin-websocket = "2"
 tauri-plugin-log = "2"
-log = "0.4"
-
-#### Avahi / Bonjour ####
-
-mdns-sd = "0.17"
-hostname = "0.4"
-local-ip-address = "0.6"
-tiny_http = "0.12.0"
+tauri-plugin-opener = "2"
+tauri-plugin-os = "2"
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
+tauri-plugin-websocket = "2"
+tiny_http = "0.12.0"
+tauri-plugin-apk-intent = { git = "https://github.com/smartclock-app/tauri-plugin-apk-intent.git" }
+tauri-plugin-deep-link = "2"
 
-#########################
-
-[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+# Updater Widget
+[target.'cfg(not(target_os = "android"))'.dependencies]
 tauri-plugin-updater = "2"
 
+# Desktop Deep Linking
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }
+
+# Network Interfaces Macos
+[target.'cfg(target_os = "macos")'.dependencies]
+system-configuration = "0.6"
+
+# Unit Tests
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }

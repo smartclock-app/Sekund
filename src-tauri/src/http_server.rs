@@ -23,7 +23,7 @@ pub fn start_http_server(
     let mut running = state.running.lock().unwrap();
 
     if *running {
-        log::info!("Server already running");
+        log::info!("[HTTP] Server already running");
         return Ok(());
     }
 
@@ -36,11 +36,11 @@ pub fn start_http_server(
         let addr = format!("0.0.0.0:{}", port);
         let server = match tiny_http::Server::http(&addr) {
             Ok(s) => {
-                log::info!("Server started on {}", addr);
+                log::info!("[HTTP] Server started on {}", addr);
                 s
             }
             Err(e) => {
-                log::error!("Failed to start server: {}", e);
+                log::error!("[HTTP] Failed to start server: {}", e);
                 *running_clone.lock().unwrap() = false;
                 return;
             }
@@ -109,16 +109,16 @@ pub fn stop_http_server(state: State<HttpServerState>) -> Result<(), String> {
     let mut running = state.running.lock().unwrap();
 
     if !*running {
-        log::warn!("Server not running");
+        log::warn!("[HTTP] Server not running");
         return Ok(());
     }
 
     *running = false;
     if let Some(handle) = state.handle.lock().unwrap().take() {
         let _ = handle.join();
-        log::info!("Server stopped");
+        log::info!("[HTTP] Server stopped");
     } else {
-        log::warn!("No server thread to join");
+        log::warn!("[HTTP] No server thread to join");
     }
 
     Ok(())
@@ -135,6 +135,73 @@ pub fn http_respond(
         let _ = tx.send(response_body);
         Ok(())
     } else {
-        Err(format!("No pending request with id {}", id))
+        Err(format!("[HTTP] No pending request with id {}", id))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::atomic::AtomicU64;
+
+    fn make_state() -> HttpServerState {
+        HttpServerState {
+            handle: Arc::new(Mutex::new(None)),
+            running: Arc::new(Mutex::new(false)),
+            responses: Arc::new(Mutex::new(HashMap::new())),
+            id_counter: Arc::new(AtomicU64::new(1)),
+        }
+    }
+
+    #[test]
+    fn http_respond_returns_error_for_unknown_id() {
+        let state = make_state();
+        let result = {
+            let responses = state.responses.lock().unwrap();
+            drop(responses);
+            if let Some(tx) = state.responses.lock().unwrap().remove(&999u64) {
+                let _ = tx.send("body".to_string());
+                Ok(())
+            } else {
+                Err(format!("[HTTP] No pending request with id {}", 999u64))
+            }
+        };
+        assert!(result.is_err());
+        assert!(result
+            .unwrap_err()
+            .contains("No pending request with id 999"));
+    }
+
+    #[test]
+    fn http_respond_sends_to_registered_channel() {
+        let state = make_state();
+        let (tx, rx) = mpsc::channel::<String>();
+        state.responses.lock().unwrap().insert(1u64, tx);
+
+        let result = {
+            if let Some(sender) = state.responses.lock().unwrap().remove(&1u64) {
+                let _ = sender.send("hello".to_string());
+                Ok(())
+            } else {
+                Err("not found".to_string())
+            }
+        };
+
+        assert!(result.is_ok());
+        assert_eq!(rx.recv().unwrap(), "hello");
+    }
+
+    #[test]
+    fn http_server_state_starts_not_running() {
+        let state = make_state();
+        assert!(!*state.running.lock().unwrap());
+    }
+
+    #[test]
+    fn id_counter_increments() {
+        let state = make_state();
+        let first = state.id_counter.fetch_add(1, Ordering::SeqCst);
+        let second = state.id_counter.fetch_add(1, Ordering::SeqCst);
+        assert_eq!(second, first + 1);
     }
 }

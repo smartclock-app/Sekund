@@ -16,9 +16,8 @@
   flex-direction: column;
   align-items: center;
 
-  padding: 2rem;
-  padding-top: 4rem;
-  gap: 2rem;
+  padding-block: 4rem 2rem;
+  gap: 1rem;
 
   background: #000000;
   background: linear-gradient(to top, #000000 0%, #0000009b 90%, #00000000 100%);
@@ -32,17 +31,17 @@
   gap: 1rem;
 
   .main {
-    font-size: calc(13rem * var(--clock-scale, 1));
+    font-size: calc(15rem * var(--clock-scale, 1));
     line-height: 0.85;
   }
 
   .sub {
-    height: calc(10rem * var(--clock-scale, 1));
+    height: calc(11rem * var(--clock-scale, 1));
     display: flex;
     flex-direction: column-reverse;
     align-items: center;
     justify-content: space-between;
-    font-size: calc(5.5rem * var(--clock-scale, 1));
+    font-size: calc(6rem * var(--clock-scale, 1));
     line-height: 0.85;
   }
 }

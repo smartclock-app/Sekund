@@ -244,8 +244,6 @@ class TraktManager {
             this.getShowSummary(slug),
           ]);
 
-          console.log("TV ITEM:", slug, { todayEpisode, nextEpisode, summary });
-
           data = {
             id: item,
             name: summary.title,

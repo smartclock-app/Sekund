@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Smart Clock",
-  "version": "0.2.0",
-  "identifier": "uk.co.danpeak.smartclock.clock",
+  "productName": "Sekund",
+  "version": "../package.json",
+  "identifier": "uk.dnpk.sekund",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Smart Clock",
+        "title": "Sekund",
         "fullscreen": true,
         "devtools": true,
         "focus": true,
@@ -27,10 +27,21 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk3QTY0N0EzNTg1NjM1RjgKUldUNE5WWllvMGVtbDIvV3Q4K1ZHN1E1bm0xOHBkRmlPREMwRnJEQm9aak03QlFISlJldXhDdzIK",
-      "endpoints": ["https://github.com/0x5045414b/ClockBeta/releases/latest/download/latest.json"]
+      "endpoints": ["https://github.com/0x5045414b/Sekund/releases/latest/download/latest.json"]
     },
     "sql": {
       "preload": ["sqlite:database.sqlite"]
+    },
+    "deep-link": {
+      "mobile": [
+        {
+          "scheme": ["sekund"],
+          "appLink": false
+        }
+      ],
+      "desktop": {
+        "schemes": ["sekund"]
+      }
     }
   },
   "bundle": {
@@ -39,6 +50,11 @@
     "targets": "all",
     "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "category": "Utility",
-    "license": "Polyform-Noncommercial-1.0.0"
+    "license": "Polyform-Noncommercial-1.0.0",
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    }
   }
 }

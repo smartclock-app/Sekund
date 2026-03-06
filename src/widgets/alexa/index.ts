@@ -19,6 +19,7 @@ export const Schema = z.object({
     .prefault({} as any),
   userId: z.string().catch(""),
   token: z.string().catch(""),
+  cookies: z.record(z.string(), z.string()).catch({} as any),
   devices: z.array(z.string()).catch([]),
   radioProviders: z.array(z.string()).catch([]),
   noteColumns: z.number().catch(3),

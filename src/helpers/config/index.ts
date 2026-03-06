@@ -43,13 +43,19 @@ export default async () => {
   });
 
   let configData;
-  if (!(await exists(CONFIG_FILENAME, { baseDir: BASE_DIRECTORY }))) {
-    warn("Config file not found, using defaults");
+  try {
+    if (!(await exists(CONFIG_FILENAME, { baseDir: BASE_DIRECTORY }))) {
+      warn("Config file not found, using defaults");
+      configData = configSchema.parse({});
+    } else {
+      const configFileContents = await readTextFile(CONFIG_FILENAME, { baseDir: BASE_DIRECTORY });
+      const parsedConfig = JSON.parse(configFileContents);
+      configData = configSchema.parse(parsedConfig);
+    }
+  } catch (error) {
+    warn(`Config file is invalid, using defaults. Error: ${error}`);
+    await backupConfig();
     configData = configSchema.parse({});
-  } else {
-    const configFileContents = await readTextFile(CONFIG_FILENAME, { baseDir: BASE_DIRECTORY });
-    const parsedConfig = JSON.parse(configFileContents);
-    configData = configSchema.parse(parsedConfig);
   }
 
   await saveConfig(configData);

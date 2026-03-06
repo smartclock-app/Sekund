@@ -1,17 +1,16 @@
 import "@/App.scss";
 import useConfigStore from "./hooks/useConfigStore";
 
-import { info } from "@tauri-apps/plugin-log";
 import { memo, useEffect, useRef, useState } from "react";
 import Alerts from "./components/alerts/Alerts";
 import Calendar from "./components/calendar/Calendar";
 import Clock from "./components/clock/Clock";
-import ConfigEditor from "./components/ConfigEditor";
-import useOptionsModal from "./components/OptionsModal";
+import { EditorScreen } from "./components/editor";
+import useOptionsMenu from "./components/menu/Menu";
+import NetworkManager from "./components/network/Manager";
 import RemoteConfig from "./components/RemoteConfig";
-import VariablesEditor from "./components/VeriablesEditor";
 import { WidgetLocation, WidgetOfType, WidgetType } from "./helpers/types";
-import useLongPress from "./hooks/useLongPress";
+import useNetworkStore from "./hooks/useNetworkStore";
 import useRouter, { RouterScreen } from "./hooks/useRouter";
 
 const MemoizedWidget = memo(
@@ -27,15 +26,13 @@ const MemoizedWidget = memo(
 );
 
 function App() {
+  const [longPressProps, Menu] = useOptionsMenu();
+
   const currentScreen = useRouter(state => state.currentScreen);
+  const connected = useNetworkStore(state => state.connected);
   const layout = useConfigStore(state => state.layout);
   const widgetConfigs = useConfigStore(state => state.config.widgets);
   const calendarConfig = useConfigStore(state => state.config.calendar);
-  const longPressProps = useLongPress(() => {
-    info("Long press detected");
-    setShowOptions(true);
-  });
-  const { setShowOptions, OptionsModal } = useOptionsModal();
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const [sidebarHasChildren, setSidebarHasChildren] = useState(false);
@@ -52,53 +49,45 @@ function App() {
     return () => observer.disconnect();
   });
 
-  return currentScreen === RouterScreen.ConfigEditor ? (
-    <ConfigEditor />
-  ) : currentScreen === RouterScreen.VariablesEditor ? (
-    <VariablesEditor />
+  return currentScreen === RouterScreen.Editor ? (
+    <EditorScreen />
   ) : (
-    <>
-      <OptionsModal />
-      <div className="container">
-        <RemoteConfig />
-        <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
-          {layout.main.map(Widget => (
-            <div id={Widget.Name} key={Widget.Name} style={{ display: "contents" }}>
-              <MemoizedWidget
-                Component={Widget.Component}
-                config={widgetConfigs[Widget.Name]}
-                location={WidgetLocation.Main}
-              />
-            </div>
+    <div className="container">
+      <NetworkManager />
+      <Menu />
+      <RemoteConfig />
+      <NetworkManager />
+      <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
+        {connected &&
+          layout.main.map(Widget => (
+            <MemoizedWidget
+              key={Widget.Name}
+              Component={Widget.Component}
+              config={widgetConfigs[Widget.Name]}
+              location={WidgetLocation.Main}
+            />
           ))}
-          <div id="clock" style={{ display: "contents" }}>
-            <Clock />
-          </div>
-        </div>
-        <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
-          <Alerts />
-          {layout.sidebar.map(Widget => {
+        <Clock />
+      </div>
+      <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
+        <Alerts />
+        {connected &&
+          layout.sidebar.map(Widget => {
             if (Widget.Name === "calendar") {
-              return (
-                <div id={Widget.Name} key="calendar" style={{ display: "contents" }}>
-                  <Calendar config={calendarConfig} location={WidgetLocation.Sidebar} />
-                </div>
-              );
+              return <Calendar key={Widget.Name} config={calendarConfig} location={WidgetLocation.Sidebar} />;
             }
 
             return (
-              <div id={Widget.Name} key={Widget.Name} style={{ display: "contents" }}>
-                <MemoizedWidget
-                  Component={Widget.Component}
-                  config={widgetConfigs[Widget.Name]}
-                  location={WidgetLocation.Sidebar}
-                />
-              </div>
+              <MemoizedWidget
+                key={Widget.Name}
+                Component={Widget.Component}
+                config={widgetConfigs[Widget.Name]}
+                location={WidgetLocation.Sidebar}
+              />
             );
           })}
-        </div>
       </div>
-    </>
+    </div>
   );
 }
 

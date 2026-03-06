@@ -1,4 +1,5 @@
 import { WidgetComponent, WidgetLocation } from "@/helpers/types";
+import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { useEffect, useState } from "react";
 import { Config } from ".";
 import fetchWeather, { WeatherIcon } from "./fetchWeather";
@@ -15,6 +16,14 @@ const Component: WidgetComponent<Config> = ({ config, location }) => {
       }
     });
   }, [config]);
+
+  useEventListener(EventType.Refresh, () => {
+    fetchWeather(config).then(data => {
+      if (data.icon && data.temp && data.windSpeed) {
+        setWeatherData(data);
+      }
+    });
+  });
 
   if (location === WidgetLocation.Sidebar) return <WeatherSidebar weatherData={weatherData} />;
   return <WeatherMain weatherData={weatherData} />;

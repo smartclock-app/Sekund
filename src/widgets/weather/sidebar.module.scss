@@ -2,7 +2,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: var(--card-padding, 1rem);
 
   .icon {
     font-family: "WeatherIcons";
@@ -16,6 +16,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
+  gap: var(--card-padding, 1rem);
   font-size: 2rem;
 }

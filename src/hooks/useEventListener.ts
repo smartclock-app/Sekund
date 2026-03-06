@@ -5,6 +5,7 @@ export enum EventType {
   Tick = "tick",
   Refresh = "refresh",
   HttpRequest = "http-request",
+  SkipPhoto = "skip-photo",
 }
 
 export const dispatchEvent = (eventName: EventType, detail?: any) => {
