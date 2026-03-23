@@ -29,6 +29,9 @@ const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
 
   return (
     <>
+      {Object.entries(configStore.calendarExtensions).map(([name, ext]) =>
+        ext.Manager ? <ext.Manager key={name} /> : null,
+      )}
       {Object.entries(events).map(([month, events]) => (
         <Card key={month}>
           <h1

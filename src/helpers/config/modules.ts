@@ -82,6 +82,7 @@ export default async () => {
         Type: mod.Type,
         Schema: mod.Schema,
         Component,
+        ...(mod.Type === WidgetType.CalendarExtension && mod.Manager ? { Manager: mod.Manager } : {}),
       };
     }
 
