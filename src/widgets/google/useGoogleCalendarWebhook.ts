@@ -1,10 +1,10 @@
+import { Config } from "@/widgets/google";
 import { fetch } from "@tauri-apps/plugin-http";
 import { error, info } from "@tauri-apps/plugin-log";
 import TauriWebSocket from "@tauri-apps/plugin-websocket";
 import { useEffect, useRef } from "react";
-import { Config } from "@/widgets/google";
-import useConfigStore from "./useConfigStore";
-import { dispatchEvent, EventType } from "./useEventListener";
+import useConfigStore from "../../hooks/useConfigStore";
+import { clearCache } from "./eventsCache";
 
 interface OAuthTokens {
   access_token: string;
@@ -186,11 +186,10 @@ const useGoogleCalendarWebhook = () => {
             info("[GoogleWebhook] Calendar list changed, re-subscribing");
             const clockId = latestConfig().clockId;
             if (clockId) await subscribe(clockId);
-            dispatchEvent(EventType.Refresh);
           } else {
             info(`[GoogleWebhook] Calendar updated: ${msg.calendarId}`);
-            dispatchEvent(EventType.Refresh);
           }
+          clearCache();
           break;
         }
 

@@ -1,5 +1,5 @@
-import useGoogleCalendarWebhook from "@/hooks/useGoogleCalendarWebhook";
 import { WidgetType } from "@/helpers/types";
+import useGoogleCalendarWebhook from "@/widgets/google/useGoogleCalendarWebhook";
 import z from "zod";
 
 export const Type = WidgetType.CalendarExtension;
