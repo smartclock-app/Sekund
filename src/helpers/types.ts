@@ -32,6 +32,8 @@ export type WidgetModule =
       Type: WidgetType.CalendarExtension;
       Schema: ZodAny;
       OnInit?: () => void;
+      Manager?: React.ComponentType;
+      ProvidesPushUpdates?: boolean;
     }
   | {
       Type: WidgetType.ClockTheme;
@@ -52,6 +54,8 @@ export type Widget =
       Type: WidgetType.CalendarExtension;
       Schema: ZodAny;
       Component: CalendarExtensionComponent;
+      Manager?: React.ComponentType;
+      ProvidesPushUpdates?: boolean;
     }
   | {
       Name: string;

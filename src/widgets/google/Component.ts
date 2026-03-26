@@ -28,8 +28,8 @@ const Component: CalendarExtensionComponent<Config> = async (config, calendarCon
         continue;
       }
 
-      // Skip event if event in this calendar already has same name
-      // Doesn't skip if event in another calendar has same name
+      // Skip event if event in this calendar already has same name.
+      // Doesn't skip if event in another calendar has same name.
       if (recurringEvents.has(event.summary)) {
         continue;
       } else {
@@ -81,8 +81,7 @@ const Component: CalendarExtensionComponent<Config> = async (config, calendarCon
     useConfigStore.getState().editConfigByPath("widgets.google", config);
   }
 
-  const events = (await Promise.all(eventsPromises)).flat();
-  return events;
+  return (await Promise.all(eventsPromises)).flat();
 };
 
 export default Component;

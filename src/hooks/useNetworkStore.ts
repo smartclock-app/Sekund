@@ -45,7 +45,7 @@ const useNetworkStore = create<NetworkStoreState>((set, get) => ({
         set({ probing: true, _debounceTimer: null });
 
         try {
-          const response = await fetch("http://www.google.com/generate_204", {
+          const response = await fetch("https://1.1.1.1/cdn-cgi/trace", {
             cache: "no-cache",
             connectTimeout: 5000,
           });
