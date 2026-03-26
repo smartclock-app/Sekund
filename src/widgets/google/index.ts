@@ -3,6 +3,7 @@ import useGoogleCalendarWebhook from "@/widgets/google/useGoogleCalendarWebhook"
 import z from "zod";
 
 export const Type = WidgetType.CalendarExtension;
+export const ProvidesPushUpdates = true;
 
 export const Schema = z.object({
   clientId: z.string().catch(""),
@@ -10,7 +11,7 @@ export const Schema = z.object({
   accessToken: z.string().catch(""),
   refreshToken: z.string().catch(""),
   tokenExpiry: z.iso.datetime().catch(new Date().toISOString()),
-  webhookServerUrl: z.string().catch("ws://localhost:3000/ws"),
+  webhookServerUrl: z.string().catch(""),
   clockId: z.string().catch(""),
   excludedCalendars: z.array(z.string()).catch([]),
 });

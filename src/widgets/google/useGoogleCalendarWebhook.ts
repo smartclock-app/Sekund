@@ -1,10 +1,11 @@
+import { dispatchEvent, EventType } from "@/hooks/useEventListener";
 import { Config } from "@/widgets/google";
 import { fetch } from "@tauri-apps/plugin-http";
 import { error, info } from "@tauri-apps/plugin-log";
 import TauriWebSocket from "@tauri-apps/plugin-websocket";
 import { useEffect, useRef } from "react";
 import useConfigStore from "../../hooks/useConfigStore";
-import { clearCache } from "./eventsCache";
+import fetchGoogleEvents from "./Component";
 
 interface OAuthTokens {
   access_token: string;
@@ -189,7 +190,18 @@ const useGoogleCalendarWebhook = () => {
           } else {
             info(`[GoogleWebhook] Calendar updated: ${msg.calendarId}`);
           }
-          clearCache();
+
+          try {
+            const calendarConfig = useConfigStore.getState().config.calendar;
+            const events = await fetchGoogleEvents(latestConfig(), calendarConfig);
+            dispatchEvent(EventType.CalendarExtensionEventsUpdated, {
+              extension: "google",
+              events,
+            });
+          } catch (e) {
+            error(`[GoogleWebhook] Failed to fetch updated events: ${e}`);
+          }
+
           break;
         }
 

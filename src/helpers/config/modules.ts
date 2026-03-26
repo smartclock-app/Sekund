@@ -83,6 +83,7 @@ export default async () => {
         Schema: mod.Schema,
         Component,
         ...(mod.Type === WidgetType.CalendarExtension && mod.Manager ? { Manager: mod.Manager } : {}),
+        ...(mod.Type === WidgetType.CalendarExtension && mod.ProvidesPushUpdates ? { ProvidesPushUpdates: true } : {}),
       };
     }
 

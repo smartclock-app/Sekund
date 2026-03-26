@@ -1,21 +1,26 @@
 import type { CalendarConfig } from "@/helpers/config/base";
 import { CalendarEvent, WidgetComponent } from "@/helpers/types";
 import useConfigStore from "@/hooks/useConfigStore";
-import useEventListener, { EventType } from "@/hooks/useEventListener";
+import useEventListener, { CalendarExtensionEventsUpdatedDetail, EventType } from "@/hooks/useEventListener";
 import { error } from "@tauri-apps/plugin-log";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import Card from "../Card";
 import EventItem from "./EventItem";
-import fetchEvents from "./fetchEvents";
+import { fetchEventsByExtension, groupEvents } from "./fetchEvents";
 
 const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
   const configStore = useConfigStore();
-  const [events, setEvents] = useState<Record<string, CalendarEvent[]>>({});
+  const [eventsByExtension, setEventsByExtension] = useState<Record<string, CalendarEvent[]>>({});
+
+  const events = useMemo(
+    () => groupEvents(configStore.config, eventsByExtension),
+    [configStore.config, eventsByExtension],
+  );
 
   useEffect(() => {
     let isMounted = true;
-    fetchEvents(configStore.config, configStore.calendarExtensions)
-      .then(events => isMounted && setEvents(events))
+    fetchEventsByExtension(configStore.config, configStore.calendarExtensions)
+      .then(events => isMounted && setEventsByExtension(events))
       .catch(e => error(`[Calendar] ${e}`));
     return () => {
       isMounted = false;
@@ -23,8 +28,29 @@ const Calendar: WidgetComponent<CalendarConfig> = memo(() => {
   }, [configStore.config, configStore.calendarExtensions]);
 
   useEventListener(EventType.Refresh, async () => {
-    const events = await fetchEvents(configStore.config, configStore.calendarExtensions);
-    setEvents(events);
+    const nonPushExtensions = configStore.config.calendar.extensions.filter(
+      (extension: string) => !configStore.calendarExtensions[extension]?.ProvidesPushUpdates,
+    );
+
+    if (nonPushExtensions.length === 0) return;
+
+    const refreshed = await fetchEventsByExtension(
+      configStore.config,
+      configStore.calendarExtensions,
+      nonPushExtensions,
+    );
+    setEventsByExtension(previous => ({ ...previous, ...refreshed }));
+  });
+
+  useEventListener(EventType.CalendarExtensionEventsUpdated, event => {
+    const detail = event.detail as CalendarExtensionEventsUpdatedDetail | undefined;
+    if (!detail) return;
+    if (!configStore.config.calendar.extensions.includes(detail.extension)) return;
+
+    setEventsByExtension(previous => ({
+      ...previous,
+      [detail.extension]: detail.events,
+    }));
   });
 
   return (

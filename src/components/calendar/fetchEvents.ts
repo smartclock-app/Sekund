@@ -21,16 +21,37 @@ const MONTHS = [
   "December",
 ];
 
-const fetchEvents = async (
+export const fetchEventsForExtension = async (
+  extension: string,
   config: Record<string, any>,
   extensions: Record<string, WidgetOfType<WidgetType.CalendarExtension>>,
-): Promise<Record<string, CalendarEvent[]>> => {
-  const events = [];
+): Promise<CalendarEvent[]> => {
+  const calendarExtension = extensions[extension];
+  if (!calendarExtension) return [];
+  return calendarExtension.Component(config.widgets[extension], config.calendar);
+};
 
-  for (const name of config.calendar.extensions) {
-    const eventsFromExtension = await extensions[name].Component(config.widgets[name], config.calendar);
-    events.push(...eventsFromExtension);
-  }
+export const fetchEventsByExtension = async (
+  config: Record<string, any>,
+  extensions: Record<string, WidgetOfType<WidgetType.CalendarExtension>>,
+  extensionNames = config.calendar.extensions,
+): Promise<Record<string, CalendarEvent[]>> => {
+  const extensionEvents: Record<string, CalendarEvent[]> = {};
+
+  await Promise.all(
+    extensionNames.map(async (name: string) => {
+      extensionEvents[name] = await fetchEventsForExtension(name, config, extensions);
+    }),
+  );
+
+  return extensionEvents;
+};
+
+export const groupEvents = (
+  config: Record<string, any>,
+  extensionEvents: Record<string, CalendarEvent[]>,
+): Record<string, CalendarEvent[]> => {
+  const events = Object.values(extensionEvents).flat();
 
   // Sort events ascending by start time, then alphabetically by title
   events.sort((a, b) => {
@@ -74,6 +95,14 @@ const fetchEvents = async (
   }
 
   return sortedEvents;
+};
+
+const fetchEvents = async (
+  config: Record<string, any>,
+  extensions: Record<string, WidgetOfType<WidgetType.CalendarExtension>>,
+): Promise<Record<string, CalendarEvent[]>> => {
+  const extensionEvents = await fetchEventsByExtension(config, extensions);
+  return groupEvents(config, extensionEvents);
 };
 
 export default fetchEvents;

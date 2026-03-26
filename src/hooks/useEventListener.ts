@@ -1,11 +1,18 @@
+import { CalendarEvent } from "@/helpers/types";
 import { info } from "@tauri-apps/plugin-log";
 import { useEffect, useRef } from "react";
+
+export interface CalendarExtensionEventsUpdatedDetail {
+  extension: string;
+  events: CalendarEvent[];
+}
 
 export enum EventType {
   Tick = "tick",
   Refresh = "refresh",
   HttpRequest = "http-request",
   SkipPhoto = "skip-photo",
+  CalendarExtensionEventsUpdated = "calendar-extension-events-updated",
 }
 
 export const dispatchEvent = (eventName: EventType, detail?: any) => {

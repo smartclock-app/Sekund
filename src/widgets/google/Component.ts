@@ -4,12 +4,8 @@ import { info } from "@tauri-apps/plugin-log";
 import dayjs from "dayjs";
 import { Config } from ".";
 import GoogleClient from "./GoogleClient";
-import { getCache, setCache } from "./eventsCache";
 
 const Component: CalendarExtensionComponent<Config> = async (config, calendarConfig) => {
-  const cached = getCache();
-  if (cached !== null) return cached;
-
   const calendarApi = new GoogleClient(config);
 
   const lists = await calendarApi.getCalendarLists();
@@ -32,8 +28,8 @@ const Component: CalendarExtensionComponent<Config> = async (config, calendarCon
         continue;
       }
 
-      // Skip event if event in this calendar already has same name
-      // Doesn't skip if event in another calendar has same name
+      // Skip event if event in this calendar already has same name.
+      // Doesn't skip if event in another calendar has same name.
       if (recurringEvents.has(event.summary)) {
         continue;
       } else {
@@ -85,9 +81,7 @@ const Component: CalendarExtensionComponent<Config> = async (config, calendarCon
     useConfigStore.getState().editConfigByPath("widgets.google", config);
   }
 
-  const events = (await Promise.all(eventsPromises)).flat();
-  setCache(events);
-  return events;
+  return (await Promise.all(eventsPromises)).flat();
 };
 
 export default Component;
