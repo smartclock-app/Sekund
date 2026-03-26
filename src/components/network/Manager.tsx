@@ -7,10 +7,9 @@ import { useEffect } from "react";
 import hashInterfaces, { NetworkInterfaces } from "./hashInterfaces";
 
 const NetworkManager = () => {
-  const probe = useNetworkStore(state => state.probe);
-
   useEffect(() => {
     let unlisten: (() => void) | undefined;
+    const probe = useNetworkStore.getState().probe;
 
     const setupListener = async () => {
       info("[Network] Setting up listener...");
@@ -30,12 +29,12 @@ const NetworkManager = () => {
     probe();
 
     return () => unlisten?.();
-  }, [probe]);
+  }, []);
 
   useEventListener(EventType.Tick, event => {
     const seconds = (event.detail as Dayjs).second();
     if (seconds % 30 === 0) {
-      probe();
+      useNetworkStore.getState().probe();
     }
   });
 
