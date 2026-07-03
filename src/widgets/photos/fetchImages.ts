@@ -4,18 +4,32 @@ import { Config } from ".";
 
 const getImagesFromImmich = async (config: Config) => {
   try {
-    const request = await fetch(`${config.immichUrl}/api/albums/${config.immichAlbumId}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${config.immichAccessToken}`,
-      },
-    });
-    const response = await request.json();
-    const assets = response["assets"];
-    const images = assets.map(
-      (e: { id: string }) =>
-        `${config.immichUrl}/api/assets/${e["id"]}/thumbnail?key=${config.immichShareKey}&size=preview`,
-    );
+    let page = 1;
+    let nextPage;
+    const images = [];
+
+    do {
+      const request = await fetch(`${config.immichUrl}/api/search/metadata`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${config.immichAccessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          albumIds: [config.immichAlbumId],
+          page: page,
+        }),
+      });
+
+      const response = await request.json();
+      const assets = response?.assets?.items ?? [];
+
+      for (const asset of assets) {
+        images.push(`${config.immichUrl}/api/assets/${asset.id}/thumbnail?key=${config.immichShareKey}&size=preview`);
+      }
+
+      nextPage = response.assets.nextPage;
+    } while (nextPage && ++page <= 5);
 
     info(`[Photos] Fetched ${images.length} images from Immich`);
     return images;
