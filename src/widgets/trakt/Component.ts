@@ -1,12 +1,102 @@
 import { CalendarEvent, CalendarExtensionComponent } from "@/helpers/types";
+import useAlertsStore from "@/hooks/useAlertsStore";
 import useConfigStore from "@/hooks/useConfigStore";
 import useDatabaseStore from "@/hooks/useDatabaseStore";
 import { error, info } from "@tauri-apps/plugin-log";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import dayjs from "dayjs";
 import { Config } from ".";
 import TraktManager from "./TraktClient";
+import { TokenPair, TraktManagerAPIError } from "./TraktClientTypes";
 
 const updateWl = false; // Set to true to force watchlist update on every fetch (for testing)
+
+const ALERT_KEY = "Trakt";
+const DEVICE_FLOW_COOLDOWN_MS = 5 * 60 * 1000;
+
+let trakt: TraktManager | null = null;
+let deviceFlowInFlight: Promise<TokenPair | null> | null = null;
+let deviceFlowCooldownUntil = 0;
+
+const getTraktManager = (config: Config): TraktManager => {
+  if (
+    !trakt ||
+    trakt.clientId !== config.auth.clientId ||
+    trakt.clientSecret !== config.auth.clientSecret ||
+    trakt.redirectURI !== config.auth.redirectUri
+  ) {
+    trakt = new TraktManager(
+      config.auth.clientId,
+      config.auth.clientSecret,
+      config.auth.redirectUri,
+      config.auth.accessToken,
+      config.auth.refreshToken,
+    );
+    deviceFlowCooldownUntil = 0;
+  }
+
+  return trakt;
+};
+
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+const failDeviceFlow = (reason: string): null => {
+  error(`[Trakt] Device authorization failed: ${reason}`);
+  useAlertsStore.getState().pushAlert(ALERT_KEY, {
+    title: "Trakt connection failed",
+    subtitle: "Will retry automatically in a few minutes.",
+  });
+  deviceFlowCooldownUntil = Date.now() + DEVICE_FLOW_COOLDOWN_MS;
+  return null;
+};
+
+const runDeviceFlow = (manager: TraktManager): Promise<TokenPair | null> => {
+  if (deviceFlowInFlight) return deviceFlowInFlight;
+  if (Date.now() < deviceFlowCooldownUntil) return Promise.resolve(null);
+
+  deviceFlowInFlight = (async () => {
+    try {
+      const { deviceCode, userCode, verificationUrl, expiresIn, interval } = await manager.generateDeviceCode();
+
+      info(`[Trakt] Starting device authorization (code ${userCode})`);
+      useAlertsStore.getState().pushAlert(ALERT_KEY, {
+        title: "Connect Trakt",
+        subtitle: `Approve the request in your browser (code ${userCode})`,
+      });
+
+      openUrl(`${verificationUrl}/${userCode}`).catch(e => error(`[Trakt] Failed to open browser: ${e}`));
+
+      const deadline = Date.now() + expiresIn * 1000;
+      let pollInterval = interval;
+
+      while (Date.now() < deadline) {
+        await sleep(pollInterval * 1000);
+        const result = await manager.pollDeviceToken(deviceCode);
+
+        if (result.status === "success") {
+          info("[Trakt] Device authorization successful");
+          return [manager.accessToken, manager.refreshToken] as TokenPair;
+        }
+        if (result.status === "pending") continue;
+        if (result.status === "slow_down") {
+          pollInterval += 1;
+          continue;
+        }
+
+        // denied / expired / not_found / already_used are all terminal
+        return failDeviceFlow(result.status);
+      }
+
+      return failDeviceFlow("expired while polling");
+    } catch (e) {
+      return failDeviceFlow(`${e}`);
+    } finally {
+      deviceFlowInFlight = null;
+    }
+  })();
+
+  return deviceFlowInFlight;
+};
 
 const Component: CalendarExtensionComponent<Config> = async config => {
   const database = useDatabaseStore.getState();
@@ -14,31 +104,40 @@ const Component: CalendarExtensionComponent<Config> = async config => {
 
   const events: CalendarEvent[] = [];
 
-  // Get watchlist
-  let newTraktTokens: [accessToken: string, refreshToken: string] | null = null;
+  if (!config.auth.clientId || !config.auth.clientSecret) {
+    useAlertsStore.getState().pushAlert(ALERT_KEY, {
+      title: "Trakt not configured",
+      subtitle: "Set clientId and clientSecret in the config file.",
+    });
+    return events;
+  }
+
+  const manager = getTraktManager(config);
+
   try {
-    if (
-      !config.auth.accessToken ||
-      !config.auth.refreshToken ||
-      !config.auth.clientId ||
-      !config.auth.clientSecret ||
-      !config.auth.redirectUri
-    ) {
-      throw new Error("[Watchlist] Trakt & TMDb API credentials must be set in the config file.");
+    if (!manager.accessToken || !manager.refreshToken) {
+      const tokens = await runDeviceFlow(manager);
+      if (!tokens) return events;
     }
 
-    const trakt = new TraktManager(
-      config.auth.clientId,
-      config.auth.clientSecret,
-      config.auth.redirectUri,
-      config.auth.accessToken,
-      config.auth.refreshToken,
-    );
-
     const currentWatchlist = await database.read<any>("SELECT * FROM watchlist");
-    const [watchlistChanged, itemIds, tokens] = await trakt.getClockList(config, currentWatchlist);
-    if (watchlistChanged || updateWl) await trakt.updateWatchlist(itemIds);
-    if (tokens != null) newTraktTokens = [tokens[0], tokens[1]];
+
+    let watchlistChanged: boolean;
+    let itemIds: Set<string>;
+    try {
+      [watchlistChanged, itemIds] = await manager.getClockList(config, currentWatchlist);
+    } catch (e) {
+      if (!(e instanceof TraktManagerAPIError) || ![400, 401, 403].includes(e.statusCode)) throw e;
+
+      info("[Trakt] Stored credentials were rejected, restarting device authorization");
+      const tokens = await runDeviceFlow(manager);
+      if (!tokens) return events;
+
+      [watchlistChanged, itemIds] = await manager.getClockList(config, currentWatchlist);
+    }
+    useAlertsStore.getState().clearAlert(ALERT_KEY);
+
+    if (watchlistChanged || updateWl) await manager.updateWatchlist(itemIds);
 
     let count = 0;
     const watchlist = await database.read<any>(
@@ -89,20 +188,10 @@ const Component: CalendarExtensionComponent<Config> = async config => {
     error(`[Watchlist] Error fetching watchlist: ${e}`);
   }
 
-  let updatedCredentials = false;
-  if (newTraktTokens && newTraktTokens[0] != config.auth.accessToken) {
-    info("[Calendar] Updating Trakt access token");
-    config.auth.accessToken = newTraktTokens![0];
-    updatedCredentials = true;
-  }
-
-  if (newTraktTokens && newTraktTokens[1] != config.auth.refreshToken) {
-    info("[Calendar] Updating Trakt refresh token");
-    config.auth.refreshToken = newTraktTokens![1];
-    updatedCredentials = true;
-  }
-
-  if (updatedCredentials) {
+  if (manager.accessToken !== config.auth.accessToken || manager.refreshToken !== config.auth.refreshToken) {
+    info("[Trakt] Persisting updated credentials");
+    config.auth.accessToken = manager.accessToken;
+    config.auth.refreshToken = manager.refreshToken;
     useConfigStore.getState().editConfigByPath("widgets.trakt", config);
   }
 

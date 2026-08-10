@@ -20,15 +20,26 @@ describe("Alerts", () => {
     expect(container).toBeEmptyDOMElement();
   });
 
-  it("renders a card with the widget name and message for a single alert", () => {
-    useAlertsStore.setState({ alerts: { weather: "No data available" } });
+  it("renders a card with the title and subtitle for a single alert", () => {
+    useAlertsStore.setState({ alerts: { weather: { title: "weather", subtitle: "No data available" } } });
     render(<Alerts />);
     expect(screen.getByText("weather")).toBeInTheDocument();
     expect(screen.getByText("No data available")).toBeInTheDocument();
   });
 
+  it("renders a title with no subtitle", () => {
+    useAlertsStore.setState({ alerts: { weather: { title: "weather" } } });
+    render(<Alerts />);
+    expect(screen.getByText("weather")).toBeInTheDocument();
+  });
+
   it("renders a card for each alert when multiple alerts are present", () => {
-    useAlertsStore.setState({ alerts: { weather: "Error A", trakt: "Error B" } });
+    useAlertsStore.setState({
+      alerts: {
+        weather: { title: "weather", subtitle: "Error A" },
+        trakt: { title: "trakt", subtitle: "Error B" },
+      },
+    });
     render(<Alerts />);
     expect(screen.getByText("weather")).toBeInTheDocument();
     expect(screen.getByText("Error A")).toBeInTheDocument();

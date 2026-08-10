@@ -1,8 +1,14 @@
 import { create } from "zustand";
 
+export interface Alert {
+  title: string;
+  subtitle?: string;
+  image?: string;
+}
+
 interface AlertsStoreState {
-  alerts: Record<string, any>;
-  pushAlert: (widget: string, alert: any) => void;
+  alerts: Record<string, Alert>;
+  pushAlert: (widget: string, alert: Alert) => void;
   clearAlert: (widget: string) => void;
 }
 

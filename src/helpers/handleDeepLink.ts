@@ -29,20 +29,24 @@ const handleDeepLink = async (urls: string[]) => {
 
           const result = configStore.configSchema?.safeParse(config);
           if (!result?.success) {
-            useAlertsStore.getState().pushAlert("Config", "Configuration from deep link is invalid");
+            useAlertsStore
+              .getState()
+              .pushAlert("Config", { title: "Config", subtitle: "Configuration from deep link is invalid" });
             return;
           }
 
           configStore.editConfig(config);
-          useAlertsStore
-            .getState()
-            .pushAlert("Config", "Configuration updated from deep link\nReloading in 5 seconds...");
+          useAlertsStore.getState().pushAlert("Config", {
+            title: "Config",
+            subtitle: "Configuration updated from deep link. Reloading in 5 seconds...",
+          });
           await new Promise(resolve => setTimeout(resolve, 5000));
           window.location.reload();
         } else {
-          useAlertsStore
-            .getState()
-            .pushAlert("Config", `Failed to fetch configuration from deep link URL: ${response.statusText}`);
+          useAlertsStore.getState().pushAlert("Config", {
+            title: "Config",
+            subtitle: `Failed to fetch configuration from deep link URL: ${response.statusText}`,
+          });
         }
       }
     } else {

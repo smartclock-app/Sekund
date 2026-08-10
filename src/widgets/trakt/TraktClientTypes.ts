@@ -19,6 +19,23 @@ export interface AccessTokenResponse {
   createdAt: number;
 }
 
+export interface DeviceCodeResponse {
+  deviceCode: string;
+  userCode: string;
+  verificationUrl: string;
+  expiresIn: number;
+  interval: number;
+}
+
+export type DevicePollResult =
+  | { status: "success"; tokens: AccessTokenResponse }
+  | { status: "pending" }
+  | { status: "slow_down" }
+  | { status: "already_used" }
+  | { status: "expired" }
+  | { status: "denied" }
+  | { status: "not_found" };
+
 export interface ListItem {
   type: string;
   movie?: ListItemType;

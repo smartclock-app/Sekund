@@ -129,7 +129,7 @@ const Component: WidgetComponent<Config> = ({ config }) => {
 
   useEffect(() => {
     if (!config.url || !config.token) {
-      useAlertsStore.getState().pushAlert("Home Assistant", "URL or token not set");
+      useAlertsStore.getState().pushAlert("Home Assistant", { title: "Home Assistant", subtitle: "URL or token not set" });
       warn("[Home Assistant] URL or token not set");
       channel.current?.disconnect();
       return;

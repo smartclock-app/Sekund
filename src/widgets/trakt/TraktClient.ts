@@ -3,7 +3,8 @@ import { error, info } from "@tauri-apps/plugin-log";
 import dayjs from "dayjs";
 import { Config } from ".";
 import {
-  AccessTokenResponse,
+  DeviceCodeResponse,
+  DevicePollResult,
   ListItem,
   MovieSummary,
   ShowSummary,
@@ -47,18 +48,83 @@ class TraktManager {
       throw new TraktManagerAPIError(response.status, response.statusText, response);
     }
 
-    const data = (await response.json()) as AccessTokenResponse;
-    this.accessToken = data.accessToken;
-    this.refreshToken = data.refreshToken;
+    const data = await response.json();
+    this.accessToken = data.access_token;
+    this.refreshToken = data.refresh_token;
 
-    return [data.accessToken, data.refreshToken];
+    return [this.accessToken, this.refreshToken];
+  }
+
+  async generateDeviceCode(): Promise<DeviceCodeResponse> {
+    const response = await fetch(`https://${TraktManager._baseURL}/oauth/device/code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: this.clientId }),
+    });
+
+    if (response.status != 200) {
+      throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
+
+    const data = await response.json();
+    return {
+      deviceCode: data.device_code,
+      userCode: data.user_code,
+      verificationUrl: data.verification_url,
+      expiresIn: data.expires_in,
+      interval: data.interval,
+    };
+  }
+
+  async pollDeviceToken(deviceCode: string): Promise<DevicePollResult> {
+    const response = await fetch(`https://${TraktManager._baseURL}/oauth/device/token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        code: deviceCode,
+        client_id: this.clientId,
+        client_secret: this.clientSecret,
+      }),
+    });
+
+    switch (response.status) {
+      case 200: {
+        const data = await response.json();
+        this.accessToken = data.access_token;
+        this.refreshToken = data.refresh_token;
+        return {
+          status: "success",
+          tokens: {
+            accessToken: data.access_token,
+            tokenType: data.token_type,
+            expiresIn: data.expires_in,
+            refreshToken: data.refresh_token,
+            scope: data.scope,
+            createdAt: data.created_at,
+          },
+        };
+      }
+      case 400:
+        return { status: "pending" };
+      case 404:
+        return { status: "not_found" };
+      case 409:
+        return { status: "already_used" };
+      case 410:
+        return { status: "expired" };
+      case 418:
+        return { status: "denied" };
+      case 429:
+        return { status: "slow_down" };
+      default:
+        throw new TraktManagerAPIError(response.status, response.statusText, response);
+    }
   }
 
   /// Fetches the Trakt list and compares it to the watchlist database.
   /// Returns a tuple of a boolean indicating if the list has changed and a set of item IDs.
-  async getClockList(config: Config, watchlist: any[]) {
+  async getClockList(config: Config, watchlist: any[]): Promise<[boolean, Set<string>]> {
     let items: ListItem[];
-    let tokens: TokenPair = [this.accessToken, this.refreshToken];
 
     const listId = config.listId;
     try {
@@ -66,7 +132,7 @@ class TraktManager {
     } catch (e) {
       if (!(e instanceof TraktManagerAPIError)) throw e;
       if (e.statusCode != 401) throw e;
-      tokens = await this.refreshAccessToken();
+      await this.refreshAccessToken();
       items = await this.getListItems(listId);
     }
 
@@ -94,7 +160,7 @@ class TraktManager {
     );
 
     const setsHaveChanged = itemIds.difference(watchlistIds).size > 0 || watchlistIds.difference(itemIds).size > 0;
-    return [setsHaveChanged, itemIds, tokens] as [boolean, Set<string>, TokenPair?];
+    return [setsHaveChanged, itemIds];
   }
 
   async getListItems(listId: string) {

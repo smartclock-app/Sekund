@@ -15,37 +15,37 @@ describe("useAlertsStore", () => {
   });
 
   it("pushAlert() adds an alert", () => {
-    useAlertsStore.getState().pushAlert("weather", "No data");
+    useAlertsStore.getState().pushAlert("weather", { title: "No data" });
     const alerts = useAlertsStore.getState().alerts;
     expect(Object.keys(alerts)).toContain("weather");
   });
 
   it("pushAlert() overwrites an existing alert for the same widget", () => {
-    useAlertsStore.getState().pushAlert("weather", "First");
-    useAlertsStore.getState().pushAlert("weather", "Second");
-    expect(useAlertsStore.getState().alerts["weather"]).toBe("Second");
+    useAlertsStore.getState().pushAlert("weather", { title: "First" });
+    useAlertsStore.getState().pushAlert("weather", { title: "Second" });
+    expect(useAlertsStore.getState().alerts["weather"]).toEqual({ title: "Second" });
   });
 
   it("pushAlert() keeps alerts for different widgets separate", () => {
-    useAlertsStore.getState().pushAlert("weather", "W");
-    useAlertsStore.getState().pushAlert("trakt", "T");
+    useAlertsStore.getState().pushAlert("weather", { title: "W" });
+    useAlertsStore.getState().pushAlert("trakt", { title: "T" });
     const alerts = useAlertsStore.getState().alerts;
     expect(Object.keys(alerts)).toHaveLength(2);
-    expect(alerts["weather"]).toBe("W");
-    expect(alerts["trakt"]).toBe("T");
+    expect(alerts["weather"]).toEqual({ title: "W" });
+    expect(alerts["trakt"]).toEqual({ title: "T" });
   });
 
   it("clearAlert() removes the specified alert", () => {
-    useAlertsStore.getState().pushAlert("weather", "W");
+    useAlertsStore.getState().pushAlert("weather", { title: "W" });
     useAlertsStore.getState().clearAlert("weather");
     expect(useAlertsStore.getState().alerts["weather"]).toBeUndefined();
   });
 
   it("clearAlert() does not affect other alerts", () => {
-    useAlertsStore.getState().pushAlert("weather", "W");
-    useAlertsStore.getState().pushAlert("trakt", "T");
+    useAlertsStore.getState().pushAlert("weather", { title: "W" });
+    useAlertsStore.getState().pushAlert("trakt", { title: "T" });
     useAlertsStore.getState().clearAlert("weather");
-    expect(useAlertsStore.getState().alerts["trakt"]).toBe("T");
+    expect(useAlertsStore.getState().alerts["trakt"]).toEqual({ title: "T" });
   });
 
   it("clearAlert() is a no-op for a non-existent key", () => {
