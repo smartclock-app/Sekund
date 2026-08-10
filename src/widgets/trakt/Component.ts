@@ -3,11 +3,11 @@ import useAlertsStore from "@/hooks/useAlertsStore";
 import useConfigStore from "@/hooks/useConfigStore";
 import useDatabaseStore from "@/hooks/useDatabaseStore";
 import { error, info } from "@tauri-apps/plugin-log";
-import { openUrl } from "@tauri-apps/plugin-opener";
 import dayjs from "dayjs";
+import QRCode from "qrcode";
 import { Config } from ".";
 import TraktManager from "./TraktClient";
-import { TokenPair, TraktManagerAPIError } from "./TraktClientTypes";
+import { TraktManagerAPIError } from "./TraktClientTypes";
 
 const updateWl = false; // Set to true to force watchlist update on every fetch (for testing)
 
@@ -15,7 +15,7 @@ const ALERT_KEY = "Trakt";
 const DEVICE_FLOW_COOLDOWN_MS = 5 * 60 * 1000;
 
 let trakt: TraktManager | null = null;
-let deviceFlowInFlight: Promise<TokenPair | null> | null = null;
+let deviceFlowInFlight: Promise<void> | null = null;
 let deviceFlowCooldownUntil = 0;
 
 const getTraktManager = (config: Config): TraktManager => {
@@ -40,31 +40,44 @@ const getTraktManager = (config: Config): TraktManager => {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-const failDeviceFlow = (reason: string): null => {
+// Re-reads the latest persisted config rather than trusting a closure-captured copy, so a
+// device-authorization flow that resolves minutes after it started doesn't clobber unrelated
+// config edits made in the meantime.
+const persistTraktTokens = (manager: TraktManager) => {
+  const config = useConfigStore.getState().config.widgets.trakt as Config;
+  config.auth.accessToken = manager.accessToken;
+  config.auth.refreshToken = manager.refreshToken;
+  useConfigStore.getState().editConfigByPath("widgets.trakt", config);
+};
+
+const failDeviceFlow = (reason: string) => {
   error(`[Trakt] Device authorization failed: ${reason}`);
   useAlertsStore.getState().pushAlert(ALERT_KEY, {
     title: "Trakt connection failed",
     subtitle: "Will retry automatically in a few minutes.",
   });
   deviceFlowCooldownUntil = Date.now() + DEVICE_FLOW_COOLDOWN_MS;
-  return null;
 };
 
-const runDeviceFlow = (manager: TraktManager): Promise<TokenPair | null> => {
+const runDeviceFlow = (manager: TraktManager): Promise<void> => {
   if (deviceFlowInFlight) return deviceFlowInFlight;
-  if (Date.now() < deviceFlowCooldownUntil) return Promise.resolve(null);
+  if (Date.now() < deviceFlowCooldownUntil) return Promise.resolve();
 
   deviceFlowInFlight = (async () => {
     try {
       const { deviceCode, userCode, verificationUrl, expiresIn, interval } = await manager.generateDeviceCode();
+      const activateUrl = `${verificationUrl}/${userCode}`;
 
       info(`[Trakt] Starting device authorization (code ${userCode})`);
+      const qrCode = await QRCode.toDataURL(activateUrl).catch(e => {
+        error(`[Trakt] Failed to generate QR code: ${e}`);
+        return undefined;
+      });
       useAlertsStore.getState().pushAlert(ALERT_KEY, {
         title: "Connect Trakt",
-        subtitle: `Approve the request in your browser (code ${userCode})`,
+        subtitle: `Scan with your phone, or visit ${verificationUrl} and enter code ${userCode}`,
+        image: qrCode,
       });
-
-      openUrl(`${verificationUrl}/${userCode}`).catch(e => error(`[Trakt] Failed to open browser: ${e}`));
 
       const deadline = Date.now() + expiresIn * 1000;
       let pollInterval = interval;
@@ -75,7 +88,12 @@ const runDeviceFlow = (manager: TraktManager): Promise<TokenPair | null> => {
 
         if (result.status === "success") {
           info("[Trakt] Device authorization successful");
-          return [manager.accessToken, manager.refreshToken] as TokenPair;
+          persistTraktTokens(manager);
+          useAlertsStore.getState().pushAlert(ALERT_KEY, {
+            title: "Trakt connected",
+            subtitle: "Trakt data will load on the next refresh.",
+          });
+          return;
         }
         if (result.status === "pending") continue;
         if (result.status === "slow_down") {
@@ -84,12 +102,13 @@ const runDeviceFlow = (manager: TraktManager): Promise<TokenPair | null> => {
         }
 
         // denied / expired / not_found / already_used are all terminal
-        return failDeviceFlow(result.status);
+        failDeviceFlow(result.status);
+        return;
       }
 
-      return failDeviceFlow("expired while polling");
+      failDeviceFlow("expired while polling");
     } catch (e) {
-      return failDeviceFlow(`${e}`);
+      failDeviceFlow(`${e}`);
     } finally {
       deviceFlowInFlight = null;
     }
@@ -116,29 +135,24 @@ const Component: CalendarExtensionComponent<Config> = async config => {
 
   try {
     if (!manager.accessToken || !manager.refreshToken) {
-      const tokens = await runDeviceFlow(manager);
-      if (!tokens) return events;
+      runDeviceFlow(manager); // backgrounded, does not block other calendar extensions
+    } else {
+      const currentWatchlist = await database.read<any>("SELECT * FROM watchlist");
+      try {
+        const [watchlistChanged, itemIds] = await manager.getClockList(config, currentWatchlist);
+        useAlertsStore.getState().clearAlert(ALERT_KEY);
+        if (watchlistChanged || updateWl) await manager.updateWatchlist(itemIds);
+      } catch (e) {
+        if (!(e instanceof TraktManagerAPIError) || ![400, 401, 403].includes(e.statusCode)) throw e;
+
+        info("[Trakt] Stored credentials were rejected, restarting device authorization");
+        runDeviceFlow(manager); // backgrounded, see above
+      }
     }
 
-    const currentWatchlist = await database.read<any>("SELECT * FROM watchlist");
-
-    let watchlistChanged: boolean;
-    let itemIds: Set<string>;
-    try {
-      [watchlistChanged, itemIds] = await manager.getClockList(config, currentWatchlist);
-    } catch (e) {
-      if (!(e instanceof TraktManagerAPIError) || ![400, 401, 403].includes(e.statusCode)) throw e;
-
-      info("[Trakt] Stored credentials were rejected, restarting device authorization");
-      const tokens = await runDeviceFlow(manager);
-      if (!tokens) return events;
-
-      [watchlistChanged, itemIds] = await manager.getClockList(config, currentWatchlist);
-    }
-    useAlertsStore.getState().clearAlert(ALERT_KEY);
-
-    if (watchlistChanged || updateWl) await manager.updateWatchlist(itemIds);
-
+    // Build events from whatever is currently cached, even while a device authorization runs in
+    // the background above -- the calendar keeps showing the last-known watchlist rather than
+    // blocking on reauthorization.
     let count = 0;
     const watchlist = await database.read<any>(
       "SELECT * FROM watchlist WHERE nextAirDate IS NOT NULL ORDER BY nextAirDate",
@@ -190,9 +204,7 @@ const Component: CalendarExtensionComponent<Config> = async config => {
 
   if (manager.accessToken !== config.auth.accessToken || manager.refreshToken !== config.auth.refreshToken) {
     info("[Trakt] Persisting updated credentials");
-    config.auth.accessToken = manager.accessToken;
-    config.auth.refreshToken = manager.refreshToken;
-    useConfigStore.getState().editConfigByPath("widgets.trakt", config);
+    persistTraktTokens(manager);
   }
 
   return events;

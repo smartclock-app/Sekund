@@ -5,7 +5,8 @@
   img {
     width: 9rem;
     height: 9rem;
-    object-fit: cover;
+    object-fit: contain;
+    background-color: #fff;
     border-radius: 0.25rem;
   }
 }
