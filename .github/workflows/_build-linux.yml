@@ -20,30 +20,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Cache Rust target
-        uses: actions/cache@v4
-        with:
-          path: src-tauri/target
-          key: rust-target-rpi-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: rust-target-rpi-
-
-      - name: Cache Docker image
-        uses: actions/cache@v4
-        id: docker-cache
-        with:
-          path: /tmp/docker-image.tar
-          key: docker-image-tauri-rpi-1.0.0
-
-      - name: Load cached Docker image
-        if: steps.docker-cache.outputs.cache-hit == 'true'
-        run: docker load -i /tmp/docker-image.tar
-
       - name: Pull Docker image
-        if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker pull dannypeaky/tauri-build-rpi:1.0.0
 
       - name: Save Docker image to cache
-        if: steps.docker-cache.outputs.cache-hit != 'true'
         run: docker save -o /tmp/docker-image.tar dannypeaky/tauri-build-rpi:1.0.0
 
       - name: Clean AppImage output directory
