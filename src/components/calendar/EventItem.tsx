@@ -12,8 +12,6 @@ interface EventItemProps {
   event: CalendarEvent;
 }
 
-const dateOnlyUtc = (date: dayjs.Dayjs) => dayjs.utc(date).startOf("day");
-
 const EventItem: React.FC<EventItemProps> = ({ event }) => {
   /// Check if the event is an all-day event
   ///
@@ -21,10 +19,16 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
   ///
   /// If [oneDay] is false, it will return true if the event starts and ends at midnight
   const isAllDay = (oneDay = true) => {
-    const isOneDay =
-      dateOnlyUtc(event.end).diff(dateOnlyUtc(event.start), "day") === 1 || event.start.isSame(event.end);
-    const startsMidnight = event.start.hour() === 0 && event.start.minute() === 0;
-    const endsMidnight = event.end.hour() === 0 && event.end.minute() === 0;
+    // Check if both dates align with the start of their respective local calendar day
+    const startsMidnight = event.start.isSame(event.start.clone().startOf("day"));
+    const endsMidnight = event.end.isSame(event.end.clone().startOf("day"));
+
+    // Measure calendar difference rather than exact 24h duration
+    const startDay = event.start.clone().startOf("day");
+    const endDay = event.end.clone().startOf("day");
+    const calendarDays = endDay.diff(startDay, "day");
+
+    const isOneDay = calendarDays === 1 || calendarDays === 0;
 
     return (isOneDay || !oneDay) && startsMidnight && endsMidnight;
   };
@@ -36,22 +40,25 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
     return date.format(format);
   };
 
-  let dateString: string;
+  let eventStart: string;
+  let eventEnd = "";
   const startDay = formatDate(event.start, `dddd D[${getOrdinal(event.start.date())}]`);
   const isSameMonth = event.start.month() === event.end.month();
 
   if (isAllDay()) {
-    dateString = startDay;
+    eventStart = startDay;
   } else if (isAllDay(false)) {
-    const format = `dddd D[${getOrdinal(event.end.date() - 1)}]${!isSameMonth ? " MMM" : ""}`;
-    dateString = `${startDay} — ${formatDate(event.end.subtract(1, "day"), format)}`;
-  } else if (!event.start.isSame(event.end, "day")) {
+    const endPrevDay = event.end.clone().subtract(1, "day");
+    const format = `dddd D[${getOrdinal(endPrevDay.date())}]${!isSameMonth ? " MMM" : ""}`;
+    eventStart = `${startDay} — ${formatDate(event.end.subtract(1, "day"), format)}`;
+  } else if (!event.start.isSame(event.end, "day") && event.end.diff(event.start, "hours") >= 24) {
     const format = `dddd D[${getOrdinal(event.end.date())}]${!isSameMonth ? " MMM" : ""}`;
-    dateString = `${startDay} (${event.start.format("HH:mm")}) - ${formatDate(event.end, format)} (${event.end.format("HH:mm")})`;
+    eventStart = `${startDay} (${event.start.format("HH:mm")}) -`;
+    eventEnd = `${formatDate(event.end, format)} (${event.end.format("HH:mm")})`;
   } else if (event.start.isSame(event.end)) {
-    dateString = `${startDay} (${event.start.format("HH:mm")})`;
+    eventStart = `${startDay} (${event.start.format("HH:mm")})`;
   } else {
-    dateString = `${startDay} (${event.start.format("HH:mm")} - ${event.end.format("HH:mm")})`;
+    eventStart = `${startDay} (${event.start.format("HH:mm")} - ${event.end.format("HH:mm")})`;
   }
 
   return (
@@ -59,7 +66,8 @@ const EventItem: React.FC<EventItemProps> = ({ event }) => {
       <p className={styles.title}>
         {typeof event.title === "string" ? <span>{event.title}</span> : event.title.map(t => <span key={t}>{t}</span>)}
       </p>
-      <FittedBox className={styles.date}>{dateString}</FittedBox>
+      <FittedBox className={styles.date}>{eventStart}</FittedBox>
+      {!!eventEnd && <FittedBox className={styles.date}>{eventEnd}</FittedBox>}
     </div>
   );
 };
