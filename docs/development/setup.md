@@ -2,16 +2,16 @@
 
 ## Prerequisites
 
-| Tool | Purpose | Install |
-|------|---------|---------|
-| [Bun](https://bun.sh/) | JavaScript runtime & package manager | `curl -fsSL https://bun.sh/install \| bash` |
-| [Rust + Cargo](https://rustup.rs/) | Tauri backend | `rustup` |
-| [Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/) | Platform-specific libs (WebView2, GTK, etc.) | See Tauri docs |
+| Tool                                                                      | Purpose                                      | Install                                     |
+| ------------------------------------------------------------------------- | -------------------------------------------- | ------------------------------------------- |
+| [Bun](https://bun.sh/)                                                    | JavaScript runtime & package manager         | `curl -fsSL https://bun.sh/install \| bash` |
+| [Rust + Cargo](https://rustup.rs/)                                        | Tauri backend                                | `rustup`                                    |
+| [Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/) | Platform-specific libs (WebView2, GTK, etc.) | See Tauri docs                              |
 
 ## Clone & install
 
 ```bash
-git clone https://github.com/0x5045414b/ClockBeta.git
+git clone https://github.com/dnpkuk/ClockBeta.git
 cd ClockBeta
 bun install
 ```
@@ -44,13 +44,13 @@ Produces APKs targeting `aarch64` and `armv7` under the standard Android build o
 
 ## Key project files
 
-| Path | Description |
-|------|-------------|
-| `src/` | React + TypeScript frontend |
-| `src-tauri/` | Rust Tauri backend |
+| Path                        | Description                                                 |
+| --------------------------- | ----------------------------------------------------------- |
+| `src/`                      | React + TypeScript frontend                                 |
+| `src-tauri/`                | Rust Tauri backend                                          |
 | `src-tauri/tauri.conf.json` | Tauri configuration (app name, identifier, bundle settings) |
-| `src-tauri/Cargo.toml` | Rust dependencies |
-| `package.json` | JS dependencies and scripts |
-| `vite.config.ts` | Vite bundler configuration |
-| `tsconfig.json` | TypeScript compiler options |
-| `index.html` | HTML entry point |
+| `src-tauri/Cargo.toml`      | Rust dependencies                                           |
+| `package.json`              | JS dependencies and scripts                                 |
+| `vite.config.ts`            | Vite bundler configuration                                  |
+| `tsconfig.json`             | TypeScript compiler options                                 |
+| `index.html`                | HTML entry point                                            |

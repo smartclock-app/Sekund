@@ -16,7 +16,7 @@ Sekund is a full-screen clock application built with Tauri v2, React, and TypeSc
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/0x5045414b/ClockBeta.git
+   git clone https://github.com/dnpkuk/ClockBeta.git
    cd ClockBeta
    ```
 

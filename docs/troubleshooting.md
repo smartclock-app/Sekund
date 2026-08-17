@@ -43,7 +43,7 @@ The editor validates `config.json` against the Zod schema. Common causes:
 ## App is not receiving updates
 
 - The `updater` widget must be present in `layout.sidebar`.
-- Updates are fetched from `https://github.com/0x5045414b/ClockBeta/releases/latest/download/latest.json`.
+- Updates are fetched from `https://github.com/dnpkuk/ClockBeta/releases/latest/download/latest.json`.
 
 ## Finding the log file
 

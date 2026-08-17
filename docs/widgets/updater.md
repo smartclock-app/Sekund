@@ -4,11 +4,11 @@ Check for updates from GitHub Releases.
 
 ## Details
 
-| Property | Value |
-|----------|-------|
-| **Type** | `widget` |
+| Property              | Value     |
+| --------------------- | --------- |
+| **Type**              | `widget`  |
 | **Allowed Locations** | `sidebar` |
-| **Widget Name** | `updater` |
+| **Widget Name**       | `updater` |
 
 ## Configuration
 
@@ -29,12 +29,12 @@ Check for updates from GitHub Releases.
 
 ## Options Reference
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `updateInterval` | number | `5` | How often (in minutes) to check for updates |
+| Field            | Type   | Default | Description                                 |
+| ---------------- | ------ | ------- | ------------------------------------------- |
+| `updateInterval` | number | `5`     | How often (in minutes) to check for updates |
 
 ## Notes
 
 - Updates are distributed via GitHub Releases using the Tauri updater plugin.
-- The update endpoint is configured in `src-tauri/tauri.conf.json` and points to `https://github.com/0x5045414b/ClockBeta/releases/latest/download/latest.json`.
+- The update endpoint is configured in `src-tauri/tauri.conf.json` and points to `https://github.com/dnpkuk/ClockBeta/releases/latest/download/latest.json`.
 - This widget is currently only available on Android builds (the Tauri updater plugin is planned to be used for desktop targets).
