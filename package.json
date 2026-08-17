@@ -5,7 +5,7 @@
   "description": "A customizable smart clock display with widgets",
   "repository": {
     "type": "git",
-    "url": "https://github.com/0x5045414b/Sekund"
+    "url": "https://github.com/dnpkuk/Sekund"
   },
   "version": "0.6.1",
   "type": "module",
