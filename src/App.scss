@@ -40,26 +40,15 @@ body {
   }
   cursor: default;
 
-  &:has(#offline) {
-    background-color: #cd4545;
-  }
-
   & > div {
     border-radius: 0.625rem;
     overflow: hidden;
   }
 
+  // Purely a marker for the :has(#offline) rule above - renders nothing itself,
+  // the offline notice is shown as an alert in the sidebar instead.
   #offline {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 1rem;
-
-    font-size: calc(2rem * var(--clock-scale, 1));
-    line-height: 0.85;
-    text-align: center;
-    font-weight: bold;
+    display: none;
   }
 
   .main {
@@ -78,18 +67,5 @@ body {
     flex-direction: column;
     align-items: stretch;
     overflow-y: scroll;
-  }
-
-  #offline {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    padding: 1rem;
-
-    font-size: calc(2rem * var(--clock-scale, 1));
-    line-height: 0.85;
-    text-align: center;
-    font-weight: bold;
   }
 }

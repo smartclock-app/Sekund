@@ -1,3 +1,4 @@
+import useAlertsStore from "@/hooks/useAlertsStore";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import useNetworkStore from "@/hooks/useNetworkStore";
 import { listen } from "@tauri-apps/api/event";
@@ -6,8 +7,22 @@ import { Dayjs } from "dayjs";
 import { useEffect } from "react";
 import hashInterfaces, { NetworkInterfaces } from "./hashInterfaces";
 
+const ALERT_KEY = "Network";
+
 const NetworkManager = () => {
   const probe = useNetworkStore(state => state.probe);
+  const connected = useNetworkStore(state => state.connected);
+
+  useEffect(() => {
+    if (connected) {
+      useAlertsStore.getState().clearAlert(ALERT_KEY);
+    } else {
+      useAlertsStore.getState().pushAlert(ALERT_KEY, {
+        title: "Offline",
+        subtitle: "Waiting for network connection...",
+      });
+    }
+  }, [connected]);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;

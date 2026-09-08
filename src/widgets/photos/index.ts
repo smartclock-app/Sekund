@@ -18,6 +18,10 @@ export const Schema = z.object({
     .boolean()
     .catch(false)
     .describe("Whether to use the static image links provided in the config instead of fetching from Immich."),
+  savePhotosToDisk: z
+    .boolean()
+    .catch(false)
+    .describe("Whether to download Immich images to disk so they remain available for offline viewing."),
   images: z
     .array(z.url().or(z.literal("")))
     .catch([])

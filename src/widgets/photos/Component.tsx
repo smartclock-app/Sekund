@@ -1,6 +1,7 @@
 import getOrdinal from "@/components/clock/getOrdinal";
 import { ClockThemeComponent } from "@/helpers/types";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
+import { warn } from "@tauri-apps/plugin-log";
 import { useCallback, useEffect, useState } from "react";
 import { Config } from ".";
 import fetchImages from "./fetchImages";
@@ -22,6 +23,9 @@ const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) =>
     const img = new Image();
     img.onload = () => {
       if (!cancelled) setLoadedImage(photos[index]);
+    };
+    img.onerror = () => {
+      if (!cancelled) warn(`[Photos] Failed to load image, keeping last loaded photo: ${photos[index]}`);
     };
     img.src = photos[index];
     return () => {

@@ -53,39 +53,37 @@ function App() {
     <EditorScreen />
   ) : (
     <div className="container">
+      {!connected && <div id="offline" />}
       <NetworkManager />
       <Menu />
       <RemoteConfig />
-      <NetworkManager />
       <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
-        {connected &&
-          layout.main.map(Widget => (
-            <MemoizedWidget
-              key={Widget.Name}
-              Component={Widget.Component}
-              config={widgetConfigs[Widget.Name]}
-              location={WidgetLocation.Main}
-            />
-          ))}
+        {layout.main.map(Widget => (
+          <MemoizedWidget
+            key={Widget.Name}
+            Component={Widget.Component}
+            config={widgetConfigs[Widget.Name]}
+            location={WidgetLocation.Main}
+          />
+        ))}
         <Clock />
       </div>
       <div className="sidebar" ref={sidebarRef} style={{ display: sidebarHasChildren ? undefined : "none" }}>
         <Alerts />
-        {connected &&
-          layout.sidebar.map(Widget => {
-            if (Widget.Name === "calendar") {
-              return <Calendar key={Widget.Name} config={calendarConfig} location={WidgetLocation.Sidebar} />;
-            }
+        {layout.sidebar.map(Widget => {
+          if (Widget.Name === "calendar") {
+            return <Calendar key={Widget.Name} config={calendarConfig} location={WidgetLocation.Sidebar} />;
+          }
 
-            return (
-              <MemoizedWidget
-                key={Widget.Name}
-                Component={Widget.Component}
-                config={widgetConfigs[Widget.Name]}
-                location={WidgetLocation.Sidebar}
-              />
-            );
-          })}
+          return (
+            <MemoizedWidget
+              key={Widget.Name}
+              Component={Widget.Component}
+              config={widgetConfigs[Widget.Name]}
+              location={WidgetLocation.Sidebar}
+            />
+          );
+        })}
       </div>
     </div>
   );
