@@ -44,8 +44,49 @@ Built-in commands:
 | `set_variables` | Replaces `variables.css` with `data` and reloads       |
 | `get_logs`      | Returns the last 100 lines of the app log              |
 | `refresh`       | Triggers a page reload                                 |
+| `display_on`    | Turns the display on (Android only)                     |
+| `display_off`   | Turns the display off (Android only)                    |
+| `get_display_status` | Returns `{ adminActive: boolean }` (Android only)  |
 
 Additional commands can be registered by widgets via `OnInit` (see [Adding Widgets](development/adding-widgets.md)).
+
+#### Display Control (Android)
+
+`display_on` and `display_off` are currently implemented for Android only. `display_off` turns the screen off via Android's Device Admin `lockNow()` API — the same effect as a single press of the physical power button — and `display_on` wakes it back up with a forced wake lock.
+
+Turning the display off requires Sekund to be granted the **device admin** permission once, on the device itself. Since this only ever needs doing once per device, the app checks on every startup and, if not yet granted, automatically opens the system "Activate this device admin app?" prompt — just confirm it the first time the app runs on a given device. This cannot be granted remotely, so if the prompt is dismissed instead of confirmed, it opens again on the next launch/reload; the long-press menu's **Enable Display Control** button can also re-trigger it manually at any time. `get_display_status` can be polled to check whether it's currently active. Until it's granted, `display_off` returns an error explaining that the permission is missing.
+
+For the smoothest remote experience, don't set a PIN/pattern/password lock on the device — with no secure lock configured, `display_on` wakes straight back to the Sekund clock face instead of a lock screen.
+
+#### Kiosk Mode / Device Owner (Android)
+
+If a device is dedicated entirely to Sekund, it can be provisioned as Android's **Device Owner** rather than just a plain Device Admin. Device Owner unlocks a few things beyond the display control above:
+
+- Sekund's Device Admin permission (used for `display_off`) is active automatically — no on-device prompt at all, since a device owner's admin receiver is always active.
+- The screen can be pinned to just Sekund plus Settings and whatever browser(s) are installed, via Android's Lock Task API — no home button, recents, or way to reach any other app.
+- App updates (via the updater widget) install silently through a `PackageInstaller` session instead of the "Install unknown app?" confirmation dialog, so a device owner can update fully unattended. On a non-device-owner install, the same update flow falls back to the normal `ACTION_INSTALL_PACKAGE` confirmation dialog.
+- Android's own adaptive brightness (`Settings.System.SCREEN_BRIGHTNESS_MODE` set to automatic) is turned on, so the screen dims/brightens using the device's ambient light sensor and Android's own tuned curve — no custom sensor code needed. This call itself doesn't check for a light sensor; on hardware without one it's simply a no-op as far as brightness changes go.
+- Sekund silently registers itself as the permanent default Home app via `DevicePolicyManager.addPersistentPreferredActivity()` — no "Complete action using" chooser, and no manual "set as launcher" step in Settings either.
+- The lock screen is disabled entirely via `DevicePolicyManager.setKeyguardDisabled()`, so waking the display always lands directly on the clock face.
+- Automatic time and timezone (`Settings.Global.AUTO_TIME`/`AUTO_TIME_ZONE`) are turned on via `DevicePolicyManager.setGlobalSetting()`, so the clock stays correct without anyone touching Settings.
+
+The status bar (notification shade / quick settings) is deliberately **not** disabled, even though Device Owner supports it (`setStatusBarDisabled`) and Android documents it as the standard kiosk-device setting — this is a conscious choice so Quick Settings (and USB/wireless debugging within it) stays reachable without going through the full Settings app.
+
+Device Owner can **only** be granted via one `adb` command run before any account exists on the device (or after a factory reset — it cannot be granted through a Settings screen or after sign-in):
+
+```sh
+adb shell dpm set-device-owner uk.dnpk.sekund/.SekundDeviceAdminReceiver
+```
+
+Once that's done, Sekund detects device owner status automatically on every startup and applies all of the above. Nothing else needs configuring — the browser package(s) to whitelist are resolved at runtime from whatever's installed, and Settings (`com.android.settings`) is always included. The long-press menu gains two extra items on Android: **Settings** (opens the system Settings app) and **Exit Kiosk Mode** (calls `disable_kiosk_mode`, useful for maintenance — kiosk mode re-engages on the next reload/restart since it's re-checked every startup).
+
+A device with Device Owner set up this way needs essentially zero manual configuration beyond the one `adb` command above — the app installs, registers itself as the launcher, pins the screen, and configures brightness entirely on its own, which is the point: making the device feel like Sekund *is* its OS rather than an app running on top of one.
+
+On a device that _isn't_ set up as device owner, all of the above is skipped silently and Sekund behaves exactly as described in the plain Device Admin section above — kiosk mode and silent installs are opportunistic, not required.
+
+Kiosk mode blocks the Quick Settings pull-down shade, but not the full Settings app (it's one of the whitelisted packages) — so Developer Options, and USB/wireless debugging specifically, stay reachable by hand via the menu's **Settings** button. There's no in-app toggle for debugging: `adb`-related settings persist across reboots (they're stored in the settings database, not reset at boot), and debugging has to already be enabled to run the `dpm set-device-owner` command above in the first place, so there's nothing left to wire up.
+
+There is currently no `power_off` command: Android provides no public API for a non-rooted app (even with device admin) to shut the device down, only to reboot it as a device-owner app. If you need true remote power control, external hardware (e.g. a smart plug) driven by your own automation is the only reliable option for now. Other platforms (Raspberry Pi, desktop) are not yet supported for display or power control.
 
 ## Schema & Backups
 

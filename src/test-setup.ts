@@ -31,6 +31,17 @@ beforeEach(() => {
     if (cmd === "start_http_server") return null;
     if (cmd === "stop_http_server") return null;
     if (cmd === "http_respond") return null;
+    if (cmd === "turn_display_on") return null;
+    if (cmd === "turn_display_off") return null;
+    if (cmd === "is_display_admin_active") return true;
+    if (cmd === "is_device_owner") return false;
+    if (cmd === "enable_kiosk_mode") return null;
+    if (cmd === "disable_kiosk_mode") return null;
+    if (cmd === "enable_auto_brightness") return null;
+    if (cmd === "set_as_persistent_home") return null;
+    if (cmd === "disable_keyguard") return null;
+    if (cmd === "enable_auto_time") return null;
+    if (cmd === "open_settings") return null;
 
     return null;
   });

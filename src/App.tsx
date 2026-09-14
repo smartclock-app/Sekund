@@ -5,7 +5,9 @@ import { memo, useEffect, useRef, useState } from "react";
 import Alerts from "./components/alerts/Alerts";
 import Calendar from "./components/calendar/Calendar";
 import Clock from "./components/clock/Clock";
+import DisplayAdmin from "./components/DisplayAdmin";
 import { EditorScreen } from "./components/editor";
+import Kiosk from "./components/Kiosk";
 import useOptionsMenu from "./components/menu/Menu";
 import NetworkManager from "./components/network/Manager";
 import RemoteConfig from "./components/RemoteConfig";
@@ -57,6 +59,8 @@ function App() {
       <NetworkManager />
       <Menu />
       <RemoteConfig />
+      <DisplayAdmin />
+      <Kiosk />
       <div className="main" style={{ width: sidebarHasChildren ? undefined : "100%" }} {...longPressProps}>
         {layout.main.map(Widget => (
           <MemoizedWidget

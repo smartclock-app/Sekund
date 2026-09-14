@@ -1,6 +1,9 @@
+mod android_jni;
 mod android_updates;
 mod browser;
+mod display;
 mod http_server;
+mod kiosk;
 mod mdns;
 mod migrations;
 mod network;
@@ -12,8 +15,16 @@ use std::sync::Arc;
 use std::sync::Mutex;
 
 use android_updates::{download_apk, install_apk};
-use browser::launch_browser;
+use browser::{launch_browser, open_settings};
+use display::{
+    disable_keyguard, enable_auto_brightness, is_display_admin_active, request_display_admin,
+    turn_display_off, turn_display_on,
+};
 use http_server::{http_respond, start_http_server, stop_http_server, HttpServerState};
+use kiosk::{
+    disable_kiosk_mode, enable_auto_time, enable_kiosk_mode, is_device_owner,
+    set_as_persistent_home,
+};
 use mdns::{start_mdns, MdnsState};
 use network::start_network_monitor;
 
@@ -42,7 +53,6 @@ pub fn run() {
         })
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_apk_intent::init())
         .setup(|_app| {
             #[cfg(not(target_os = "android"))]
             _app.handle()
@@ -81,7 +91,19 @@ pub fn run() {
             download_apk,
             install_apk,
             launch_browser,
-            start_network_monitor
+            start_network_monitor,
+            is_display_admin_active,
+            request_display_admin,
+            turn_display_off,
+            turn_display_on,
+            enable_auto_brightness,
+            disable_keyguard,
+            is_device_owner,
+            enable_kiosk_mode,
+            disable_kiosk_mode,
+            set_as_persistent_home,
+            enable_auto_time,
+            open_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

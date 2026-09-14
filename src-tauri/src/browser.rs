@@ -1,4 +1,23 @@
 #[tauri::command]
+#[cfg(target_os = "android")]
+pub fn open_settings() -> Result<(), String> {
+    use std::process::Command;
+
+    Command::new("am")
+        .args(&["start", "-a", "android.settings.SETTINGS"])
+        .output()
+        .map_err(|e| format!("Failed to open settings: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+#[cfg(not(target_os = "android"))]
+pub fn open_settings() -> Result<(), String> {
+    Err("Opening settings is only supported on Android".to_string())
+}
+
+#[tauri::command]
 pub fn launch_browser() -> Result<String, String> {
     #[cfg(not(any(target_os = "android", target_os = "macos")))]
     {

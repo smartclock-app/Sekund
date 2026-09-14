@@ -1,3 +1,4 @@
+import { mockIPC } from "@tauri-apps/api/mocks";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import useRemoteConfigStore from "./useRemoteConfig";
 
@@ -74,6 +75,33 @@ describe("useRemoteConfig", () => {
       const result = await (useRemoteConfigStore.getState().getHandler("get_logs")!({}) as Promise<any>);
       expect(result.status).toBe("ok");
       expect(typeof result.result).toBe("string");
+    });
+
+    it("display_on returns ok status", async () => {
+      const result = await (useRemoteConfigStore.getState().getHandler("display_on")!({}) as Promise<any>);
+      expect(result.status).toBe("ok");
+    });
+
+    it("display_off returns ok status", async () => {
+      const result = await (useRemoteConfigStore.getState().getHandler("display_off")!({}) as Promise<any>);
+      expect(result.status).toBe("ok");
+    });
+
+    it("display_off returns error status when the underlying command fails", async () => {
+      mockIPC(cmd => {
+        if (cmd === "turn_display_off") throw new Error("Device admin permission not granted");
+        return null;
+      });
+
+      const result = await (useRemoteConfigStore.getState().getHandler("display_off")!({}) as Promise<any>);
+      expect(result.status).toBe("error");
+      expect(result.error).toContain("Device admin permission not granted");
+    });
+
+    it("get_display_status returns ok status with adminActive", async () => {
+      const result = await (useRemoteConfigStore.getState().getHandler("get_display_status")!({}) as Promise<any>);
+      expect(result.status).toBe("ok");
+      expect(result.result).toEqual({ adminActive: true });
     });
   });
 });

@@ -6,7 +6,6 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "apk-intent:allow-install-apk",
     "deep-link:default",
     "websocket:default",
     "log:allow-log",

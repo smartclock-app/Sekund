@@ -1,4 +1,5 @@
 import { RemoteConfigHandler } from "@/helpers/types";
+import { invoke } from "@tauri-apps/api/core";
 import { BaseDirectory, readTextFile } from "@tauri-apps/plugin-fs";
 import { create } from "zustand";
 import useConfigStore from "./useConfigStore";
@@ -42,6 +43,30 @@ const useRemoteConfigStore = create<RemoteConfigStoreState>()(set => ({
     refresh: () => {
       setTimeout(() => window.location.reload(), 100);
       return { status: "ok", result: "Refresh event dispatched" };
+    },
+    display_on: async () => {
+      try {
+        await invoke("turn_display_on");
+        return { status: "ok", result: "Display turned on" };
+      } catch (e) {
+        return { status: "error", error: String(e) };
+      }
+    },
+    display_off: async () => {
+      try {
+        await invoke("turn_display_off");
+        return { status: "ok", result: "Display turned off" };
+      } catch (e) {
+        return { status: "error", error: String(e) };
+      }
+    },
+    get_display_status: async () => {
+      try {
+        const adminActive = await invoke<boolean>("is_display_admin_active");
+        return { status: "ok", result: { adminActive } };
+      } catch (e) {
+        return { status: "error", error: String(e) };
+      }
     },
   },
   addHandler: (name, handler) => {

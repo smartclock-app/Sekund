@@ -3,6 +3,7 @@ import useRouter, { RouterScreen } from "@/hooks/useRouter";
 import { invoke } from "@tauri-apps/api/core";
 import { info } from "@tauri-apps/plugin-log";
 import { openUrl } from "@tauri-apps/plugin-opener";
+import { platform } from "@tauri-apps/plugin-os";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./menu.module.scss";
@@ -23,6 +24,27 @@ const Menu = (props: { show: boolean; onClose: () => void }) => {
             Browser
           </button>
         </li>
+        {platform() === "android" && (
+          <>
+            <li>
+              <button onClick={() => invoke("open_settings").catch(e => info(`Failed to open settings: ${e}`))}>
+                Settings
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => invoke("request_display_admin").catch(e => info(`Failed to open device admin settings: ${e}`))}
+              >
+                Enable Display Control
+              </button>
+            </li>
+            <li>
+              <button onClick={() => invoke("disable_kiosk_mode").catch(e => info(`Failed to exit kiosk mode: ${e}`))}>
+                Exit Kiosk Mode
+              </button>
+            </li>
+          </>
+        )}
       </ul>
     </div>,
     document.getElementById("root")!,

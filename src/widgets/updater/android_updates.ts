@@ -37,9 +37,5 @@ export async function downloadApk(url: string, path: string, onProgress: (progre
 }
 
 export async function installApk(path: string): Promise<void> {
-  return invoke("plugin:apk-intent|install_apk", {
-    payload: {
-      path,
-    },
-  });
+  return invoke("install_apk", { path });
 }
