@@ -9,11 +9,7 @@ export interface UpdateInfo {
 
 // Full example usage
 export async function checkForUpdate(): Promise<UpdateInfo | null> {
-  const request = await fetch("https://api.github.com/repos/dnpkuk/Sekund/releases/latest", {
-    headers: {
-      Authorization: `Bearer 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`,
-    },
-  });
+  const request = await fetch("https://api.github.com/repos/smartclock-app/Sekund/releases/latest");
 
   const assets = await request.json();
   const apkAsset = assets.assets.find((asset: any) => asset.name.endsWith(".apk"));

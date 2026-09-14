@@ -2,7 +2,7 @@ import getOrdinal from "@/components/clock/getOrdinal";
 import { ClockThemeComponent } from "@/helpers/types";
 import useEventListener, { EventType } from "@/hooks/useEventListener";
 import { warn } from "@tauri-apps/plugin-log";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Config } from ".";
 import fetchImages from "./fetchImages";
 import styles from "./photos.module.scss";
@@ -11,10 +11,27 @@ const Component: ClockThemeComponent<Config> = ({ config, clockConfig, now }) =>
   const [photos, setPhotos] = useState<string[]>();
   const [index, setIndex] = useState(0);
   const [loadedImage, setLoadedImage] = useState<string>();
+  // Tracks whether the last fetch genuinely failed (network/API error), as opposed to succeeding
+  // with a legitimately empty album - only the former is worth retrying automatically.
+  const lastFetchFailed = useRef(false);
+
+  const refreshPhotos = useCallback(() => {
+    fetchImages(config).then(({ images, failed }) => {
+      lastFetchFailed.current = failed;
+      setPhotos(images);
+    });
+  }, [config]);
 
   useEffect(() => {
-    fetchImages(config).then(setPhotos);
-  }, [config]);
+    refreshPhotos();
+  }, [refreshPhotos]);
+
+  // Re-fetching the album hits the network (and, with savePhotosToDisk, disk), so only retry after
+  // an actual failure rather than on every Refresh tick. A successful fetch, even of an empty
+  // album, is left alone until the config changes.
+  useEventListener(EventType.Refresh, () => {
+    if (lastFetchFailed.current) refreshPhotos();
+  });
 
   useEffect(() => {
     if (!photos?.[index]) return;

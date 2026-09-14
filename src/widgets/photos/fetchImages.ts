@@ -111,38 +111,49 @@ const syncCachedImages = async (assets: ImmichAsset[]): Promise<string[]> => {
   return readCachedImages();
 };
 
-const fetchImages = async (config: Config) => {
-  let images: string[] = [];
+export interface FetchImagesResult {
+  images: string[];
+  // True when the album couldn't be reached at all (as opposed to being fetched successfully but
+  // legitimately containing no images) - callers should keep retrying and avoid treating this as
+  // "the album is empty".
+  failed: boolean;
+}
 
+const fetchImages = async (config: Config): Promise<FetchImagesResult> => {
   if (config.useStaticLinks) {
-    images = config.images;
-  } else if (!config.immichUrl || !config.immichAccessToken || !config.immichAlbumId || !config.immichShareKey) {
+    const images = [...config.images].sort(() => Math.random() - 0.5);
+    return { images, failed: false };
+  }
+
+  if (!config.immichUrl || !config.immichAccessToken || !config.immichAlbumId || !config.immichShareKey) {
     warn("[Photos] Cannot get images from Immich, missing required fields");
-    return config.savePhotosToDisk ? await readCachedImages() : [];
-  } else {
-    let assets: ImmichAsset[] = [];
-    let fetchFailed = false;
+    const images = config.savePhotosToDisk ? await readCachedImages().catch(() => []) : [];
+    return { images, failed: false };
+  }
 
+  let assets: ImmichAsset[];
+  try {
+    assets = await getAssetsFromImmich(config);
+  } catch (e) {
+    info(`[Photos] Error fetching images from Immich: ${e}`);
+    const images = config.savePhotosToDisk ? await readCachedImages().catch(() => []) : [];
+    return { images, failed: true };
+  }
+
+  let images: string[];
+  if (config.savePhotosToDisk) {
     try {
-      assets = await getAssetsFromImmich(config);
+      images = await syncCachedImages(assets);
     } catch (e) {
-      fetchFailed = true;
-      info(`[Photos] Error fetching images from Immich: ${e}`);
+      warn(`[Photos] Failed to sync photo cache on disk: ${e}`);
+      images = await readCachedImages().catch(() => []);
     }
-
-    if (config.savePhotosToDisk) {
-      try {
-        images = fetchFailed ? await readCachedImages() : await syncCachedImages(assets);
-      } catch (e) {
-        warn(`[Photos] Failed to read/sync photo cache on disk: ${e}`);
-      }
-    } else {
-      images = assets.map(asset => asset.url);
-    }
+  } else {
+    images = assets.map(asset => asset.url);
   }
 
   images.sort(() => Math.random() - 0.5);
-  return images;
+  return { images, failed: false };
 };
 
 export default fetchImages;
