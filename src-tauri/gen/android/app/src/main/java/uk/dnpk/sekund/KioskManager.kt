@@ -40,6 +40,21 @@ object KioskManager {
         val packages = (listOf(activity.packageName, "com.android.settings") + resolveBrowserPackages(activity)).distinct()
 
         dpm.setLockTaskPackages(admin, packages.toTypedArray())
+
+        // Lock Task Mode defaults to LOCK_TASK_FEATURE_NONE, which blocks the
+        // notification shade / Quick Settings entirely — more restrictive than
+        // intended, since Quick Settings (and USB/wireless debugging within it)
+        // should stay reachable. NOTIFICATIONS can only be enabled together with
+        // HOME; that's harmless here since Sekund is also the persistent default
+        // Home app (see setAsPersistentHome), so pressing Home just re-focuses it.
+        dpm.setLockTaskFeatures(
+            admin,
+            DevicePolicyManager.LOCK_TASK_FEATURE_SYSTEM_INFO or
+                DevicePolicyManager.LOCK_TASK_FEATURE_NOTIFICATIONS or
+                DevicePolicyManager.LOCK_TASK_FEATURE_HOME or
+                DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW,
+        )
+
         activity.startLockTask()
     }
 

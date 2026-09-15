@@ -6,11 +6,34 @@ pub type Result<T> = std::result::Result<T, String>;
 // the JNIEnv stays usable for subsequent calls) to a plain String. The JNI call
 // itself must already have been made into `result` before calling this, since
 // borrowing `env` here at the same time as evaluating the call would conflict.
+//
+// jni-rs's own error for a pending exception (`Error::JavaException`) carries no
+// detail — its Display is just the generic "Java exception was thrown" — so this
+// captures the actual exception's toString() (class + message) before clearing it,
+// which is the only way to see e.g. *which* class failed to load or *why* a
+// DevicePolicyManager call was rejected.
 pub fn map_jni_err<T>(env: &mut jni::JNIEnv, result: jni::errors::Result<T>) -> Result<T> {
-    result.map_err(|e| {
-        let _ = env.exception_clear();
-        e.to_string()
+    result.map_err(|e| match describe_pending_exception(env) {
+        Some(detail) => detail,
+        None => e.to_string(),
     })
+}
+
+fn describe_pending_exception(env: &mut jni::JNIEnv) -> Option<String> {
+    if !env.exception_check().ok()? {
+        return None;
+    }
+
+    let throwable = env.exception_occurred().ok()?;
+    env.exception_clear().ok()?;
+
+    let message = env
+        .call_method(&throwable, "toString", "()Ljava/lang/String;", &[])
+        .ok()?
+        .l()
+        .ok()?;
+    let message = jni::objects::JString::from(message);
+    env.get_string(&message).ok().map(Into::into)
 }
 
 // Looks up an app class (as opposed to a system/framework class) by its fully

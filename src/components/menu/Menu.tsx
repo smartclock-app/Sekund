@@ -4,11 +4,21 @@ import { invoke } from "@tauri-apps/api/core";
 import { info } from "@tauri-apps/plugin-log";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { platform } from "@tauri-apps/plugin-os";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "./menu.module.scss";
 
 const Menu = (props: { show: boolean; onClose: () => void }) => {
+  const [displayAdminActive, setDisplayAdminActive] = useState(true);
+
+  useEffect(() => {
+    if (!props.show || platform() !== "android") return;
+
+    invoke<boolean>("is_display_admin_active")
+      .then(setDisplayAdminActive)
+      .catch(() => setDisplayAdminActive(false));
+  }, [props.show]);
+
   if (!props.show) return null;
   return createPortal(
     <div className={styles.overlay} onClick={props.onClose}>
@@ -20,7 +30,7 @@ const Menu = (props: { show: boolean; onClose: () => void }) => {
           <button onClick={() => useRouter.getState().navigate(RouterScreen.Editor)}>Editor</button>
         </li>
         <li>
-          <button onClick={async () => await invoke("launch_browser").catch(() => openUrl("https://www.google.com"))}>
+          <button onClick={async () => invoke("launch_browser").catch(() => openUrl("https://www.google.com"))}>
             Browser
           </button>
         </li>
@@ -31,13 +41,17 @@ const Menu = (props: { show: boolean; onClose: () => void }) => {
                 Settings
               </button>
             </li>
-            <li>
-              <button
-                onClick={() => invoke("request_display_admin").catch(e => info(`Failed to open device admin settings: ${e}`))}
-              >
-                Enable Display Control
-              </button>
-            </li>
+            {!displayAdminActive && (
+              <li>
+                <button
+                  onClick={() =>
+                    invoke("request_display_admin").catch(e => info(`Failed to open device admin settings: ${e}`))
+                  }
+                >
+                  Enable Display Control
+                </button>
+              </li>
+            )}
             <li>
               <button onClick={() => invoke("disable_kiosk_mode").catch(e => info(`Failed to exit kiosk mode: ${e}`))}>
                 Exit Kiosk Mode
