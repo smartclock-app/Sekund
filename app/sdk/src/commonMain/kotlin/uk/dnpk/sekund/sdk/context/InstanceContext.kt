@@ -51,4 +51,7 @@ interface InstanceContext<S> {
 
     /** Writes to Sekund's log, tagged with this instance's id. */
     val log: PluginLog
+
+    /** Other running instances, e.g. the calendar sources picked in a calendar widget's settings. */
+    val instances: InstanceLookup
 }

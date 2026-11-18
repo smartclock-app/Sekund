@@ -22,6 +22,7 @@ import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.runtime.services.SharedEventBus
 import uk.dnpk.sekund.sdk.context.Alert
 import uk.dnpk.sekund.sdk.context.InstanceContext
+import uk.dnpk.sekund.sdk.context.LinkedInstance
 import uk.dnpk.sekund.sdk.context.TimePreferences
 import uk.dnpk.sekund.sdk.context.TimeService
 import uk.dnpk.sekund.sdk.plugin.Contribution
@@ -172,6 +173,38 @@ class InstanceManagerTest {
         val ready = assertIs<RunningInstance.Ready>(manager.instances.value["a"])
         assertEquals(listOf("refreshInterval"), ready.issues.map { issue -> issue.path })
     }
+
+    @Test
+    fun `an instance can follow another one as it is recreated and removed`() = runTest {
+        val manager = manager()
+        manager.apply(listOf(note("a", "watcher"), note("b", "one")))
+        val watcher = manager.instances.value["a"].widget()
+        val linked = watcher.context.instances.watch(ExtensionPoints.Widgets, "b")
+        testScheduler.runCurrent()
+        assertEquals("one", linkedNote(linked.value).context.settings)
+
+        manager.apply(listOf(note("a", "watcher"), note("b", "two")))
+        testScheduler.runCurrent()
+        assertEquals("two", linkedNote(linked.value).context.settings)
+
+        manager.apply(listOf(note("a", "watcher")))
+        testScheduler.runCurrent()
+        assertEquals(LinkedInstance.Unavailable("No instance called 'b'"), linked.value)
+    }
+
+    @Test
+    fun `following an instance of another extension point reports it as unavailable`() = runTest {
+        val manager = manager()
+        manager.apply(listOf(note("a", "watcher"), note("b", "one")))
+        val watcher = manager.instances.value["a"].widget()
+
+        val linked = watcher.context.instances.watch(ExtensionPoints.CalendarSources, "b")
+
+        assertIs<LinkedInstance.Unavailable>(linked.value)
+    }
+
+    private fun linkedNote(linked: LinkedInstance<Widget>): NoteWidget =
+        assertIs<NoteWidget>(assertIs<LinkedInstance.Running<Widget>>(linked).value)
 
     @Test
     fun `a newly installed plugin brings its failed instances to life, and only those are recreated`() = runTest {

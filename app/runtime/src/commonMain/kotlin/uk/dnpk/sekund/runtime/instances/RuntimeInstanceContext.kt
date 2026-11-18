@@ -6,6 +6,7 @@ import uk.dnpk.sekund.sdk.auth.AuthAccess
 import uk.dnpk.sekund.sdk.context.Alerts
 import uk.dnpk.sekund.sdk.context.EventBus
 import uk.dnpk.sekund.sdk.context.InstanceContext
+import uk.dnpk.sekund.sdk.context.InstanceLookup
 import uk.dnpk.sekund.sdk.context.KeyValueStore
 import uk.dnpk.sekund.sdk.context.PluginLog
 import uk.dnpk.sekund.sdk.context.Refresher
@@ -24,4 +25,5 @@ class RuntimeInstanceContext<S>(
     override val alerts: Alerts,
     override val events: EventBus,
     override val log: PluginLog,
+    override val instances: InstanceLookup,
 ) : InstanceContext<S>

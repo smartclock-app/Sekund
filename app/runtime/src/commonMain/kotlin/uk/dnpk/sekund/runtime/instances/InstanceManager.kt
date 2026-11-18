@@ -157,6 +157,7 @@ class InstanceManager(
             alerts = services.alerts.forOwner(config.id),
             events = services.events,
             log = TaggedPluginLog(config.id),
+            instances = RuntimeInstanceLookup(running = current, scope = scope),
         )
 
         try {
