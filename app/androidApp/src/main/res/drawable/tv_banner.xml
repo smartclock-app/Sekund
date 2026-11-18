@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Android TV home-screen banner (320x180, required with the Leanback launcher in the manifest).
+     A placeholder until Sekund has real artwork: a clock face on black. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M0,0h320v180h-320z" />
+    <!-- The dial: a ring of radius 56 around the centre (160, 90). -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#F8F8F8"
+        android:strokeWidth="8"
+        android:pathData="M160,34a56,56 0,1 1,0 112a56,56 0,1 1,0 -112z" />
+    <!-- The hands, pointing to ten past ten. -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#3B82F6"
+        android:strokeWidth="8"
+        android:strokeLineCap="round"
+        android:pathData="M132,72L160,90L196,66" />
+</vector>
