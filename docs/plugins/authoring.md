@@ -38,6 +38,11 @@ If all you need is "call an API and show the result", you may not need Kotlin at
    Watch `context.auth.state(ref)` if you want to show "reconnect your account". You don't need to show an
    alert yourself: Sekund shows one central "Reconnect …" alert.
 
+4. Rarely, a connection carries the token *inside* it rather than on HTTP requests: Home Assistant's WebSocket
+   wants it in its first message. For that one case, `context.auth.connectionToken(ref, url)` returns the token,
+   but only if the provider's definition says `"connectionToken": true` and `url` is within its `baseUrls`
+   (`ws://`/`wss://` count as `http://`/`https://`). Everything else should use the client.
+
 ## Auth provider definitions (`*.auth.json`)
 
 A provider says *how* to sign in to a service. It's data, not code, so one definition is shared by every plugin
@@ -59,7 +64,8 @@ commas are allowed. Broken files are skipped and listed on the Accounts screen.
   "inject": { "type": "header", "name": "x-api-key", "format": "{api_key}" },
   "extraHeaders": { },                     // added to every signed-in request
   "accountInfo": { "url": "{instance_url}/api/users/me", "label": "$.email" },   // optional account name
-  "baseUrls": ["{instance_url}/"]          // the only places credentials are ever sent
+  "baseUrls": ["{instance_url}/"],         // the only places credentials are ever sent
+  "connectionToken": false                 // optional: see "connectionToken" below
 }
 ```
 
@@ -72,6 +78,9 @@ Unknown placeholders are rejected when the file loads. Trailing `/` is removed f
 - `{"type": "query", "name": "appid", "format": "{api_key}"}`
 
 **`accountInfo.label`** is a simple path: `$.email`, `$.user.username`.
+
+**`connectionToken`** (default `false`): lets plugins read the token with `context.auth.connectionToken` for a
+connection that carries it inside (Home Assistant's WebSocket). Leave it off unless the service needs it.
 
 ### Methods
 

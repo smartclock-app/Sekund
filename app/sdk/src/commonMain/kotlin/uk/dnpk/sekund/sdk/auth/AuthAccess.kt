@@ -41,11 +41,31 @@ interface AuthAccess {
      * plugin's to use). Never contains credentials.
      */
     fun fields(account: AccountRef): Map<String, String>
+
+    /**
+     * The account's token, for the rare connection that carries it *inside* the connection rather than on
+     * HTTP requests. Home Assistant's WebSocket is the example: its first message must contain the token.
+     * Use [client] for everything else; it never shows you the token.
+     *
+     * Only works for providers whose definition says `"connectionToken": true`. [url] is where the token
+     * will be sent; it must be one of the provider's `baseUrls` (`ws://` and `wss://` count as `http://`
+     * and `https://`). Ask again for each new connection: the token may have been refreshed.
+     *
+     * @throws ProviderNotDeclaredException if the plugin's manifest doesn't require [AccountRef.provider].
+     * @throws ConnectionTokenNotAllowedException if the provider doesn't allow it, or has no single token.
+     * @throws CredentialHostException if [url] isn't one of the provider's `baseUrls`.
+     * @throws AccountUnavailableException if the account is missing or needs reconnecting.
+     */
+    suspend fun connectionToken(account: AccountRef, url: String): String
 }
 
 /** The plugin asked for an account of a provider it didn't declare in its manifest's `requires.auth`. */
 class ProviderNotDeclaredException(provider: String, pluginId: String) :
     IllegalStateException("Plugin '$pluginId' didn't declare the auth provider '$provider' in its manifest")
+
+/** The provider doesn't hand out tokens for connections (see [AuthAccess.connectionToken]). */
+class ConnectionTokenNotAllowedException(provider: String, reason: String) :
+    IllegalStateException("Can't use a '$provider' token for a connection: $reason")
 
 /** The account can't be used right now: it doesn't exist, or the user has to reconnect it. */
 class AccountUnavailableException(val accountId: String, reason: String) :

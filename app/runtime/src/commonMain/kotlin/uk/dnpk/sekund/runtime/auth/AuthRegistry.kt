@@ -21,6 +21,8 @@ import uk.dnpk.sekund.protocol.auth.AuthProviderDefinition
 import uk.dnpk.sekund.runtime.auth.secrets.SecretStore
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.sdk.auth.AccountUnavailableException
+import uk.dnpk.sekund.sdk.auth.ConnectionTokenNotAllowedException
+import uk.dnpk.sekund.sdk.auth.CredentialHostException
 import uk.dnpk.sekund.sdk.auth.AuthState
 import uk.dnpk.sekund.sdk.auth.CustomAuthHandler
 import uk.dnpk.sekund.sdk.auth.CustomAuthRejectedException
@@ -263,6 +265,37 @@ class AuthRegistry(
 
         val fresh = refreshIfStill(accountId) { stored -> expiresSoon(details.definition, details.account, stored) }
         return details.copy(credential = fresh ?: credential)
+    }
+
+    /**
+     * The account's token for a connection to [url] that carries it inside (see `AuthAccess.connectionToken`).
+     * Refreshes first if it's about to expire, like [credentialForRequest].
+     */
+    internal suspend fun connectionToken(accountId: String, url: String): String {
+        val details = credentialForRequest(accountId)
+        val definition = details.definition
+        if (!definition.connectionToken) {
+            throw ConnectionTokenNotAllowedException(definition.id, "its definition doesn't say \"connectionToken\": true")
+        }
+        if (isCustom(details)) {
+            throw ConnectionTokenNotAllowedException(definition.id, "custom sign-ins have no single token")
+        }
+        // A WebSocket goes to the same server as plain HTTP, so check it against the same baseUrls.
+        val httpUrl = asHttpUrl(url)
+        val templates = AccountTemplates(definition, details.account.fields, details.credential)
+        if (!templates.isAllowedUrl(httpUrl)) throw CredentialHostException(url, definition.id)
+
+        val credential = details.credential
+        return credential.accessToken
+            ?: credential.apiKey
+            ?: throw ConnectionTokenNotAllowedException(definition.id, "the account has no token")
+    }
+
+    /** `ws://x` → `http://x` and `wss://x` → `https://x`; anything else unchanged. */
+    private fun asHttpUrl(url: String): String {
+        if (url.startsWith("ws://")) return "http://" + url.removePrefix("ws://")
+        if (url.startsWith("wss://")) return "https://" + url.removePrefix("wss://")
+        return url
     }
 
     /**

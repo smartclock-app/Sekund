@@ -47,4 +47,13 @@ class PluginAuthAccess(
         if (saved.provider != account.provider) return emptyMap()
         return saved.fields
     }
+
+    override suspend fun connectionToken(account: AccountRef, url: String): String {
+        if (!declaredProviders.contains(account.provider)) throw ProviderNotDeclaredException(account.provider, pluginId)
+        val saved = registry.account(account.accountId)
+        if (saved != null && saved.provider != account.provider) {
+            throw IllegalArgumentException("Account '${account.accountId}' is a ${saved.provider} account, not ${account.provider}")
+        }
+        return registry.connectionToken(account.accountId, url)
+    }
 }

@@ -48,6 +48,8 @@ class FakeAuth(private val signedClient: HttpClient) : AuthAccess {
     }
 
     override fun fields(account: AccountRef): Map<String, String> = emptyMap()
+
+    override suspend fun connectionToken(account: AccountRef, url: String): String = error("Declarative widgets don't use connection tokens")
 }
 
 /** A client whose every request is answered by [handler], and which remembers the requests. */

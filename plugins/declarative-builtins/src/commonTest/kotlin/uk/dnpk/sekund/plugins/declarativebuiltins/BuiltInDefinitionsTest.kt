@@ -36,6 +36,7 @@ class BuiltInDefinitionsTest {
         override fun state(account: AccountRef): Flow<AuthState> = flowOf(AuthState.Valid)
         override fun client(account: AccountRef): HttpClient = client
         override fun fields(account: AccountRef): Map<String, String> = emptyMap()
+        override suspend fun connectionToken(account: AccountRef, url: String): String = error("Not used")
     }
 
     private suspend fun load(name: String): DeclarativeDefinition {

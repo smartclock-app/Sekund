@@ -35,6 +35,9 @@ import kotlinx.serialization.Serializable
  * @property baseUrls credentials are only ever sent to URLs starting with one of these. A plugin asking
  *   for anything else gets an error instead of leaking the token to another site.
  * @property fields extra things to ask for when connecting an account (e.g. a server address).
+ * @property connectionToken true lets plugins read the account's token for a connection to one of the
+ *   [baseUrls] that carries the token *inside* it rather than on HTTP requests (Home Assistant's WebSocket
+ *   sends it as its first message). Off by default: only turn it on for services that need it.
  */
 @Serializable
 data class AuthProviderDefinition(
@@ -47,6 +50,7 @@ data class AuthProviderDefinition(
     val accountInfo: AccountInfoDefinition? = null,
     val baseUrls: List<String>,
     val fields: List<AccountField> = emptyList(),
+    val connectionToken: Boolean = false,
 )
 
 /**

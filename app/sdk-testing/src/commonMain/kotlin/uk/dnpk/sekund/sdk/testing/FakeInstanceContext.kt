@@ -176,6 +176,17 @@ class FakeAuth(private val client: HttpClient) : AuthAccess {
 
     override fun fields(account: AccountRef): Map<String, String> = accountFields
 
+    /** What [connectionToken] returns. Set it to null to make it fail like a provider that doesn't allow it. */
+    var token: String? = "test-token"
+
+    /** The URLs [connectionToken] was asked for, in order. */
+    val tokenUrls = mutableListOf<String>()
+
+    override suspend fun connectionToken(account: AccountRef, url: String): String {
+        tokenUrls.add(url)
+        return token ?: throw IllegalStateException("No connection token in this test")
+    }
+
     override fun state(account: AccountRef): Flow<AuthState> = states
 
     override fun client(account: AccountRef): HttpClient {

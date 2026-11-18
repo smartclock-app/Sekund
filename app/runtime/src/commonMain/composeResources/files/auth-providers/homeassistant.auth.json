@@ -9,5 +9,7 @@
   "methods": [
     { "type": "bearer", "label": "Long-lived access token", "help": "Create one on your Home Assistant profile page, under Security." }
   ],
-  "baseUrls": ["{instance_url}/"]
+  "baseUrls": ["{instance_url}/"],
+  // The live connection (WebSocket) sends the token as its first message, so the plugin needs to read it.
+  "connectionToken": true
 }
