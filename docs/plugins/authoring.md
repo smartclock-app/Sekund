@@ -1,9 +1,212 @@
 # Writing plugins
 
-This guide grows phase by phase. Right now it covers **signing in to services** and **webhooks**.
+A plugin is a Kotlin module in `plugins/` that adds things to Sekund: widgets, clock faces, calendar sources,
+photo sources. It's written against `:app:sdk` only, never the runtime, so it can be tested on its own.
 
 If all you need is "call an API and show the result", you may not need Kotlin at all: see
 [declarative widgets](declarative-widgets.md).
+
+This guide walks through a complete plugin, a **quote of the day** widget. The code is real: it lives in
+[`plugins/example`](../../plugins/example), and is compiled and tested with everything else, so it can't go
+out of date. After that come [accounts](#using-accounts-from-a-plugin) and [webhooks](#webhooks-being-told-when-something-changes).
+
+## A complete example: the quote widget
+
+### 1. The module
+
+Create `plugins/example/build.gradle.kts`. Any folder in `plugins/` with a build file joins the build by itself.
+
+```kotlin
+plugins {
+    id("sekund.plugin")   // Kotlin Multiplatform + Compose + :app:sdk, set up for you
+}
+
+kotlin {
+    sourceSets {
+        commonTest.dependencies {
+            implementation(project(":app:sdk-testing"))   // fakes for tests
+        }
+    }
+}
+```
+
+Put the code in `src/commonMain/kotlin/...`, so it runs on Android and desktop alike.
+
+### 2. The settings
+
+Declare each setting once. From that, Sekund reads `config.json` (bad values fall back to defaults and show a
+warning instead of crashing), generates the settings screen, and describes the settings to the companion.
+
+```kotlin
+data class QuoteSettings(
+    val url: String,
+    val showAuthor: Boolean,
+)
+
+object QuoteSettingsSchema : SettingsSchema<QuoteSettings>() {
+    private val url = text(
+        "url",
+        label = "Quote API",
+        description = "Returns JSON like {\"quote\": \"...\", \"author\": \"...\"}.",
+        default = "https://quotes.example.com/today",
+        required = true,
+    )
+    private val showAuthor = toggle("showAuthor", label = "Show the author", default = true)
+
+    override fun build(values: SettingsValues) = QuoteSettings(
+        url = values[url].trim(),
+        showAuthor = values[showAuthor],
+    )
+}
+```
+
+The other kinds are `number`, `choice` (an enum), `duration`, `color`, `textList`, `objectList`, `account`
+(a signed-in account, see below) and `instanceRefs` (other instances, like the calendar's sources). A plugin
+with nothing to set uses `NoSettings`.
+
+### 3. The widget
+
+A widget is a class that gets an `InstanceContext` (its settings plus everything Sekund offers: HTTP, time,
+storage, alerts...) and draws itself in `Content`. Sekund creates one per configured instance, and throws it
+away when the instance is removed or its settings change.
+
+```kotlin
+@Serializable
+data class Quote(val quote: String, val author: String = "")
+
+class QuoteWidget(private val context: InstanceContext<QuoteSettings>) : Widget {
+    private val json = Json { ignoreUnknownKeys = true }
+
+    val quote: StateFlow<Loadable<Quote>> = context.refresher.poll(RefreshPolicy(every = 6.hours)) { fetchQuote() }
+
+    private suspend fun fetchQuote(): Quote {
+        val response = context.http.get(context.settings.url)
+        if (!response.status.isSuccess()) {
+            throw IllegalStateException("The quote API answered ${response.status.value}")
+        }
+        return json.decodeFromString<Quote>(response.bodyAsText())
+    }
+
+    @Composable
+    override fun Content(location: WidgetLocation) {
+        when (val state = quote.collectAsState().value) {
+            is Loadable.Loading -> {}
+            is Loadable.Failed -> ErrorCard(title = "No quote", message = state.message)
+            is Loadable.Ready -> QuoteCard(state.data, context.settings.showAuthor)
+        }
+    }
+}
+```
+
+- **`context.refresher.poll`** is how almost every plugin loads data. You write the fetch; Sekund runs it now
+  and then every 6 hours, again when the network returns or the display wakes, pauses it while the screen is
+  off, retries failures with growing delays, and keeps the last good data when a refresh fails. Throw an
+  exception with a readable message when something's wrong: it becomes `Loadable.Failed` (or a stale `Ready`).
+- **`StateFlow`** is a value that changes over time (think: a small zustand store). `collectAsState()` makes
+  the composable redraw when it changes.
+- **Never start work outside `context.scope`**. If you need your own coroutine, `context.scope.launch { }`;
+  Sekund cancels it with the instance.
+- **Draw with Sekund's components and tokens** (`SekundCard`, `ErrorCard`, `Sekund.theme.colors...`) so the
+  widget matches the rest of the screen. `QuoteCard` is in [`QuoteWidget.kt`](../../plugins/example/src/commonMain/kotlin/uk/dnpk/sekund/plugins/example/QuoteWidget.kt).
+
+### 4. The plugin object
+
+The plugin says who it is and what it contributes. `register` only registers; work starts when instances
+are created.
+
+```kotlin
+object QuotePlugin : SekundPlugin {
+    const val QUOTE = "quote"
+
+    override val manifest = PluginManifest(
+        id = "example",
+        name = "Example",
+        version = "1.0.0",
+        description = "A quote of the day. The example from the plugin guide.",
+    )
+
+    override fun register(registrar: PluginRegistrar) {
+        registrar.contribute(
+            Contribution(
+                point = ExtensionPoints.Widgets,
+                type = QUOTE,
+                name = "Quote",
+                description = "A quote, refreshed every few hours.",
+                settings = QuoteSettingsSchema,
+                widgetLocations = setOf(WidgetLocation.Sidebar),
+                create = { context -> QuoteWidget(context) },
+            ),
+        )
+    }
+}
+```
+
+The extension points are `Widgets`, `ClockFaces`, `CalendarSources` and `PhotoSources`. A plugin can
+contribute to several, as many times as it likes (`plugins/google` adds a calendar source; `plugins/slideshow`
+a clock face).
+
+### 5. A test
+
+`:app:sdk-testing` has a `FakeInstanceContext` where nothing happens by itself: you choose what the API
+answers and when data refreshes.
+
+```kotlin
+@Test
+fun `loads the quote from the configured address`() = runTest {
+    val api = FakeApi { request ->
+        if (request.url.toString() == "https://quotes.test/today") {
+            json("""{"quote": "Simplicity is prerequisite for reliability.", "author": "Dijkstra", "id": 7}""")
+        } else {
+            null // Anything else answers 404.
+        }
+    }
+    val context = FakeInstanceContext(settings, backgroundScope, api = api)
+    val widget = QuoteWidget(context)
+
+    context.refresher.runAll()
+
+    val state = assertIs<Loadable.Ready<Quote>>(widget.quote.value)
+    assertEquals(Quote("Simplicity is prerequisite for reliability.", "Dijkstra"), state.data)
+}
+```
+
+Run it with `./gradlew :plugins:example:jvmTest`. The fake context also records alerts, overlays and log
+lines, and has fake time (`context.time.set(...)`), storage and accounts.
+
+### 6. Adding it to the app
+
+The example stops here on purpose. For a real plugin:
+
+1. Add the module to the dependencies in `app/shared/build.gradle.kts`: `implementation(project(":plugins:quote"))`.
+2. Add the plugin object to the list in `app/shared/.../BuiltInPlugins.kt`.
+3. Run the app (`./gradlew :app:desktopApp:run`), long-press, and add the widget in Settings. Or add it to
+   `config.json` by hand:
+
+   ```json
+   "instances": [
+     { "id": "quote-1", "type": "quote", "settings": { "url": "https://quotes.example.com/today" } }
+   ],
+   "layout": { "sidebar": ["quote-1"] }
+   ```
+
+### What else the context offers
+
+| `context.` | For |
+|---|---|
+| `time` | The current time, ticking each second or minute, and the 12/24-hour preference. |
+| `storage` | A small key/value store kept across restarts (cache the last data for a quick start). |
+| `files` | A folder for downloads, e.g. photos for offline use. May be cleared. |
+| `alerts` | An alert card at the top of the sidebar ("Your Trakt account needs signing in again"). |
+| `overlays` | A full-screen overlay, e.g. a doorbell camera. |
+| `events` | Messages between plugins, and Sekund's own events (display on/off, network changed). |
+| `instances` | Other instances, like the calendar sources a calendar widget shows. |
+| `auth` | Signed-in HTTP clients; see below. |
+| `webhooks` | Public URLs other services can call; see below. |
+| `log` | Sekund's log, tagged with the instance id. |
+
+Each is documented in `app/sdk/src/commonMain/.../sdk/context/`. The plugins in `plugins/` are worked examples:
+`calendar` (combining other instances), `trakt` (accounts + calendar source), `slideshow` (clock face +
+photo sources), `homeassistant` (WebSocket, alerts, overlays, video), `alexa` (a custom sign-in).
 
 ## Using accounts from a plugin
 
