@@ -2,6 +2,7 @@ package uk.dnpk.sekund
 
 import uk.dnpk.sekund.plugins.calendar.CalendarPlugin
 import uk.dnpk.sekund.plugins.clock.ClockPlugin
+import uk.dnpk.sekund.plugins.trakt.TraktPlugin
 import uk.dnpk.sekund.plugins.google.GooglePlugin
 import uk.dnpk.sekund.plugins.declarative.DeclarativePlugin
 import uk.dnpk.sekund.protocol.declarative.DeclarativeDefinition
@@ -17,6 +18,7 @@ val BuiltInPlugins: List<SekundPlugin> = listOf(
     ClockPlugin,
     CalendarPlugin,
     GooglePlugin,
+    TraktPlugin,
 )
 
 /**
