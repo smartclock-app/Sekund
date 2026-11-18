@@ -8,6 +8,10 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":app:runtime"))
+
+            // Built-in plugins. Each one is also listed in BuiltInPlugins.kt.
+            implementation(project(":plugins:clock"))
+
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
         }
