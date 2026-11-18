@@ -12,6 +12,7 @@ kotlin {
             // Built-in plugins. Each one is also listed in BuiltInPlugins.kt.
             implementation(project(":plugins:clock"))
             implementation(project(":plugins:calendar"))
+            implementation(project(":plugins:google"))
             implementation(project(":plugins:declarative")) // the engine for JSON-defined widgets
 
             implementation(libs.androidx.lifecycle.viewmodelCompose)
