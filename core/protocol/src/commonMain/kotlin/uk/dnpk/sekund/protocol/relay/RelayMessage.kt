@@ -43,14 +43,14 @@ sealed class RelayMessage {
 
     /**
      * Server → device: nobody owns this device yet. Show [code] on screen; someone signed in to the
-     * server enters it (in the companion, or at [claimUrl]) to make the device theirs.
+     * server (at [serverUrl], shown next to the code) enters it in the companion to make the device theirs.
      */
     @Serializable
     @SerialName("claim.code")
     data class ClaimCode(
         val code: String,
         val expiresAt: String,
-        val claimUrl: String,
+        val serverUrl: String,
     ) : RelayMessage()
 
     /**

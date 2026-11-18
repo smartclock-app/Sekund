@@ -23,7 +23,7 @@ class RelayMessageJsonTest {
     fun `messages read back the same`() {
         val messages = listOf(
             RelayMessage.Hello("dev_1", null, "Kitchen", "1.0.0", 1),
-            RelayMessage.ClaimCode("ABCD-1234", "2026-11-18T12:00:00Z", "https://example.org/claim"),
+            RelayMessage.ClaimCode("ABCD-1234", "2026-11-18T12:00:00Z", "https://example.org"),
             RelayMessage.Welcome(owner = "sam", oauthProviders = listOf("google"), webhooks = true),
             RelayMessage.RpcResponse(replyTo = "r1", status = 200, headers = mapOf("ETag" to "\"abc\""), body = "{}"),
             RelayMessage.EventsStart,

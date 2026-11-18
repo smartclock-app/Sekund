@@ -52,5 +52,6 @@ fun Application.serverModule(server: SekundServer) {
         get("/health") { call.respondText("ok (api v$API_VERSION)") }
 
         userRoutes(server)
+        deviceRoutes(server)
     }
 }
