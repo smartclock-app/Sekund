@@ -36,21 +36,6 @@ import kotlin.time.Duration.Companion.seconds
 class RelayTest {
     private val config = ServerConfig(publicUrl = "https://sekund.example.org", allowSignups = true)
 
-    /** Connects a new device and claims it as [owner]; returns the device and its token. */
-    private suspend fun claimedDevice(client: HttpClient, owner: SessionStarted, deviceId: String = "dev_test"): Pair<FakeDevice, String> {
-        val device = FakeDevice.connect(client, deviceId)
-        val code = device.expect<RelayMessage.ClaimCode>()
-        val claimed = client.post("/v1/devices/claim") {
-            bearerAuth(owner.token)
-            contentType(ContentType.Application.Json)
-            setBody(ClaimDevice(code.code.lowercase().replace("-", " "))) // people type codes sloppily
-        }
-        assertEquals(HttpStatusCode.Created, claimed.status)
-        val token = device.expect<RelayMessage.Claimed>().deviceToken
-        device.expect<RelayMessage.Welcome>()
-        return Pair(device, token)
-    }
-
     @Test
     fun `an unclaimed device shows a code that its new owner enters`() = testApplication {
         val client = startServer(newTestServer(config))

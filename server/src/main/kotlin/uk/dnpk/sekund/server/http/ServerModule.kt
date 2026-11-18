@@ -53,5 +53,6 @@ fun Application.serverModule(server: SekundServer) {
 
         userRoutes(server)
         deviceRoutes(server)
+        webhookRoutes(server)
     }
 }

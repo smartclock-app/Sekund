@@ -31,11 +31,13 @@ import kotlin.time.Instant
  *
  * @param welcome builds the `welcome` message for a device owned by a given username (what the server
  *   offers: OAuth providers, webhooks).
+ * @param connected called after a device is welcomed (e.g. to send it what was waiting in the outbox).
  */
 class RelayHub(
     private val devices: DeviceStore,
     private val welcome: (owner: String) -> RelayMessage.Welcome,
     private val ownerName: (ownerId: String) -> String?,
+    private val connected: suspend (DeviceConnection) -> Unit = {},
     private val clock: Clock = Clock.System,
 ) {
     private val log = LoggerFactory.getLogger("Relay")
@@ -67,6 +69,7 @@ class RelayHub(
         val watched = lock.withLock { (watcherCounts[connection.deviceId] ?: 0) > 0 }
         if (watched) connection.send(RelayMessage.EventsStart)
         log.info("Device ${connection.deviceId} connected")
+        connected(connection)
     }
 
     /** The connection closed. */
@@ -138,6 +141,9 @@ class RelayHub(
         if (reply is RelayMessage.Error) throw ServerProblem(502, "device_error", reply.message)
         throw ServerProblem(502, "device_error", "The device gave an unexpected answer")
     }
+
+    /** The open connection to [deviceId], or null if it isn't connected. */
+    suspend fun onlineConnection(deviceId: String): DeviceConnection? = lock.withLock { online[deviceId] }
 
     /** The open connection to [deviceId]. @throws ServerProblem 503 if it isn't connected. */
     suspend fun connectionOf(deviceId: String): DeviceConnection =

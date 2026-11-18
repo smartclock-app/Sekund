@@ -1,6 +1,15 @@
 package uk.dnpk.sekund.server
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.bearerAuth
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import uk.dnpk.sekund.protocol.server.ClaimDevice
+import uk.dnpk.sekund.protocol.server.SessionStarted
+import kotlin.test.assertEquals
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.websocket.Frame
@@ -46,4 +55,19 @@ class FakeDevice(private val session: DefaultClientWebSocketSession) {
             return device
         }
     }
+}
+
+/** Connects a new device and claims it as [owner]; returns the device and its token. */
+suspend fun claimedDevice(client: HttpClient, owner: SessionStarted, deviceId: String = "dev_test"): Pair<FakeDevice, String> {
+    val device = FakeDevice.connect(client, deviceId)
+    val code = device.expect<RelayMessage.ClaimCode>()
+    val claimed = client.post("/v1/devices/claim") {
+        bearerAuth(owner.token)
+        contentType(ContentType.Application.Json)
+        setBody(ClaimDevice(code.code.lowercase().replace("-", " "))) // people type codes sloppily
+    }
+    assertEquals(HttpStatusCode.Created, claimed.status)
+    val token = device.expect<RelayMessage.Claimed>().deviceToken
+    device.expect<RelayMessage.Welcome>()
+    return Pair(device, token)
 }
