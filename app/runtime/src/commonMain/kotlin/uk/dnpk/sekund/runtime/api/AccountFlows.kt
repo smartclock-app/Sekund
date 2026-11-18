@@ -15,6 +15,9 @@ import uk.dnpk.sekund.runtime.auth.Credential
 import uk.dnpk.sekund.runtime.auth.DeviceSignIn
 import uk.dnpk.sekund.runtime.auth.DeviceSignInStatus
 import uk.dnpk.sekund.runtime.auth.randomUrlSafe
+import uk.dnpk.sekund.runtime.relay.ServerSignIn
+import uk.dnpk.sekund.runtime.relay.ServerSignInStatus
+import uk.dnpk.sekund.runtime.relay.ServerSignIns
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.sdk.auth.AuthState
 
@@ -26,6 +29,7 @@ class AccountFlows(
     private val auth: AuthRegistry,
     private val authCodes: AuthCodeSignIns,
     private val alerts: AlertCenter,
+    private val serverSignIns: ServerSignIns,
 ) {
     private val lock = Mutex()
     private val deviceSignIns = mutableMapOf<String, DeviceSignIn>()
@@ -59,6 +63,7 @@ class AccountFlows(
                 return deviceFlow(flowId, signIn)
             }
             is AuthMethodDefinition.OAuthAuthorizationCode -> {
+                if (request.viaServer) return startThroughServer(request, reconnect)
                 val redirectUri = request.redirectUri ?: throw ApiProblem.badRequest("Send the companion's \"redirectUri\"")
                 val started = authCodes.start(request.provider, request.method, request.fields, request.clientId, request.clientSecret, redirectUri, reconnect)
                 val flow = AccountFlow.AuthorizationCode(started.flowId, started.authorizeUrl, started.redirectUri, started.expiresAt.toString())
@@ -68,13 +73,34 @@ class AccountFlows(
         }
     }
 
+    /** Signing in with the Sekund server's own OAuth client: the person opens the server's link. */
+    private suspend fun startThroughServer(request: ConnectAccount, reconnect: String?): AccountFlow {
+        if (!serverSignIns.canSignIn(request.provider, request.method)) {
+            throw ApiProblem.conflict("The Sekund server this device uses can't sign in to '${request.provider}'")
+        }
+        val signIn = try {
+            serverSignIns.start(request.provider, request.method, request.fields, reconnect)
+        } catch (unavailable: IllegalStateException) {
+            throw ApiProblem(503, "unavailable", unavailable.message ?: "The Sekund server isn't available")
+        }
+        return serverFlow(signIn)
+    }
+
     /** Where the sign-in [flowId] has got to. */
     suspend fun status(flowId: String): AccountFlow {
+        val throughServer = serverSignIns.find(flowId)
+        if (throughServer != null) return serverFlow(throughServer)
         lock.withLock {
             val signIn = deviceSignIns[flowId]
             if (signIn != null) return deviceFlow(flowId, signIn)
             return authCodeFlows[flowId] ?: throw ApiProblem.notFound("No sign-in called '$flowId'")
         }
+    }
+
+    private suspend fun serverFlow(signIn: ServerSignIn): AccountFlow = when (val status = signIn.status.value) {
+        is ServerSignInStatus.Waiting -> AccountFlow.OpenUrl(signIn.flowId, status.url, status.expiresAt)
+        is ServerSignInStatus.Connected -> AccountFlow.Connected(summary(status.account))
+        is ServerSignInStatus.Failed -> AccountFlow.Failed(status.reason)
     }
 
     /** The companion-assisted authorization-code step: swap the redirect's code for tokens. */

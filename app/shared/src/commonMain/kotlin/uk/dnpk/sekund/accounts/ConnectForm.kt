@@ -32,6 +32,9 @@ import uk.dnpk.sekund.runtime.auth.AuthRegistry
 import uk.dnpk.sekund.runtime.auth.ConnectedAccount
 import uk.dnpk.sekund.runtime.auth.DeviceSignIn
 import uk.dnpk.sekund.runtime.auth.DeviceSignInStatus
+import uk.dnpk.sekund.runtime.relay.ServerSignIn
+import uk.dnpk.sekund.runtime.relay.ServerSignInStatus
+import uk.dnpk.sekund.runtime.relay.ServerSignIns
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.ui.theme.Sekund
 
@@ -41,12 +44,14 @@ import uk.dnpk.sekund.ui.theme.Sekund
  * Shows the provider's extra fields (e.g. server address), then what its sign-in method needs:
  * - API key / token: a box to paste it in,
  * - device code: the user's own client id/secret if the provider needs them, then the code to enter,
- * - browser sign-in: a note that it's done from the companion app (a later phase).
+ * - browser sign-in: a link (and QR code) from the Sekund server when it can sign in to the provider,
+ *   otherwise a note that it's done from the companion app.
  */
 @Composable
 fun ConnectForm(
     auth: AuthRegistry,
     alerts: AlertCenter,
+    serverSignIns: ServerSignIns,
     definition: AuthProviderDefinition,
     reconnect: ConnectedAccount?,
     onDone: () -> Unit,
@@ -62,6 +67,8 @@ fun ConnectForm(
     var error by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }
     var deviceSignIn by remember { mutableStateOf<DeviceSignIn?>(null) }
+    var serverSignIn by remember { mutableStateOf<ServerSignIn?>(null) }
+    val serverProviders by serverSignIns.providers.collectAsState()
 
     // Leaving the form cancels a device sign-in that's still waiting.
     DisposableEffect(Unit) {
@@ -162,10 +169,22 @@ fun ConnectForm(
             }
 
             is AuthMethodDefinition.OAuthAuthorizationCode -> {
-                Text(
-                    "${definition.name} needs a web browser to sign in. Connect it from the Sekund companion app on your phone.",
-                    color = colors.onBackground,
-                )
+                val current = serverSignIn
+                // serverProviders is read so this updates when the server connects or goes away.
+                val serverCanDoIt = definition.id in serverProviders && serverSignIns.canSignIn(definition.id, methodIndex)
+                if (current != null) {
+                    ServerSignInProgress(current, onDone = onDone)
+                } else if (serverCanDoIt) {
+                    Text("Sign in on your phone, through your Sekund server.", color = colors.onBackground)
+                    Button(enabled = !busy, onClick = {
+                        attempt { serverSignIn = serverSignIns.start(definition.id, methodIndex, fieldValues.toMap(), reconnect?.id) }
+                    }) { Text("Get a sign-in link") }
+                } else {
+                    Text(
+                        "${definition.name} needs a web browser to sign in. Connect it from the Sekund companion app on your phone.",
+                        color = colors.onBackground,
+                    )
+                }
             }
         }
 
@@ -192,6 +211,24 @@ private fun DeviceCodeStatus(signIn: DeviceSignIn, onDone: () -> Unit) {
             Button(onClick = onDone) { Text("Done") }
         }
         is DeviceSignInStatus.Failed -> Text(current.reason, color = colors.error)
+    }
+}
+
+/** The link to open until the sign-in through the server finishes (it's also shown as a QR code in the alerts). */
+@Composable
+private fun ServerSignInProgress(signIn: ServerSignIn, onDone: () -> Unit) {
+    val status by signIn.status.collectAsState()
+    val colors = Sekund.theme.colors
+    when (val current = status) {
+        is ServerSignInStatus.Waiting -> {
+            Text("On your phone or computer, open", color = colors.onBackground)
+            Text(current.url, color = colors.accent, fontSize = 18.sp)
+        }
+        is ServerSignInStatus.Connected -> {
+            Text("Connected ${current.account.label}.", color = colors.onBackground)
+            Button(onClick = onDone) { Text("Done") }
+        }
+        is ServerSignInStatus.Failed -> Text(current.reason, color = colors.error)
     }
 }
 

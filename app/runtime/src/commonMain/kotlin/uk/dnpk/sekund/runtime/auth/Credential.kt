@@ -10,6 +10,8 @@ import kotlinx.serialization.Serializable
  * an OAuth account has the tokens (and the user's own client id/secret if they brought one).
  *
  * @property expiresAtEpochSeconds when [accessToken] stops working, or null if it doesn't expire.
+ * @property viaServer the tokens came from the Sekund server's own OAuth client, so they're refreshed
+ *   through the server (only it knows that client's secret).
  */
 @Serializable
 data class Credential(
@@ -21,4 +23,5 @@ data class Credential(
     val clientSecret: String? = null,
     /** A custom sign-in's session values (e.g. Amazon's cookies and CSRF token). */
     val extra: Map<String, String> = emptyMap(),
+    val viaServer: Boolean = false,
 )

@@ -27,6 +27,9 @@ data class AccountSummary(
  * @property redirectUri for `oauth2.authorizationCode`: where the provider sends the browser back to
  *   (the companion's redirect).
  * @property reconnect the id of an existing account to update instead of adding one.
+ * @property viaServer for `oauth2.authorizationCode`: sign in with the Sekund server's own OAuth client
+ *   instead (only for providers listed in the device's `serverSignIns`; see docs/server.md). The answer
+ *   is an [AccountFlow.OpenUrl], and [redirectUri] isn't needed.
  */
 @Serializable
 data class ConnectAccount(
@@ -38,6 +41,7 @@ data class ConnectAccount(
     val clientSecret: String? = null,
     val redirectUri: String? = null,
     val reconnect: String? = null,
+    val viaServer: Boolean = false,
 )
 
 /** Where a sign-in has got to. Returned by `POST /v1/accounts` and `GET /v1/accounts/flows/{flowId}`. */
@@ -71,6 +75,18 @@ sealed class AccountFlow {
         val flowId: String,
         val authorizeUrl: String,
         val redirectUri: String,
+        val expiresAt: String,
+    ) : AccountFlow()
+
+    /**
+     * Signing in through the Sekund server: open [url] in any browser (e.g. on a phone). The device
+     * finishes by itself; poll `GET /v1/accounts/flows/{flowId}` or watch for `accountsChanged`.
+     */
+    @Serializable
+    @SerialName("openUrl")
+    data class OpenUrl(
+        val flowId: String,
+        val url: String,
         val expiresAt: String,
     ) : AccountFlow()
 

@@ -44,6 +44,8 @@ import kotlin.time.Instant
  *
  * @param scope where background work (device-code polling) runs; the app scope in production.
  * @param customHandlers finds the plugin code for `custom` sign-in methods by name (see [CustomAuthHandler]).
+ * @param serverRefresh refreshes a token that came from the Sekund server's OAuth client, through the
+ *   server (see [Credential.viaServer]). Throws if there's no server to ask, like a network error.
  */
 class AuthRegistry(
     http: HttpClient,
@@ -53,6 +55,9 @@ class AuthRegistry(
     internal val scope: CoroutineScope,
     internal val clock: Clock = Clock.System,
     private val customHandlers: (String) -> CustomAuthHandler? = { null },
+    private val serverRefresh: suspend (provider: String, refreshToken: String) -> EndpointAnswer = { _, _ ->
+        throw IllegalStateException("This account signed in through a Sekund server, and there's none connected")
+    },
 ) {
     private val log = Logger.withTag("Auth")
 
@@ -343,14 +348,18 @@ class AuthRegistry(
         refreshing.update { ids -> ids + account.id }
         try {
             // Network errors are thrown from here: the account stays usable and the request fails as offline.
-            val answer = tokenEndpoint.post(
-                url = templates.fill(oauth.refreshUrl),
-                params = params,
-                encoding = oauth.encoding,
-                clientAuth = oauth.clientAuth,
-                clientId = templates.clientId(),
-                clientSecret = templates.clientSecret(),
-            )
+            val answer = if (details.credential.viaServer) {
+                serverRefresh(details.definition.id, refreshToken)
+            } else {
+                tokenEndpoint.post(
+                    url = templates.fill(oauth.refreshUrl),
+                    params = params,
+                    encoding = oauth.encoding,
+                    clientAuth = oauth.clientAuth,
+                    clientId = templates.clientId(),
+                    clientSecret = templates.clientSecret(),
+                )
+            }
             val tokens = answer.tokens()
             val newAccessToken = tokens.accessToken
             if (answer.isSuccess && newAccessToken != null) {

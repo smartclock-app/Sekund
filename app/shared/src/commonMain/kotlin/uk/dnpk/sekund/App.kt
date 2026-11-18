@@ -71,6 +71,7 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
             AccountsScreen(
                 auth = graph.auth,
                 alerts = graph.alerts,
+                serverSignIns = graph.serverSignIns,
                 problems = authProblems,
                 onClose = { accountsOpen = false },
             )

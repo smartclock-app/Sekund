@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import uk.dnpk.sekund.runtime.auth.AuthRegistry
 import uk.dnpk.sekund.runtime.auth.ConnectedAccount
+import uk.dnpk.sekund.runtime.relay.ServerSignIns
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.sdk.auth.AuthState
 import uk.dnpk.sekund.ui.components.SekundCard
@@ -44,6 +45,7 @@ import uk.dnpk.sekund.ui.theme.Sekund
 fun AccountsScreen(
     auth: AuthRegistry,
     alerts: AlertCenter,
+    serverSignIns: ServerSignIns,
     problems: List<String>,
     onClose: () -> Unit,
 ) {
@@ -67,6 +69,7 @@ fun AccountsScreen(
                 ConnectForm(
                     auth = auth,
                     alerts = alerts,
+                    serverSignIns = serverSignIns,
                     definition = targetProvider,
                     reconnect = target.reconnect,
                     onDone = { connecting = null },

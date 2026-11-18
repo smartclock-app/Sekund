@@ -30,6 +30,7 @@ import uk.dnpk.sekund.runtime.api.EventStream
 import uk.dnpk.sekund.runtime.relay.LocalApi
 import uk.dnpk.sekund.runtime.relay.RelayClient
 import uk.dnpk.sekund.runtime.relay.RelayWebhooks
+import uk.dnpk.sekund.runtime.relay.ServerSignIns
 import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.runtime.config.ConfigRepository
 import uk.dnpk.sekund.runtime.api.DeviceApi
@@ -139,7 +140,12 @@ class AppGraph(
         scope = scope,
         // Custom sign-ins (e.g. Amazon) are code that plugins provide.
         customHandlers = { name -> registry.authHandler(name) },
+        // Accounts that signed in with the Sekund server's own client are refreshed through it.
+        serverRefresh = { provider, refreshToken -> serverSignIns.refresh(provider, refreshToken) },
     )
+
+    /** Signing in with the Sekund server's own OAuth clients (when a server is connected). */
+    val serverSignIns: ServerSignIns = ServerSignIns(auth, alerts)
 
     /** Browser sign-ins in progress (completed through the companion app). */
     val authCodeSignIns: AuthCodeSignIns = AuthCodeSignIns(auth)
@@ -214,7 +220,7 @@ class AppGraph(
         events = { EventStream.of(api) },
         alerts = alerts,
         scope = scope,
-        features = listOf(webhooks),
+        features = listOf(webhooks, serverSignIns),
     )
 
     /**

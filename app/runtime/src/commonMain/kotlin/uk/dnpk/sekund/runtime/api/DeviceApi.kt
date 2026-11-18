@@ -41,7 +41,7 @@ class DeviceApi(
     val clients = ApiClients(graph.paths.apiClientsFile)
     val identity = DeviceIdentity(graph.paths.deviceFile)
     val pairing = Pairing(clients, graph.alerts, deviceId = { identity.id })
-    val accounts = AccountFlows(graph.auth, graph.authCodeSignIns, graph.alerts)
+    val accounts = AccountFlows(graph.auth, graph.authCodeSignIns, graph.alerts, graph.serverSignIns)
     val actions = DeviceActions(graph.instances, graph.updater, graph.services)
 
     /**
@@ -64,6 +64,7 @@ class DeviceApi(
             data = graph.paths.dataDir.toString(),
             logs = graph.paths.logDir.toString(),
         ),
+        serverSignIns = graph.serverSignIns.providers.value,
     )
 
     fun catalog() = CatalogBuilder.build(

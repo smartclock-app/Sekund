@@ -46,13 +46,18 @@ class FakeClock(var epochSeconds: Long = 1_000_000) : Clock {
 class AuthTestRig(
     scope: CoroutineScope,
     customHandlers: Map<String, CustomAuthHandler> = emptyMap(),
+    serverRefresh: suspend (provider: String, refreshToken: String) -> EndpointAnswer = { _, _ -> error("No Sekund server in this test") },
     handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
 ) {
     val secrets = InMemorySecretStore()
     val alerts = AlertCenter()
     val clock = FakeClock()
     val accountsFile = AccountsFile(newTestPaths().accountsFile)
-    val registry = AuthRegistry(HttpClient(MockEngine(handler)), secrets, accountsFile, alerts, scope, clock, customHandlers = { name -> customHandlers[name] })
+    val registry = AuthRegistry(
+        HttpClient(MockEngine(handler)), secrets, accountsFile, alerts, scope, clock,
+        customHandlers = { name -> customHandlers[name] },
+        serverRefresh = serverRefresh,
+    )
 
     fun addProvider(json: String): AuthProviderDefinition {
         val parsed = AuthDefinitionParser.parse(json)

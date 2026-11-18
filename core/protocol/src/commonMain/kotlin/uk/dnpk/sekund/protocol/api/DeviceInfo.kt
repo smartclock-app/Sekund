@@ -9,6 +9,8 @@ import uk.dnpk.sekund.protocol.plugin.Capability
  *
  * @property platform `"android"` or `"desktop"`.
  * @property paths where the device keeps its files, so people can find them.
+ * @property serverSignIns auth providers the device can sign in to through its Sekund server right now
+ *   (`POST /v1/accounts` with `"viaServer": true`). Empty without a connected server.
  */
 @Serializable
 data class DeviceInfo(
@@ -19,6 +21,7 @@ data class DeviceInfo(
     val platform: String,
     val capabilities: List<Capability>,
     val paths: DevicePaths,
+    val serverSignIns: List<String> = emptyList(),
 )
 
 @Serializable
