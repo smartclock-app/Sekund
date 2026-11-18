@@ -1,0 +1,38 @@
+# Shared setup for every job that runs Gradle: Java, the Android SDK and Gradle's cache.
+# (A "composite action" is a reusable list of steps; workflows use it as `uses: ./.github/actions/prepare-build`.)
+name: Prepare a Gradle build
+description: Java 21, the Android SDK platform and Gradle; with a signing key, also the release update source.
+
+inputs:
+  update-signing-key:
+    description: The PEM private key that signs update manifests. Empty leaves the build without updates.
+    required: false
+    default: ""
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: "21"
+
+    # Every Gradle run configures the Android modules too, so even the Linux and server builds need the SDK
+    # platform (compileSdk in gradle/libs.versions.toml). Gradle downloads anything else it needs.
+    - uses: android-actions/setup-android@v3
+      with:
+        packages: "platforms;android-37"
+
+    - uses: gradle/actions/setup-gradle@v5
+
+    # Release builds look for updates on this repository's releases; see docs/updates.md.
+    - name: Write the update source
+      if: inputs.update-signing-key != ''
+      shell: bash
+      env:
+        UPDATE_SIGNING_KEY: ${{ inputs.update-signing-key }}
+      run: |
+        key_file="$RUNNER_TEMP/update-signing.pem"
+        printf '%s\n' "$UPDATE_SIGNING_KEY" > "$key_file"
+        scripts/write-update-source.sh "$GITHUB_REPOSITORY" "$key_file"
+        rm "$key_file"

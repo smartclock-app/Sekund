@@ -2,15 +2,19 @@
 # Starts a release: sets the version in gradle.properties, commits it and tags it.
 # Pushing the tag makes GitHub Actions build and publish the release (.github/workflows/release.yml).
 #
-#   scripts/release.sh 1.2.0
+#   scripts/release.sh 1.2.0 "Home Assistant cameras"
 #   git push origin main v1.2.0
+#
+# The notes (optional) become the tag's message, which the release workflow shows on the GitHub release
+# and on the devices' update card.
 #
 # See docs/releasing.md.
 set -euo pipefail
 
 version="${1:-}"
+notes="${2:-Sekund $version}"
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "Usage: scripts/release.sh <major.minor.patch>, e.g. scripts/release.sh 1.2.0" >&2
+  echo "Usage: scripts/release.sh <major.minor.patch> [notes], e.g. scripts/release.sh 1.2.0 \"Bug fixes\"" >&2
   exit 1
 fi
 
@@ -47,6 +51,6 @@ else
   git commit -q -m "Release $version"
 fi
 
-git tag -a "v$version" -m "Sekund $version"
+git tag -a "v$version" -m "$notes"
 echo "Tagged v$version. Publish it with:"
 echo "  git push origin main v$version"
