@@ -46,6 +46,8 @@ class FakeAuth(private val signedClient: HttpClient) : AuthAccess {
         requestedAccounts.add(account)
         return signedClient
     }
+
+    override fun fields(account: AccountRef): Map<String, String> = emptyMap()
 }
 
 /** A client whose every request is answered by [handler], and which remembers the requests. */

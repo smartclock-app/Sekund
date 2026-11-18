@@ -35,6 +35,7 @@ class BuiltInDefinitionsTest {
     private class PassThroughAuth(private val client: HttpClient) : AuthAccess {
         override fun state(account: AccountRef): Flow<AuthState> = flowOf(AuthState.Valid)
         override fun client(account: AccountRef): HttpClient = client
+        override fun fields(account: AccountRef): Map<String, String> = emptyMap()
     }
 
     private suspend fun load(name: String): DeclarativeDefinition {
