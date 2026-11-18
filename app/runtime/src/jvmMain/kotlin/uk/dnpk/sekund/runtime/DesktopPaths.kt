@@ -30,6 +30,7 @@ object DesktopPaths {
                 dataDir = Path(home, "Library", "Application Support", "Sekund", "data"),
                 cacheDir = Path(home, "Library", "Caches", "Sekund"),
                 logDir = Path(home, "Library", "Logs", "Sekund"),
+                secretsDir = Path(home, "Library", "Application Support", "Sekund", "data", "secrets"),
             )
         }
 
@@ -41,15 +42,18 @@ object DesktopPaths {
                 dataDir = Path(local, "Sekund", "data"),
                 cacheDir = Path(local, "Sekund", "cache"),
                 logDir = Path(local, "Sekund", "logs"),
+                secretsDir = Path(local, "Sekund", "data", "secrets"),
             )
         }
 
         // Linux (including the Raspberry Pi), using the XDG base directory spec.
+        val linuxData = Path(xdg("XDG_DATA_HOME", Path(home, ".local", "share")), "sekund")
         return AppPaths(
             configDir = Path(xdg("XDG_CONFIG_HOME", Path(home, ".config")), "sekund"),
-            dataDir = Path(xdg("XDG_DATA_HOME", Path(home, ".local", "share")), "sekund"),
+            dataDir = linuxData,
             cacheDir = Path(xdg("XDG_CACHE_HOME", Path(home, ".cache")), "sekund"),
             logDir = Path(xdg("XDG_STATE_HOME", Path(home, ".local", "state")), "sekund", "logs"),
+            secretsDir = Path(linuxData, "secrets"),
         )
     }
 

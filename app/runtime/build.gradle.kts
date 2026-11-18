@@ -13,6 +13,9 @@ kotlin {
             implementation(libs.kermit)     // logging
             implementation(libs.ktor.client.cio)
         }
+        jvmMain.dependencies {
+            implementation(libs.java.keyring) // OS keychain access for the secrets key (DesktopSecretCipher)
+        }
         commonTest.dependencies {
             implementation(libs.ktor.client.mock)
         }

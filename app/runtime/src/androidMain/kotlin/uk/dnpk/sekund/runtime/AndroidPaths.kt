@@ -10,6 +10,8 @@ import kotlinx.io.files.Path
  * permission and can be reached with `adb pull` / `adb push` or a USB cable. That makes config.json easy
  * to inspect and edit. (The old app used private storage, which you can't open without root.)
  * Falls back to private storage if shared storage isn't available.
+ *
+ * Secrets are the exception: they go in private internal storage (`filesDir/secrets`).
  */
 object AndroidPaths {
     fun resolve(context: Context): AppPaths {
@@ -20,6 +22,7 @@ object AndroidPaths {
             dataDir = Path(root.absolutePath, "data"),
             cacheDir = Path(cache.absolutePath),
             logDir = Path(root.absolutePath, "logs"),
+            secretsDir = Path(context.filesDir.absolutePath, "secrets"),
         )
     }
 }
