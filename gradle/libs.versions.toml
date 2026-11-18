@@ -23,6 +23,10 @@ ktor = "3.6.0"
 logback = "1.6.6"
 jmdns = "3.6.1"
 material3 = "1.12.0-alpha03"
+exposed = "1.6.1"
+sqlite-jdbc = "3.54.1.0"
+postgresql = "42.7.14"
+bouncycastle = "1.79"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -58,7 +62,7 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-serialization-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-serverCore = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
-# The device's own embedded API server (multiplatform artifacts; :server uses the -jvm ones above).
+# The device's own embedded API server. Multiplatform artifacts; :server uses them too (Gradle picks the JVM variant).
 ktor-embedded-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
 ktor-embedded-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
 ktor-embedded-websockets = { module = "io.ktor:ktor-server-websockets", version.ref = "ktor" }
@@ -69,6 +73,12 @@ ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.re
 jmdns = { module = "org.jmdns:jmdns", version.ref = "jmdns" }
 ktor-serverNetty = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 ktor-serverTestHost = { module = "io.ktor:ktor-server-test-host-jvm", version.ref = "ktor" }
+# The optional server's database (Exposed over JDBC: SQLite by default, PostgreSQL optional) and password hashing.
+exposed-core = { module = "org.jetbrains.exposed:exposed-core", version.ref = "exposed" }
+exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "exposed" }
+sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "sqlite-jdbc" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+bouncycastle = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

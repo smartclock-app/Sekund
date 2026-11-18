@@ -4,7 +4,6 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.testApplication
-import uk.dnpk.sekund.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -12,7 +11,7 @@ import kotlin.test.assertTrue
 class HealthTest {
     @Test
     fun `health endpoint responds ok`() = testApplication {
-        application { module() }
+        val client = startServer(newTestServer())
 
         val response = client.get("/health")
 
