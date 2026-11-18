@@ -1,0 +1,15 @@
+// Actual Budget, through actual-http-api (https://github.com/jhonderson/actual-http-api), which turns
+// an Actual server into a plain REST API. Its API key is the API_KEY it was started with.
+{
+  "id": "actual-http-api",
+  "name": "Actual Budget",
+  "icon": "money",
+  "fields": [
+    { "key": "instance_url", "label": "actual-http-api address", "placeholder": "http://actual-api.local:5007" }
+  ],
+  "methods": [
+    { "type": "apiKey", "help": "The API_KEY set when starting actual-http-api." }
+  ],
+  "inject": { "type": "header", "name": "x-api-key", "format": "{api_key}" },
+  "baseUrls": ["{instance_url}/"]
+}

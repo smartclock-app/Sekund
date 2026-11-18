@@ -53,6 +53,8 @@ class LegacyImporterTest {
 
         val weather = plan.config.instances.first { instance -> instance.id == "weather" }
         assertEquals(JsonPrimitive("acc_legacy_openweather"), weather.settings["account"])
+        assertEquals(JsonPrimitive("C"), weather.settings["temperatureUnit"])
+        assertEquals(JsonPrimitive("mph"), weather.settings["windUnit"])
         val configText = SekundJson.encodeToString(AppConfig.serializer(), plan.config)
         for (secret in listOf("ow-key", "g-access", "g-refresh", "g-secret", "t-refresh", "im-key", "hunter2")) {
             assertFalse(configText.contains(secret), "'$secret' must not end up in config.json")

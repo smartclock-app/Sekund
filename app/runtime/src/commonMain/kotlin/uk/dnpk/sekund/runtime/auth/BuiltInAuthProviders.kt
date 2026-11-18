@@ -16,6 +16,7 @@ object BuiltInAuthProviders {
         "immich.auth.json",
         "openweather.auth.json",
         "homeassistant.auth.json",
+        "actual-http-api.auth.json",
     )
 
     /** The text of one built-in file. */

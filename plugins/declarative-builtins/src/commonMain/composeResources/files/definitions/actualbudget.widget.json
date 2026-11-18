@@ -1,0 +1,55 @@
+// Account balances from Actual Budget, through actual-http-api. One request per account listed in the
+// settings; balances arrive in minor units (pence/cents), so they're divided by 100.
+{
+  "manifest": {
+    "id": "actualbudget",
+    "name": "Actual Budget",
+    "version": "1.0.0",
+    "description": "Balances of chosen Actual Budget accounts.",
+    "requires": { "auth": [{ "provider": "actual-http-api" }] }
+  },
+  "locations": ["sidebar"],
+  "hosts": ["{settings.serverUrl}/"],
+  "settings": {
+    "fields": [
+      { "kind": "account", "key": "account", "label": "Actual Budget account", "provider": "actual-http-api", "required": true },
+      {
+        "kind": "text", "key": "serverUrl", "label": "actual-http-api address", "required": true, "default": "",
+        "placeholder": "http://actual-api.local:5007",
+        "description": "The same address as the account's, without a trailing slash."
+      },
+      { "kind": "text", "key": "currency", "label": "Currency symbol", "default": "£" },
+      {
+        "kind": "objectList", "key": "accounts", "label": "Accounts to show",
+        "item": {
+          "fields": [
+            { "kind": "text", "key": "name", "label": "Name to show", "required": true, "default": "" },
+            { "kind": "text", "key": "syncId", "label": "Budget sync ID", "description": "Settings → Advanced settings in Actual.", "required": true, "default": "" },
+            { "kind": "text", "key": "accountId", "label": "Account ID", "description": "The last part of the account's address in Actual.", "required": true, "default": "" }
+          ]
+        }
+      }
+    ]
+  },
+  "source": {
+    "url": "{settings.serverUrl}/v1/budgets/{item.syncId|urlencode}/accounts/{item.accountId|urlencode}/balance",
+    "auth": "actual-http-api",
+    "refresh": "15m",
+    "forEach": { "setting": "accounts" },
+    "map": {
+      "rows": {
+        "path": "$",
+        "fields": {
+          "name": "{item.name}",
+          "balance": "{settings.currency}{$.data|divide:100|number:2}"
+        }
+      }
+    }
+  },
+  "view": {
+    "kind": "keyValue",
+    "title": "Balances",
+    "rowLabel": "{name}",
+    "rowValue": "{balance}"
+  }
+}

@@ -1,0 +1,104 @@
+// Current weather from OpenWeather, by postcode. Tap for the next 24 hours.
+// OpenWeather is always asked for metric values; the convert filter shows them in the units picked.
+{
+  "manifest": {
+    "id": "weather",
+    "name": "Weather",
+    "version": "1.0.0",
+    "description": "Current weather and the next 24 hours, from OpenWeather.",
+    "requires": { "auth": [{ "provider": "openweather" }] }
+  },
+  "locations": ["main", "sidebar"],
+  "hosts": ["https://api.openweathermap.org/"],
+  "settings": {
+    "fields": [
+      { "kind": "account", "key": "account", "label": "OpenWeather account", "provider": "openweather", "required": true },
+      { "kind": "text", "key": "postcode", "label": "Postcode", "required": true, "default": "", "placeholder": "LS1 4AP" },
+      { "kind": "text", "key": "country", "label": "Country code", "description": "Two letters, e.g. GB or US.", "default": "GB" },
+      {
+        "kind": "choice", "key": "temperatureUnit", "label": "Temperature", "default": "C",
+        "options": [{ "value": "C", "label": "Celsius (°C)" }, { "value": "F", "label": "Fahrenheit (°F)" }]
+      },
+      {
+        "kind": "choice", "key": "windUnit", "label": "Wind speed", "default": "mph",
+        "options": [
+          { "value": "mph", "label": "Miles per hour" },
+          { "value": "km/h", "label": "Kilometres per hour" },
+          { "value": "m/s", "label": "Metres per second" }
+        ]
+      }
+    ]
+  },
+  "source": {
+    "url": "https://api.openweathermap.org/data/2.5/weather?zip={settings.postcode|urlencode},{settings.country|urlencode}&units=metric",
+    "auth": "openweather",
+    "refresh": "15m",
+    "map": {
+      "fields": {
+        "temp": "{$.main.temp|convert:C:settings.temperatureUnit|round}°{settings.temperatureUnit}",
+        "feelsLike": "{$.main.feels_like|convert:C:settings.temperatureUnit|round}°{settings.temperatureUnit}",
+        "wind": "{$.wind.speed|convert:m/s:settings.windUnit|round} {settings.windUnit}",
+        "humidity": "{$.main.humidity}%",
+        "summary": "{$.weather[0].description}",
+        "icon": "{$.weather[0].icon|lookup:icons}",
+        "place": "{$.name}"
+      }
+    }
+  },
+  "sources": {
+    "forecast": {
+      "url": "https://api.openweathermap.org/data/2.5/forecast?zip={settings.postcode|urlencode},{settings.country|urlencode}&units=metric&cnt=8",
+      "auth": "openweather",
+      "refresh": "1h",
+      "map": {
+        "rows": {
+          "path": "$.list",
+          "fields": {
+            "time": "{$.dt|time}",
+            "icon": "{$.weather[0].icon|lookup:icons}",
+            "summary": "{$.weather[0].description}",
+            "temp": "{$.main.temp|convert:C:settings.temperatureUnit|round}°{settings.temperatureUnit}",
+            "wind": "{$.wind.speed|convert:m/s:settings.windUnit|round} {settings.windUnit}"
+          }
+        }
+      }
+    }
+  },
+  "view": {
+    "kind": "stat",
+    "value": "{temp}",
+    "label": "{summary}",
+    "icon": "{icon}",
+    "secondary": [
+      { "label": "Wind", "value": "{wind}" },
+      { "label": "Feels like", "value": "{feelsLike}" }
+    ]
+  },
+  "expanded": {
+    "source": "forecast",
+    "view": {
+      "kind": "list",
+      "title": "Next 24 hours",
+      "rowIcon": "{icon}",
+      "rowTitle": "{time}  {temp}",
+      "rowSubtitle": "{summary}",
+      "rowTrailing": "{wind}",
+      "maxRows": 8
+    }
+  },
+  "lookups": {
+    // OpenWeather icon codes (d = day, n = night): https://openweathermap.org/weather-conditions
+    "icons": {
+      "01d": "☀️", "01n": "🌙",
+      "02d": "🌤️", "02n": "☁️",
+      "03d": "⛅", "03n": "☁️",
+      "04d": "☁️", "04n": "☁️",
+      "09d": "🌧️", "09n": "🌧️",
+      "10d": "🌦️", "10n": "🌧️",
+      "11d": "⛈️", "11n": "⛈️",
+      "13d": "❄️", "13n": "❄️",
+      "50d": "🌫️", "50n": "🌫️",
+      "*": "🌡️"
+    }
+  }
+}

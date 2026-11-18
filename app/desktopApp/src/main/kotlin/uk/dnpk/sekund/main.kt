@@ -4,6 +4,7 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import uk.dnpk.sekund.plugins.declarativebuiltins.BuiltInDefinitions
 import uk.dnpk.sekund.runtime.AppGraph
 import kotlinx.io.files.Path
 import uk.dnpk.sekund.runtime.DesktopPaths
@@ -26,6 +27,7 @@ fun main(args: Array<String>) {
         paths = paths,
         plugins = BuiltInPlugins,
         declarativePlugin = ::declarativePlugin,
+        builtInDefinitions = { BuiltInDefinitions.readAll() },
         defaultConfig = DefaultConfig.create(),
         // The key lives in the OS keychain, or in this owner-only file where there is no keychain.
         secretCipher = DesktopSecretCipher(keyFile = Path(paths.secretsDir, "secrets.key")),

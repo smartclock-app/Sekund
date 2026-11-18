@@ -1,5 +1,6 @@
 package uk.dnpk.sekund
 
+import uk.dnpk.sekund.plugins.declarativebuiltins.BuiltInDefinitions
 import android.app.Application
 import uk.dnpk.sekund.runtime.AndroidPaths
 import uk.dnpk.sekund.runtime.AppGraph
@@ -21,6 +22,7 @@ class SekundApplication : Application() {
             paths = AndroidPaths.resolve(this),
             plugins = BuiltInPlugins,
             declarativePlugin = ::declarativePlugin,
+            builtInDefinitions = { BuiltInDefinitions.readAll() },
             defaultConfig = DefaultConfig.create(),
             secretCipher = AndroidKeystoreCipher(),
             platform = PlatformInfo(name = "android", appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"),

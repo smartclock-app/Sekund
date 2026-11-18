@@ -14,6 +14,7 @@ kotlin {
             implementation(project(":plugins:calendar"))
             implementation(project(":plugins:google"))
             implementation(project(":plugins:declarative")) // the engine for JSON-defined widgets
+            api(project(":plugins:declarative-builtins")) // the JSON widgets shipped with the app (read by the entry points)
 
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)

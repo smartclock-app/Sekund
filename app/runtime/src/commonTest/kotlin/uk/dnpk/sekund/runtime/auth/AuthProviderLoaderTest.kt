@@ -18,7 +18,7 @@ class AuthProviderLoaderTest {
         val loaded = AuthProviderLoader(paths.authProvidersDir).load()
 
         assertEquals(emptyList(), loaded.problems)
-        assertEquals(listOf("google", "trakt", "immich", "openweather", "homeassistant"), loaded.providers.keys.toList())
+        assertEquals(listOf("google", "trakt", "immich", "openweather", "homeassistant", "actual-http-api"), loaded.providers.keys.toList())
     }
 
     @Test

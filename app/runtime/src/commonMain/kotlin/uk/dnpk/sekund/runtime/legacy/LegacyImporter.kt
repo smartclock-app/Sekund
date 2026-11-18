@@ -149,7 +149,9 @@ object LegacyImporter {
                         "account" to optional(account),
                         "postcode" to text(LegacyJson.text(widget, "postcode") ?: ""),
                         "country" to text(LegacyJson.text(widget, "country") ?: "GB"),
-                        "units" to text(LegacyJson.text(widget, "units") ?: "metric"),
+                        // The old app always labelled wind "mph"; temperature followed its units setting.
+                        "temperatureUnit" to text(if (LegacyJson.text(widget, "units") == "imperial") "F" else "C"),
+                        "windUnit" to text("mph"),
                     ),
                 ),
             )
