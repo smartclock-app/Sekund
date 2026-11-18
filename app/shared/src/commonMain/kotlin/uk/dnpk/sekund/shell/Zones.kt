@@ -35,12 +35,13 @@ fun MainZone(
     }
 }
 
-/** The scrolling column: config problems and alerts first, then the sidebar widgets in order. */
+/** The scrolling column: config problems, the update card and alerts first, then the sidebar widgets in order. */
 @Composable
 fun Sidebar(
     state: ShellState,
     onExpand: (String) -> Unit,
     onLongPress: () -> Unit,
+    onInstallUpdate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = Sekund.theme.spacing
@@ -51,6 +52,10 @@ fun Sidebar(
         val problem = state.configProblem
         if (problem != null) {
             ErrorCard(title = "config.json has a problem", message = problem)
+        }
+        val update = state.update.available()
+        if (update != null) {
+            UpdateCard(update, state.update.install, onInstall = onInstallUpdate)
         }
         for (alert in state.alerts.values) {
             MessageCard(title = alert.title, message = alert.subtitle)

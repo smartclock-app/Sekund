@@ -29,6 +29,7 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
     val instances by graph.instances.instances.collectAsState()
     val alerts by graph.alerts.alerts.collectAsState()
     val overlays by graph.overlays.entries.collectAsState()
+    val update by graph.updater.status.collectAsState()
     val configProblem by graph.config.loadProblem.collectAsState()
     val authProblems by graph.authProblems.collectAsState()
     var accountsOpen by remember { mutableStateOf(false) }
@@ -43,6 +44,7 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
         alerts = alerts,
         configProblem = configProblem,
         registry = graph.registry,
+        update = update,
     )
 
     SekundTheme {
@@ -52,6 +54,7 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
             onReload = { graph.instances.reloadAll() },
             onSettings = { settingsOpen = true },
             onAccounts = { accountsOpen = true },
+            onInstallUpdate = { graph.updater.installNow() },
             onQuit = onQuit,
         )
         if (settingsOpen) {

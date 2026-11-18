@@ -20,7 +20,7 @@ import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoints
 import uk.dnpk.sekund.ui.theme.Sekund
 
-/** Orientation, how times are shown, and which clock face fills the main square. */
+/** Orientation, how times are shown, which clock face fills the main square, and updates. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun GeneralSection(
@@ -63,6 +63,11 @@ internal fun GeneralSection(
                 )
             }
         }
+    }
+
+    // Sekund always checks for new versions; this only decides whether to wait for a tap.
+    SwitchRow("Install updates by themselves", config.updates.installAutomatically) { on ->
+        edit { current -> current.copy(updates = current.updates.copy(installAutomatically = on)) }
     }
 }
 

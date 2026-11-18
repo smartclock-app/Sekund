@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
+import uk.dnpk.sekund.protocol.plugin.Capability
 import uk.dnpk.sekund.protocol.declarative.DeclarativeDefinition
 import uk.dnpk.sekund.runtime.auth.AccountsFile
 import uk.dnpk.sekund.runtime.auth.AuthCodeSignIns
@@ -41,6 +42,11 @@ import uk.dnpk.sekund.runtime.instances.SharedServices
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.runtime.services.OverlayCenter
+import uk.dnpk.sekund.runtime.updates.AppUpdater
+import uk.dnpk.sekund.runtime.updates.UpdateInstaller
+import uk.dnpk.sekund.runtime.updates.UpdateService
+import uk.dnpk.sekund.runtime.updates.UpdateSources
+import uk.dnpk.sekund.runtime.platform.updatePlatformKey
 import uk.dnpk.sekund.runtime.services.SharedEventBus
 import uk.dnpk.sekund.runtime.services.SystemTimeService
 import uk.dnpk.sekund.sdk.context.DisplayChanged
@@ -67,6 +73,7 @@ import uk.dnpk.sekund.sdk.plugin.SekundPlugin
  * @param builtInDefinitions the declarative definitions shipped with the app, as JSON text.
  * @param platform the platform's name, the app version and what the device can do.
  * @param advertiser announces the device API on the network (mDNS); null to not announce.
+ * @param updateInstaller installs verified app updates; null where the platform can't yet.
  */
 class AppGraph(
     val paths: AppPaths,
@@ -77,6 +84,7 @@ class AppGraph(
     builtInDefinitions: suspend () -> List<String> = { emptyList() },
     platform: PlatformInfo,
     private val advertiser: ServiceAdvertiser? = null,
+    updateInstaller: UpdateInstaller? = null,
 ) {
     private val log = Logger.withTag("App")
 
@@ -138,6 +146,19 @@ class AppGraph(
 
     val time: SystemTimeService = SystemTimeService(scope, timePreferences)
 
+    /** New versions of the app: signed manifest, verified downloads, the platform's installer. */
+    private val updateService: UpdateService = UpdateService(
+        http = http,
+        currentVersion = platform.appVersion,
+        platformKey = updatePlatformKey(),
+        downloadDir = Path(paths.cacheDir, "updates"),
+        installer = updateInstaller,
+        source = { UpdateSources.builtIn() },
+    )
+
+    /** Keeps the app up to date on a schedule, and drives the sidebar's update card. */
+    val updater: AppUpdater = AppUpdater(updateService, config.config, scope)
+
     val instances: InstanceManager = InstanceManager(
         registry = registry,
         services = SharedServices(
@@ -158,7 +179,7 @@ class AppGraph(
     val legacyImport: LegacyImport = LegacyImport(paths, config, auth)
 
     /** The device API's logic: pairing, catalog, config edits, accounts... (served by [startApi]). */
-    val api: DeviceApi = DeviceApi(this, platform)
+    val api: DeviceApi = DeviceApi(this, withUpdateCapability(platform, updateInstaller))
 
     /**
      * Loads config.json and starts every instance and the device API. Returns straight away; loading
@@ -178,8 +199,15 @@ class AppGraph(
             val imported = legacyImport.importFileIfLegacy()
             config.load { imported ?: defaultConfig }
             instances.follow(config.config)
+            updater.start()
             startApi()
         }
+    }
+
+    /** The device API tells companions this device can update itself when the platform has an installer. */
+    private fun withUpdateCapability(platform: PlatformInfo, installer: UpdateInstaller?): PlatformInfo {
+        if (installer == null || Capability.SelfUpdate in platform.capabilities) return platform
+        return platform.copy(capabilities = platform.capabilities + Capability.SelfUpdate)
     }
 
     private suspend fun loadAuth() {

@@ -38,6 +38,21 @@ data class AppConfig(
     val instances: List<InstanceConfig> = emptyList(),
     /** The LAN API used by the companion app. */
     val api: ApiConfig = ApiConfig(),
+    /** Checking for and installing new versions of Sekund. */
+    val updates: UpdatesConfig = UpdatesConfig(),
+)
+
+/**
+ * App updates (see docs/updates.md). Sekund always checks; these only change how.
+ *
+ * @property installAutomatically download and install new versions without waiting for a tap. On Android
+ *   as device owner that's silent; elsewhere the system installer still asks for confirmation.
+ * @property checkEvery how often to look for a new version, e.g. `"6h"` or `"30m"` (at least 5 minutes).
+ */
+@Serializable
+data class UpdatesConfig(
+    val installAutomatically: Boolean = false,
+    val checkEvery: String = "6h",
 )
 
 /**

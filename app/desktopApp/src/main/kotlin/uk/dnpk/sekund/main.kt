@@ -5,6 +5,7 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import uk.dnpk.sekund.plugins.declarativebuiltins.BuiltInDefinitions
+import uk.dnpk.sekund.runtime.updates.DesktopUpdateInstaller
 import uk.dnpk.sekund.runtime.AppGraph
 import kotlinx.io.files.Path
 import uk.dnpk.sekund.runtime.DesktopPaths
@@ -34,6 +35,8 @@ fun main(args: Array<String>) {
         // Packaged apps get their version from jpackage; `gradlew run` doesn't have one.
         platform = PlatformInfo(name = "desktop", appVersion = System.getProperty("jpackage.app-version") ?: "dev"),
         advertiser = JmDnsAdvertiser(),
+        // Opens a verified update's installer for the user to confirm.
+        updateInstaller = DesktopUpdateInstaller(),
     )
     graph.start()
 

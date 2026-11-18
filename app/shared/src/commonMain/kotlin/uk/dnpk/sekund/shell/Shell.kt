@@ -45,6 +45,7 @@ fun Shell(
     onReload: () -> Unit,
     onSettings: () -> Unit,
     onAccounts: () -> Unit,
+    onInstallUpdate: () -> Unit,
     onQuit: (() -> Unit)?,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
@@ -70,7 +71,7 @@ fun Shell(
                 val mainModifier = if (state.hasSidebar) Modifier.fillMaxWidth().height(screenWidth) else Modifier.fillMaxSize()
                 MainZone(state, clockFace, onExpand = expand, onLongPress = openMenu, modifier = mainModifier)
                 if (state.hasSidebar) {
-                    Sidebar(state, onExpand = expand, onLongPress = openMenu, modifier = Modifier.fillMaxWidth().weight(1f))
+                    Sidebar(state, onExpand = expand, onLongPress = openMenu, onInstallUpdate = onInstallUpdate, modifier = Modifier.fillMaxWidth().weight(1f))
                 }
             }
         } else {
@@ -78,7 +79,7 @@ fun Shell(
                 val mainModifier = if (state.hasSidebar) Modifier.fillMaxHeight().width(screenHeight) else Modifier.fillMaxSize()
                 MainZone(state, clockFace, onExpand = expand, onLongPress = openMenu, modifier = mainModifier)
                 if (state.hasSidebar) {
-                    Sidebar(state, onExpand = expand, onLongPress = openMenu, modifier = Modifier.fillMaxHeight().weight(1f))
+                    Sidebar(state, onExpand = expand, onLongPress = openMenu, onInstallUpdate = onInstallUpdate, modifier = Modifier.fillMaxHeight().weight(1f))
                 }
             }
         }

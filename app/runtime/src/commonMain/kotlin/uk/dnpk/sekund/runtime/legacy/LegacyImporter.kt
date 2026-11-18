@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import uk.dnpk.sekund.protocol.config.UpdatesConfig
 import uk.dnpk.sekund.protocol.config.ApiConfig
 import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.protocol.config.ClockConfig
@@ -42,7 +43,6 @@ object LegacyImporter {
         const val ACTUAL_BUDGET = "actualbudget"
         const val HOME_ASSISTANT = "homeassistant"
         const val ALEXA = "alexa"
-        const val UPDATER = "updater"
     }
 
     /** True if [json] looks like an old Tauri config: it has `widgets` and no `instances`. */
@@ -62,6 +62,7 @@ object LegacyImporter {
         val accounts = mutableListOf<ImportedAccount>()
         val notes = mutableListOf<String>()
         private val instances = mutableListOf<InstanceConfig>()
+        private var updates = UpdatesConfig()
         private val widgets = LegacyJson.obj(old, "widgets")
 
         private val layoutMain = LegacyJson.texts(LegacyJson.obj(old, "layout"), "main")
@@ -109,6 +110,7 @@ object LegacyImporter {
                 ),
                 instances = instances,
                 api = apiConfig(),
+                updates = updates,
             )
         }
 
@@ -318,18 +320,13 @@ object LegacyImporter {
             )
         }
 
+        /** Updates are part of the app now, not a widget: the old widget's interval becomes a setting. */
         private fun updater() {
             val widget = LegacyJson.obj(widgets, "updater") ?: return
             if ("updater" !in inUse) return
             // The old setting was in minutes.
-            val minutes = LegacyJson.number(widget, "updateInterval")?.toInt()
-            instances.add(
-                InstanceConfig(
-                    id = "updater",
-                    type = Types.UPDATER,
-                    refreshInterval = if (minutes == null) null else "${minutes}m",
-                ),
-            )
+            val minutes = LegacyJson.number(widget, "updateInterval")?.toInt() ?: return
+            updates = UpdatesConfig(checkEvery = "${minutes}m")
         }
 
         // ---- Helpers --------------------------------------------------------------------------

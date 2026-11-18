@@ -35,9 +35,9 @@ class LegacyImporterTest {
     @Test
     fun onlyWidgetsInUseBecomeInstances() {
         val ids = plan.config.instances.map { instance -> instance.id }
-        assertEquals(listOf("clock", "calendar", "weather", "google", "trakt", "photos", "immich", "updater"), ids)
+        assertEquals(listOf("clock", "calendar", "weather", "google", "trakt", "photos", "immich"), ids)
         assertEquals(listOf("weather"), plan.config.layout.main)
-        assertEquals(listOf("calendar", "updater"), plan.config.layout.sidebar)
+        assertEquals(listOf("calendar"), plan.config.layout.sidebar)
     }
 
     @Test
@@ -72,7 +72,7 @@ class LegacyImporterTest {
 
     @Test
     fun intervalsAreConvertedToDurations() {
-        assertEquals("30m", plan.config.instances.first { instance -> instance.id == "updater" }.refreshInterval)
+        assertEquals("30m", plan.config.updates.checkEvery)
         assertEquals(JsonPrimitive("60s"), plan.config.instances.first { instance -> instance.id == "photos" }.settings["rotateEvery"])
     }
 

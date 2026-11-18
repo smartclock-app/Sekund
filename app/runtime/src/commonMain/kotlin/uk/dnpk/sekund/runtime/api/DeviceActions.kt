@@ -7,6 +7,7 @@ import uk.dnpk.sekund.protocol.api.ActionInfo
 import uk.dnpk.sekund.protocol.api.ActionResult
 import uk.dnpk.sekund.runtime.instances.InstanceManager
 import uk.dnpk.sekund.runtime.instances.RunningInstance
+import uk.dnpk.sekund.runtime.updates.AppUpdater
 import uk.dnpk.sekund.sdk.actions.HasActions
 import uk.dnpk.sekund.sdk.actions.PluginAction
 
@@ -15,12 +16,14 @@ import uk.dnpk.sekund.sdk.actions.PluginAction
  *
  * - `device.reload`: recreate every instance (the long-press menu's "Reload"),
  * - `device.refresh`: ask every instance to fetch its data again,
+ * - `update.check`: look for a new version of Sekund now,
+ * - `update.install`: download and install the new version, if there is one,
  * - `<instanceId>.refresh`: ask one instance to fetch its data again,
  * - `<instanceId>.<name>`: an action the instance's plugin offers (see [HasActions]), e.g. `photos.skip`.
  *
  * Display and kiosk actions arrive with the platform phases.
  */
-class DeviceActions(private val instances: InstanceManager) {
+class DeviceActions(private val instances: InstanceManager, private val updater: AppUpdater) {
     private val finished = MutableSharedFlow<ActionResult>(extraBufferCapacity = 16)
 
     /** Every action result, for the events stream. */
@@ -30,6 +33,8 @@ class DeviceActions(private val instances: InstanceManager) {
         val result = mutableListOf(
             ActionInfo("device.reload", "Restart every widget and source"),
             ActionInfo("device.refresh", "Fetch fresh data for everything now"),
+            ActionInfo("update.check", "Look for a new version of Sekund now"),
+            ActionInfo("update.install", "Download and install the new version of Sekund, if there is one"),
         )
         for (instance in instances.instances.value.values) {
             if (instance is RunningInstance.Ready) {
@@ -53,6 +58,15 @@ class DeviceActions(private val instances: InstanceManager) {
                     if (instance is RunningInstance.Ready) instance.refreshNow()
                 }
                 ActionResult(name, ok = true)
+            }
+            name == "update.check" -> {
+                updater.checkNow()
+                val problem = updater.status.value.checkProblem
+                ActionResult(name, ok = problem == null, message = problem)
+            }
+            name == "update.install" -> {
+                val started = updater.installNow()
+                ActionResult(name, ok = started, message = if (started) null else "No update is available")
             }
             name.endsWith(".refresh") -> refreshOne(name, name.removeSuffix(".refresh"))
             else -> runPluginAction(name)
