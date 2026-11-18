@@ -1,6 +1,6 @@
 # Writing plugins
 
-This guide grows phase by phase. Right now it covers **signing in to services**.
+This guide grows phase by phase. Right now it covers **signing in to services** and **webhooks**.
 
 If all you need is "call an API and show the result", you may not need Kotlin at all: see
 [declarative widgets](declarative-widgets.md).
@@ -139,3 +139,30 @@ Photos aren't among them, so the Google definition uses the authorization-code f
   never in `config.json` or `accounts.json`.
 - Plugins never see credentials, only signed-in clients.
 - Credentials are only sent to URLs starting with one of `baseUrls`.
+
+## Webhooks: being told when something changes
+
+When a device is connected to a Sekund server that relays webhooks ([docs/server.md](../server.md)), an
+instance can get public URLs that other services call when something changes:
+
+```kotlin
+// Tell the service where to call whenever the URL is (re)issued; null means there's no server.
+context.scope.launch {
+    context.webhooks.url("changes").collectLatest { url ->
+        if (url != null) api.subscribe(callbackUrl = url)
+    }
+}
+// Refresh as soon as it calls.
+context.scope.launch {
+    context.webhooks.calls("changes").collect { call -> context.refresher.refreshNow() }
+}
+```
+
+- The same instance and name keep the same URL, across restarts too.
+- **Keep polling.** Without a server there are no URLs, and a call can be missed; webhooks only make updates
+  arrive sooner.
+- Calls can arrive twice (delivery is at-least-once), and anyone who learns the URL can call it: check what
+  you can (Google's channel token, a signature header) and treat a call as "go and look", not as data to trust.
+- In tests, `FakeInstanceContext.webhooks` (`FakeWebhooks`) lets you `setUrl` and `call` by hand.
+
+`plugins/google/GoogleCalendarPush.kt` is a complete example.

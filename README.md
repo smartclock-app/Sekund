@@ -14,7 +14,7 @@ Built with Kotlin Multiplatform and Compose Multiplatform, with an optional Ktor
 | `app/shared` | The root UI (shell, menus, settings) and `BuiltInPlugins.kt`. |
 | `app/androidApp`, `app/desktopApp` | Entry points per platform. |
 | `plugins/*` | One folder per plugin (clock, calendar, google, ...). Picked up automatically by `settings.gradle.kts`. |
-| `server` | Optional relay server (webhooks, OAuth callbacks, remote access). |
+| `server` | Optional server: remote access, webhook relay, OAuth sign-ins. See [docs/server.md](docs/server.md). |
 | `build-logic` | Shared build configuration ("convention plugins"). See its README. |
 
 ## Running
@@ -24,6 +24,7 @@ Built with Kotlin Multiplatform and Compose Multiplatform, with an optional Ktor
 - Server: `./gradlew :server:run`
 
 Setting up a device: [Android](docs/android.md), [desktop and Raspberry Pi](docs/desktop.md).
+The optional server: [docs/server.md](docs/server.md) (Docker image: `server/Dockerfile`).
 
 ## Tests
 

@@ -81,8 +81,12 @@ curl http://sekund.local:8080/v1/device -H "Authorization: Bearer $TOKEN"
 
 ```json
 { "id": "dev_komaxzAJ5tZS", "name": "Kitchen", "appVersion": "1.2.0", "apiVersion": 1, "platform": "android",
-  "capabilities": ["DisplayControl", "Kiosk"], "paths": { "config": "...", "data": "...", "logs": "..." } }
+  "capabilities": ["DisplayControl", "Kiosk"], "paths": { "config": "...", "data": "...", "logs": "..." },
+  "serverSignIns": ["google"] }
 ```
+
+`serverSignIns` lists the auth providers the device can sign in to through its Sekund server right now
+(empty without one; see "Signing in through the server" below).
 
 Hide features the device lacks: `capabilities` can include `DisplayControl`, `Kiosk`, `SelfUpdate`,
 `OpenBrowser`, `VideoPlayback`.
@@ -134,7 +138,8 @@ Invalid values never break anything: the device falls back to the default and re
   "clockFace": "clock",                  // instance id of a clock face
   "layout": { "main": ["weather"], "sidebar": ["calendar"] },
   "instances": [{ "id": "weather", "type": "weather", "settings": { ... }, "refreshInterval": "30m" }],
-  "api": { "enabled": true, "port": 8080, "deviceName": "Kitchen" }
+  "api": { "enabled": true, "port": 8080, "deviceName": "Kitchen" },
+  "server": { "url": "https://sekund.example.org" }   // the optional Sekund server; null for none
 }
 ```
 
@@ -192,7 +197,7 @@ Accounts hold credentials; settings only ever store an account's id. Credentials
 | `PUT /v1/accounts/{id}/credential` | `{accessToken?, refreshToken?, expiresInSeconds?, apiKey?}` → `AccountSummary`. Last resort, for providers a companion signs in to itself. |
 | `DELETE /v1/accounts/{id}` | Revokes the token with the service (if it can) and forgets the account |
 
-`ConnectAccount`: `{provider, method?, fields?, key?, clientId?, clientSecret?, redirectUri?, reconnect?}`.
+`ConnectAccount`: `{provider, method?, fields?, key?, clientId?, clientSecret?, redirectUri?, reconnect?, viaServer?}`.
 `method` is the index into the provider's `methods` (default `0`, the preferred one). `fields` fills the
 provider's extra fields (e.g. `instance_url`). `reconnect` updates an existing account instead of adding one.
 
@@ -203,6 +208,7 @@ provider's extra fields (e.g. `instance_url`). `reconnect` updates an existing a
 | `connected` | Done: `{account}` |
 | `deviceCode` | `{flowId, userCode, verificationUrl, qrUrl}`. The device also shows the code. Watch `accountsChanged` events or poll the flow. |
 | `authorizationCode` | `{flowId, authorizeUrl, redirectUri, expiresAt}`. See below. |
+| `openUrl` | `{flowId, url, expiresAt}`: signing in through the Sekund server. Open `url` in any browser; the device finishes by itself. |
 | `failed` | `{reason}` |
 
 ### By method
@@ -217,6 +223,12 @@ provider's extra fields (e.g. `instance_url`). `reconnect` updates an existing a
   4. When the browser comes back to `redirectUri`, send its `code` and `state` to
      `POST /v1/accounts/flows/{flowId}/code`.
   5. The device checks `state`, swaps the code for tokens and answers `connected`. Flows expire after 10 minutes.
+- **Signing in through the server** (`oauth2.authorizationCode` with `"client": {"mode": "byoOrServer"}`, when the
+  provider is in `GET /v1/device`'s `serverSignIns`): `POST /v1/accounts` with `"viaServer": true` (no
+  `redirectUri` or client needed). The answer is `openUrl`; open its `url` anywhere (the device also shows it
+  as a QR code). The server signs in with its own client and delivers the tokens to the device, which answers
+  later polls with `connected`. Such accounts are refreshed through the server. `409` if the server can't sign
+  in to that provider, `503` if the device isn't connected to it. See [docs/server.md](../server.md).
 
 ## Actions
 
@@ -285,11 +297,12 @@ is out of scope here.
 7. **Definitions:** install declarative widgets (paste, file or URL) and auth providers with `PUT`, showing
    the `422` issues.
 8. **Legacy import:** offer to send an old config.json to `POST /v1/import/legacy` and show its `notes`.
-9. **Relay (later):** the same client with the base URL switched to `https://server/v1/devices/{deviceId}`.
+9. **Server (optional):** sign up / sign in to a Sekund server, claim devices with the code they show, and
+   use the same client with the base URL `https://<server>/v1/devices/{deviceId}` and the server session
+   token. Offer `viaServer` sign-ins for providers in `serverSignIns`. See [docs/server.md](../server.md).
 
 ## Not yet available
 
-- The relay through the optional server (phase 9), and with it remote access and server-hosted OAuth.
 - Scoped (limited) tokens: every paired client can do everything.
 - `PUT /v1/theme` and theme tokens.
 - Display control on desktop and the Raspberry Pi.

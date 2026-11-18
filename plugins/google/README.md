@@ -10,7 +10,10 @@ the calendar widget can show.
 | `GoogleCalendarApi.kt` | The few Calendar API v3 calls used, with typed answers. |
 | `GoogleEventMapper.kt` | Pure conversion to `CalendarEvent`: time zones, all-day events, colours, repeats. |
 | `GoogleCalendarSource.kt` | Polls every 5 minutes, fetching all calendars in parallel. |
+| `GoogleCalendarPush.kt` | With a Sekund server that relays webhooks: Google watch channels on `context.webhooks`, renewed an hour before they expire (at most a week); a change notification refreshes straight away. |
 
-Sign-in, token refresh and saving new tokens are done by the auth registry (`google.auth.json`), not here.
-Push updates (Google watch channels relayed by the server) arrive with the server in phase 9; until then
-this polls.
+Sign-in, token refresh and saving new tokens are done by the auth registry (`google.auth.json`), not here. With
+a server that has a Google OAuth client, the account can also be signed in through the server (see docs/server.md).
+
+Push refreshes the whole source rather than syncing incrementally with `syncToken`: simpler, and a refresh is a
+handful of requests. Without a server (or if a notification is lost) polling carries on as before.

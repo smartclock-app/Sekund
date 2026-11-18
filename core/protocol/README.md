@@ -3,7 +3,8 @@
 Plain `@Serializable` data classes for everything that crosses a network boundary:
 
 - the device API (`/v1/...`) used by the companion app,
-- relay frames between devices and the optional server,
+- relay frames between devices and the optional server (`relay/RelayMessage`, see docs/api/relay-protocol.md),
+- the server's own API: accounts and devices (`server/ServerApi`, see docs/server.md),
 - settings descriptors (how a settings screen is described as data),
 - auth provider definitions (`*.auth.json`).
 

@@ -1,0 +1,14 @@
+{
+  "port": 8080,
+  "publicUrl": "https://sekund.example.org",
+  "database": { "url": "jdbc:sqlite:sekund-server.db" },
+  "allowSignups": false,
+  "oauth": {
+    "google": {
+      "clientId": "1234567890-abc.apps.googleusercontent.com",
+      "clientSecret": "GOCSPX-...",
+      "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+      "tokenUrl": "https://oauth2.googleapis.com/token"
+    }
+  }
+}

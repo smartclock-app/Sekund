@@ -46,6 +46,18 @@ The LAN API the companion app uses, documented in `docs/api/device-api.md`.
 - `AccountFlows`, `DeviceActions`, `CatalogBuilder`, `ConfigIssues`, `EventStream`: the parts behind the routes.
 - `LanApiServer`: starts the Ktor CIO server (checks the port first, so a busy port can't crash the app).
 
+## Relay to the Sekund server (`runtime/relay`)
+
+The optional server link (docs/server.md, docs/api/relay-protocol.md), on when config.json has `server.url`.
+
+- `RelayClient`: the outbound WebSocket. Claiming (shows the code as an alert), the device token (in the secret
+  store), reconnecting with backoff, `RelayStatus` for settings, events while the server asks for them.
+- `LocalApi`: answers tunnelled device API requests by making the same request to the device API over loopback,
+  authorised with `DeviceApi.localToken` (made fresh at every start).
+- `RelayFeature`: how other parts use the link. `RelayWebhooks` (what plugins get as `context.webhooks`) and
+  `ServerSignIns` (signing in with the server's OAuth clients; such credentials are `viaServer` and
+  `AuthRegistry` refreshes them through it).
+
 ## Discovery and logging
 
 - `discovery/ServiceAdvertiser`: mDNS `_sekund._tcp`; `JmDnsAdvertiser` (desktop) and `NsdAdvertiser` (Android).

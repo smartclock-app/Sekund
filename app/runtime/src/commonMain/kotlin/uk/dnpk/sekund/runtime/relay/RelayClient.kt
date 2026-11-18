@@ -212,6 +212,8 @@ class RelayClient(
     private fun waitingToBeClaimed(message: RelayMessage.ClaimCode) {
         val where = if (message.serverUrl.isEmpty()) "the companion app" else "the companion app, signed in to ${message.serverUrl}"
         alerts.show(ALERT_OWNER, Alert(title = "Claim this Sekund: ${message.code}", subtitle = "Enter the code in $where."))
+        // Also logged, for screens nobody is looking at (e.g. setting up a Raspberry Pi over SSH).
+        log.i { "Waiting to be claimed: enter ${message.code} in $where" }
         currentStatus.value = RelayStatus.WaitingToBeClaimed(message.code, message.serverUrl, parseInstant(message.expiresAt))
     }
 
