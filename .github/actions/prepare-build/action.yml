@@ -18,10 +18,11 @@ runs:
         java-version: "21"
 
     # Every Gradle run configures the Android modules too, so even the Linux and server builds need the SDK
-    # platform (compileSdk in gradle/libs.versions.toml). Gradle downloads anything else it needs.
+    # platform (compileSdk in gradle/libs.versions.toml; API 37 is published as "android-37.0").
+    # Gradle downloads anything else it needs.
     - uses: android-actions/setup-android@v3
       with:
-        packages: "platforms;android-37"
+        packages: "platforms;android-37.0"
 
     - uses: gradle/actions/setup-gradle@v5
 
