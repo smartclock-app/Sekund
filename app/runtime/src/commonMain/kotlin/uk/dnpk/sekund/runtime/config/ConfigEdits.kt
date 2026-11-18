@@ -1,5 +1,8 @@
 package uk.dnpk.sekund.runtime.config
 
+import uk.dnpk.sekund.protocol.config.AppConfig
+import uk.dnpk.sekund.protocol.config.LayoutConfig
+import uk.dnpk.sekund.protocol.config.InstanceConfig
 import kotlinx.serialization.json.JsonObject
 import uk.dnpk.sekund.sdk.widget.WidgetLocation
 

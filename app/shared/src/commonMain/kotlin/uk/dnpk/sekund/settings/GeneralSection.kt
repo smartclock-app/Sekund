@@ -13,8 +13,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import uk.dnpk.sekund.runtime.config.AppConfig
-import uk.dnpk.sekund.runtime.config.Orientation
+import uk.dnpk.sekund.protocol.config.AppConfig
+import uk.dnpk.sekund.protocol.config.Orientation
 import uk.dnpk.sekund.runtime.instances.RunningInstance
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoints

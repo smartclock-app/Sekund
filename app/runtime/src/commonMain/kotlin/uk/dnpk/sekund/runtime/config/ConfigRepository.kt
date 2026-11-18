@@ -1,5 +1,7 @@
 package uk.dnpk.sekund.runtime.config
 
+import uk.dnpk.sekund.protocol.config.AppConfig
+import uk.dnpk.sekund.protocol.config.Orientation
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +17,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import uk.dnpk.sekund.protocol.SekundPrettyJson
 import uk.dnpk.sekund.runtime.AppPaths
+import uk.dnpk.sekund.runtime.auth.urlSafeBase64
+import uk.dnpk.sekund.runtime.platform.sha256
 import kotlin.time.Clock
 
 /**
@@ -93,6 +97,29 @@ class ConfigRepository(
         }
     }
 
+    /** The current config's ETag (see [etagOf]). */
+    val etag: String
+        get() = etagOf(currentConfig.value)
+
+    /**
+     * Like [update], but only if the config is still the version the caller last saw. The device API
+     * uses this for `If-Match`: if someone else changed the config in between, the change is refused
+     * instead of silently overwriting theirs.
+     *
+     * @param ifMatch the ETag the caller last saw, or null to skip the check.
+     */
+    suspend fun updateIfMatch(ifMatch: String?, change: (AppConfig) -> AppConfig): ConditionalUpdate {
+        writeLock.withLock {
+            if (fileIsBroken) return ConditionalUpdate.FileBroken
+            val currentEtag = etagOf(currentConfig.value)
+            if (ifMatch != null && ifMatch != currentEtag) return ConditionalUpdate.Conflict(currentEtag)
+            val newConfig = change(currentConfig.value)
+            writeFile(newConfig)
+            currentConfig.value = newConfig
+            return ConditionalUpdate.Saved(newConfig, etagOf(newConfig))
+        }
+    }
+
     /**
      * Copies the current config.json into the backups folder. Keeps the newest [keep] backups.
      * Called on app upgrades and before remote changes.
@@ -152,6 +179,26 @@ class ConfigRepository(
     }
 
     private fun readFile(file: Path): String = fileSystem.source(file).buffered().use { source -> source.readString() }
+}
+
+/** The result of [ConfigRepository.updateIfMatch]. */
+sealed class ConditionalUpdate {
+    data class Saved(val config: AppConfig, val etag: String) : ConditionalUpdate()
+
+    /** Someone else changed the config since the caller read it. [currentEtag] is the new version. */
+    data class Conflict(val currentEtag: String) : ConditionalUpdate()
+
+    /** config.json on disk couldn't be read, so nothing is saved until it's fixed. */
+    data object FileBroken : ConditionalUpdate()
+}
+
+/**
+ * A short fingerprint of [config]: the start of a SHA-256 hash of its JSON. Any change to the config
+ * changes it, so it works as an HTTP ETag ("version tag").
+ */
+fun etagOf(config: AppConfig): String {
+    val json = ConfigJson.encodeToString(AppConfig.serializer(), config)
+    return urlSafeBase64.encode(sha256(json.encodeToByteArray())).take(16)
 }
 
 /**

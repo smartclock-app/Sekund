@@ -12,9 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import uk.dnpk.sekund.runtime.AppGraph
-import uk.dnpk.sekund.runtime.config.AppConfig
+import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.runtime.config.ConfigEdits
-import uk.dnpk.sekund.runtime.config.InstanceConfig
+import uk.dnpk.sekund.protocol.config.InstanceConfig
 import uk.dnpk.sekund.sdk.plugin.Contribution
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoints
 import uk.dnpk.sekund.sdk.widget.WidgetLocation

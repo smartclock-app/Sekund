@@ -1,4 +1,4 @@
-package uk.dnpk.sekund.runtime.config
+package uk.dnpk.sekund.protocol.config
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -27,7 +27,7 @@ import kotlinx.serialization.json.JsonObject
  */
 @Serializable
 data class AppConfig(
-    /** Format version, used to migrate old files. See [ConfigRepository]. */
+    /** Format version, used to migrate old files (see ConfigRepository in :app:runtime). */
     val version: Int = CURRENT_CONFIG_VERSION,
     val orientation: Orientation = Orientation.Landscape,
     val clock: ClockConfig = ClockConfig(),
@@ -36,6 +36,20 @@ data class AppConfig(
     val layout: LayoutConfig = LayoutConfig(),
     /** Every configured widget, clock face and source. The layout refers to these by id. */
     val instances: List<InstanceConfig> = emptyList(),
+    /** The LAN API used by the companion app. */
+    val api: ApiConfig = ApiConfig(),
+)
+
+/**
+ * The device API on the local network (see docs/api/device-api.md). Changes apply after a restart.
+ *
+ * @property deviceName shown in the companion when it finds this device, and advertised over mDNS.
+ */
+@Serializable
+data class ApiConfig(
+    val enabled: Boolean = true,
+    val port: Int = 8080,
+    val deviceName: String = "Sekund",
 )
 
 const val CURRENT_CONFIG_VERSION: Int = 1

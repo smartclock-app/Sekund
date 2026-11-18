@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import kotlinx.serialization.json.JsonObject
 import uk.dnpk.sekund.runtime.AppGraph
 import uk.dnpk.sekund.runtime.auth.ConnectedAccount
-import uk.dnpk.sekund.runtime.config.AppConfig
+import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.runtime.config.ConfigEdits
 import uk.dnpk.sekund.runtime.instances.RunningInstance
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry

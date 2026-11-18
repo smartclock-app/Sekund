@@ -14,8 +14,8 @@ import kotlinx.io.files.Path
 import uk.dnpk.sekund.protocol.plugin.PluginManifest
 import uk.dnpk.sekund.protocol.settings.SettingsIssue
 import uk.dnpk.sekund.runtime.auth.PluginAuthAccess
-import uk.dnpk.sekund.runtime.config.AppConfig
-import uk.dnpk.sekund.runtime.config.InstanceConfig
+import uk.dnpk.sekund.protocol.config.AppConfig
+import uk.dnpk.sekund.protocol.config.InstanceConfig
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.runtime.services.InstanceRefresher
 import uk.dnpk.sekund.runtime.services.JsonFileStore
@@ -161,7 +161,7 @@ class InstanceManager(
 
         try {
             val value = contribution.create(context)
-            return RunningInstance.Ready(config, contribution.point, value, issues, scope, contribution)
+            return RunningInstance.Ready(config, contribution.point, value, issues, scope, contribution, refreshNow = { context.refresher.refreshNow() })
         } catch (error: Exception) {
             log.e(error) { "Couldn't create '${config.id}'" }
             scope.cancel()

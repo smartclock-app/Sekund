@@ -7,6 +7,8 @@ import androidx.compose.ui.window.rememberWindowState
 import uk.dnpk.sekund.runtime.AppGraph
 import kotlinx.io.files.Path
 import uk.dnpk.sekund.runtime.DesktopPaths
+import uk.dnpk.sekund.runtime.api.PlatformInfo
+import uk.dnpk.sekund.runtime.discovery.JmDnsAdvertiser
 import uk.dnpk.sekund.runtime.auth.secrets.DesktopSecretCipher
 
 /**
@@ -27,6 +29,9 @@ fun main(args: Array<String>) {
         defaultConfig = DefaultConfig.create(),
         // The key lives in the OS keychain, or in this owner-only file where there is no keychain.
         secretCipher = DesktopSecretCipher(keyFile = Path(paths.secretsDir, "secrets.key")),
+        // Packaged apps get their version from jpackage; `gradlew run` doesn't have one.
+        platform = PlatformInfo(name = "desktop", appVersion = System.getProperty("jpackage.app-version") ?: "dev"),
+        advertiser = JmDnsAdvertiser(),
     )
     graph.start()
 

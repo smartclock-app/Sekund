@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import uk.dnpk.sekund.runtime.config.Orientation
+import uk.dnpk.sekund.protocol.config.Orientation
 import uk.dnpk.sekund.runtime.instances.valueFor
 import uk.dnpk.sekund.sdk.clock.ClockFace
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoints

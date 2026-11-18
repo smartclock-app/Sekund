@@ -3,6 +3,8 @@ package uk.dnpk.sekund
 import android.app.Application
 import uk.dnpk.sekund.runtime.AndroidPaths
 import uk.dnpk.sekund.runtime.AppGraph
+import uk.dnpk.sekund.runtime.api.PlatformInfo
+import uk.dnpk.sekund.runtime.discovery.NsdAdvertiser
 import uk.dnpk.sekund.runtime.auth.secrets.AndroidKeystoreCipher
 
 /**
@@ -21,6 +23,8 @@ class SekundApplication : Application() {
             declarativePlugin = ::declarativePlugin,
             defaultConfig = DefaultConfig.create(),
             secretCipher = AndroidKeystoreCipher(),
+            platform = PlatformInfo(name = "android", appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "unknown"),
+            advertiser = NsdAdvertiser(this),
         )
         graph.start()
     }

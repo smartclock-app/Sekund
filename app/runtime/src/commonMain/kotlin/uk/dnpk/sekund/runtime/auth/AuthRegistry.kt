@@ -352,7 +352,7 @@ class AuthRegistry(
         currentAccounts.value = accounts
     }
 
-    private suspend fun readCredential(account: ConnectedAccount): Credential? {
+    internal suspend fun readCredential(account: ConnectedAccount): Credential? {
         val text = secrets.read(account.secretKey) ?: return null
         return SekundJson.decodeFromString(Credential.serializer(), text)
     }

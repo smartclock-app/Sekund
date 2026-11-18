@@ -2,7 +2,7 @@ package uk.dnpk.sekund.runtime.instances
 
 import kotlinx.coroutines.CoroutineScope
 import uk.dnpk.sekund.protocol.settings.SettingsIssue
-import uk.dnpk.sekund.runtime.config.InstanceConfig
+import uk.dnpk.sekund.protocol.config.InstanceConfig
 import uk.dnpk.sekund.sdk.plugin.Contribution
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoint
 
@@ -37,6 +37,8 @@ sealed class RunningInstance {
         val issues: List<SettingsIssue>,
         internal val scope: CoroutineScope,
         override val contribution: Contribution<*, *>?,
+        /** Asks the instance to fetch its data again now (the `<id>.refresh` action). */
+        val refreshNow: () -> Unit = {},
     ) : RunningInstance()
 
     /** Couldn't be created. [reason] says why, for the error card. */

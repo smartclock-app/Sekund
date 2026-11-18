@@ -1,8 +1,8 @@
 package uk.dnpk.sekund
 
 import uk.dnpk.sekund.plugins.clock.ClockPlugin
-import uk.dnpk.sekund.runtime.config.AppConfig
-import uk.dnpk.sekund.runtime.config.InstanceConfig
+import uk.dnpk.sekund.protocol.config.AppConfig
+import uk.dnpk.sekund.protocol.config.InstanceConfig
 
 /** The config.json written on first start: just the digital clock. */
 object DefaultConfig {

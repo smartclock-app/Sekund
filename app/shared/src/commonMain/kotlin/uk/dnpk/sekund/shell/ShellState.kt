@@ -1,6 +1,6 @@
 package uk.dnpk.sekund.shell
 
-import uk.dnpk.sekund.runtime.config.AppConfig
+import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.runtime.instances.RunningInstance
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.sdk.context.Alert

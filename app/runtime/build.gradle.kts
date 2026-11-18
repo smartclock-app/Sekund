@@ -19,12 +19,26 @@ kotlin {
             api(libs.kotlinx.io.core)       // multiplatform file access (config.json, storage, logs)
             implementation(libs.kermit)     // logging
             implementation(libs.ktor.client.cio)
+
+            // The LAN API (device API) the companion app talks to.
+            implementation(libs.ktor.embedded.core)
+            implementation(libs.ktor.embedded.cio)
+            implementation(libs.ktor.embedded.websockets)
+            implementation(libs.ktor.embedded.contentNegotiation)
+            implementation(libs.ktor.embedded.statusPages)
+            implementation(libs.ktor.serialization.json)
         }
         jvmMain.dependencies {
             implementation(libs.java.keyring) // OS keychain access for the secrets key (DesktopSecretCipher)
+            implementation(libs.jmdns)        // mDNS advertising (_sekund._tcp) on desktop
         }
         commonTest.dependencies {
             implementation(libs.ktor.client.mock)
+        }
+        jvmTest.dependencies {
+            implementation(libs.ktor.embedded.testHost)
+            implementation(libs.ktor.client.contentNegotiation)
+            implementation(libs.ktor.client.websockets)
         }
     }
 }

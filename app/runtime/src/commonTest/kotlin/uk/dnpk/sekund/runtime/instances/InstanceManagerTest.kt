@@ -15,7 +15,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import uk.dnpk.sekund.protocol.plugin.PluginManifest
-import uk.dnpk.sekund.runtime.config.InstanceConfig
+import uk.dnpk.sekund.protocol.config.InstanceConfig
 import uk.dnpk.sekund.runtime.newTestPaths
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.runtime.services.AlertCenter

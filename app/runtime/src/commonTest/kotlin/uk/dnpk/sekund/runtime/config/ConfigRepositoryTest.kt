@@ -1,5 +1,8 @@
 package uk.dnpk.sekund.runtime.config
 
+import uk.dnpk.sekund.protocol.config.AppConfig
+import uk.dnpk.sekund.protocol.config.Orientation
+import uk.dnpk.sekund.protocol.config.LayoutConfig
 import kotlinx.coroutines.test.runTest
 import kotlinx.io.buffered
 import kotlinx.io.files.Path

@@ -35,6 +35,14 @@ data class AppPaths(
     val accountsFile: Path
         get() = Path(dataDir, "accounts.json")
 
+    /** The companions paired with the device API (token hashes only). */
+    val apiClientsFile: Path
+        get() = Path(dataDir, "api-clients.json")
+
+    /** This device's permanent id. */
+    val deviceFile: Path
+        get() = Path(dataDir, "device.json")
+
     /** Declarative widget and photo source definitions (`*.widget.json`, `*.photos.json`). */
     val widgetsDir: Path
         get() = Path(configDir, "widgets")

@@ -24,6 +24,7 @@ class AuthProviderLoader(
     suspend fun load(): LoadedProviders {
         val providers = linkedMapOf<String, AuthProviderDefinition>()
         val problems = mutableListOf<String>()
+        val userFiles = mutableMapOf<String, Path>()
 
         for (name in builtInNames) {
             add("built-in $name", readBuiltIn(name), providers, problems)
@@ -33,27 +34,35 @@ class AuthProviderLoader(
             for (file in fileSystem.list(userFolder)) {
                 if (!file.name.endsWith(".auth.json")) continue
                 val text = fileSystem.source(file).buffered().use { source -> source.readString() }
-                add(file.toString(), text, providers, problems)
+                val id = add(file.toString(), text, providers, problems)
+                if (id != null) userFiles[id] = file
             }
         }
-        return LoadedProviders(providers, problems)
+        return LoadedProviders(providers, problems, userFiles)
     }
 
-    private fun add(source: String, text: String, into: MutableMap<String, AuthProviderDefinition>, problems: MutableList<String>) {
+    /** Adds the definition in [text] if it's valid. Returns its id, or null if it wasn't added. */
+    private fun add(source: String, text: String, into: MutableMap<String, AuthProviderDefinition>, problems: MutableList<String>): String? {
         val parsed = AuthDefinitionParser.parse(text)
         val definition = parsed.definition
         if (definition == null) {
             for (issue in parsed.issues) {
                 problems.add("$source: ${issue.path} ${issue.message}".replace(":  ", ": "))
             }
-            return
+            return null
         }
         into[definition.id] = definition
+        return definition.id
     }
 }
 
-/** Usable definitions by id, plus a readable line for each file or field that was wrong. */
+/**
+ * Usable definitions by id, plus a readable line for each file or field that was wrong.
+ *
+ * @property userFiles the user's own file for each provider that came from one (rather than built in).
+ */
 data class LoadedProviders(
     val providers: Map<String, AuthProviderDefinition>,
     val problems: List<String>,
+    val userFiles: Map<String, Path> = emptyMap(),
 )
