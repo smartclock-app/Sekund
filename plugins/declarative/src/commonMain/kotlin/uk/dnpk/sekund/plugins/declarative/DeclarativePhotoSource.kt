@@ -1,5 +1,7 @@
 package uk.dnpk.sekund.plugins.declarative
 
+import io.ktor.client.request.get
+import io.ktor.client.statement.readRawBytes
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
@@ -29,6 +31,15 @@ class DeclarativePhotoSource(
 
     override val photos: StateFlow<Loadable<List<Photo>>> =
         context.refresher.poll(Refresh.policyFor(definition.source)) { toPhotos(runner.run(definition.source)) }
+
+    /** Fetches the picture with the definition's host check and sign-in, like the `image` view does. */
+    override suspend fun download(photo: Photo): ByteArray {
+        val response = runner.clientForImage(photo.url).get(photo.url)
+        if (response.status.value !in 200..299) {
+            throw IllegalStateException("Photo ${photo.id}: HTTP ${response.status.value}")
+        }
+        return response.readRawBytes()
+    }
 
     private fun toPhotos(data: MappedData): List<Photo> {
         val result = mutableListOf<Photo>()

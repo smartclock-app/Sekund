@@ -24,6 +24,7 @@ import uk.dnpk.sekund.sdk.auth.AuthState
 import uk.dnpk.sekund.sdk.context.Alert
 import uk.dnpk.sekund.sdk.context.Alerts
 import uk.dnpk.sekund.sdk.context.EventBus
+import uk.dnpk.sekund.sdk.context.FileCache
 import uk.dnpk.sekund.sdk.context.InstanceContext
 import uk.dnpk.sekund.sdk.context.InstanceLookup
 import uk.dnpk.sekund.sdk.context.KeyValueStore
@@ -65,6 +66,7 @@ class FakeInstanceContext<S>(
     override val auth: FakeAuth = FakeAuth(api.client)
     override val refresher: ManualRefresher = ManualRefresher(time)
     override val storage: MemoryStore = MemoryStore()
+    override val files: MemoryFileCache = MemoryFileCache()
     override val alerts: RecordingAlerts = RecordingAlerts()
     override val events: FakeEventBus = FakeEventBus()
     override val log: RecordingLog = RecordingLog()
@@ -186,6 +188,23 @@ class MemoryStore : KeyValueStore {
 
     override suspend fun remove(key: String) {
         values.remove(key)
+    }
+}
+
+/** A [FileCache] in memory. [files] can be filled in before the test. */
+class MemoryFileCache : FileCache {
+    val files = mutableMapOf<String, ByteArray>()
+
+    override suspend fun read(name: String): ByteArray? = files[name]
+
+    override suspend fun write(name: String, bytes: ByteArray) {
+        files[name] = bytes
+    }
+
+    override suspend fun names(): List<String> = files.keys.toList()
+
+    override suspend fun remove(name: String) {
+        files.remove(name)
     }
 }
 

@@ -17,6 +17,7 @@ import uk.dnpk.sekund.runtime.auth.PluginAuthAccess
 import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.protocol.config.InstanceConfig
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
+import uk.dnpk.sekund.runtime.services.FolderFileCache
 import uk.dnpk.sekund.runtime.services.InstanceRefresher
 import uk.dnpk.sekund.runtime.services.JsonFileStore
 import uk.dnpk.sekund.runtime.services.TaggedPluginLog
@@ -154,6 +155,7 @@ class InstanceManager(
                 clock = services.clock,
             ),
             storage = JsonFileStore(Path(services.paths.storageDir, "${config.id}.json")),
+            files = FolderFileCache(Path(services.paths.cacheDir, "instances", config.id)),
             alerts = services.alerts.forOwner(config.id),
             events = services.events,
             log = TaggedPluginLog(config.id),

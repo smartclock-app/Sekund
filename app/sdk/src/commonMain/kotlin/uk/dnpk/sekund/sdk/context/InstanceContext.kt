@@ -43,6 +43,9 @@ interface InstanceContext<S> {
     /** A small key/value store private to this instance, for caching data across restarts. */
     val storage: KeyValueStore
 
+    /** A private folder for downloaded files (e.g. photos kept for offline use). May be cleared at any time. */
+    val files: FileCache
+
     /** Shows or clears this instance's alert card at the top of the sidebar. */
     val alerts: Alerts
 

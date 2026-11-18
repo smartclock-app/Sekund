@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import uk.dnpk.sekund.sdk.auth.AuthAccess
 import uk.dnpk.sekund.sdk.context.Alerts
 import uk.dnpk.sekund.sdk.context.EventBus
+import uk.dnpk.sekund.sdk.context.FileCache
 import uk.dnpk.sekund.sdk.context.InstanceContext
 import uk.dnpk.sekund.sdk.context.InstanceLookup
 import uk.dnpk.sekund.sdk.context.KeyValueStore
@@ -22,6 +23,7 @@ class RuntimeInstanceContext<S>(
     override val time: TimeService,
     override val refresher: Refresher,
     override val storage: KeyValueStore,
+    override val files: FileCache,
     override val alerts: Alerts,
     override val events: EventBus,
     override val log: PluginLog,
