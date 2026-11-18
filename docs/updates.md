@@ -39,22 +39,16 @@ Development builds (version `dev`) never update.
 }
 ```
 
-Both are empty for now, which turns updates off ("This build has no update source"). The release
-downloads must be public: the app never sends credentials for them.
-
-## Making the key (once)
-
-```sh
-openssl ecparam -name prime256v1 -genkey -noout -out sekund-update.key      # PRIVATE: keep it out of git
-openssl ec -in sekund-update.key -pubout -outform DER | base64               # -> "publicKey" above
-```
-
-Store the private key as a CI secret (phase 10), never in the repository.
+The committed file is empty, which turns updates off ("This build has no update source"), so development
+builds never update. The release workflow fills it in before building (`scripts/write-update-source.sh`),
+deriving the public key from the `UPDATE_SIGNING_KEY` secret. The release downloads must be public: the app
+never sends credentials for them.
 
 ## Publishing a release
 
-`update.json` lists one asset per platform (`android`, `linux-arm64`, `linux-x64`, `macos-arm64`,
-`macos-x64`, `windows-x64`):
+The release workflow does this; see [releasing.md](releasing.md), which also covers making the key. What it
+produces, for reference: `update.json` lists one asset per platform (`android`, `linux-arm64`, `linux-x64`;
+the app also understands `macos-arm64`, `macos-x64` and `windows-x64`, which aren't released):
 
 ```json
 {
@@ -62,15 +56,11 @@ Store the private key as a CI secret (phase 10), never in the repository.
   "notes": "Home Assistant cameras",
   "assets": {
     "android": { "url": "https://github.com/<owner>/<repo>/releases/download/v2.1.0/sekund-2.1.0.apk",
-                 "sha256": "<shasum -a 256 sekund-2.1.0.apk>", "size": 41234567 }
+                 "sha256": "<sha-256 of the file, hex>", "size": 41234567 }
   }
 }
 ```
 
-Sign it and upload both files to the release:
-
-```sh
-openssl dgst -sha256 -sign sekund-update.key update.json | base64 > update.json.sig
-```
-
-Sign the exact bytes you upload: reformatting `update.json` afterwards breaks the signature.
+`update.json.sig` is the base64 ECDSA signature of its exact bytes
+(`openssl dgst -sha256 -sign sekund-update.key update.json | base64`). Reformatting `update.json` after signing
+breaks the signature. `scripts/make-update-manifest.sh` makes both by hand if you ever need to.

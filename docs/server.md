@@ -18,13 +18,20 @@ router), and the server passes companion requests, webhooks and sign-ins along i
 
 ### Docker
 
+Each release publishes an image for amd64 and arm64 ([releasing.md](releasing.md)):
+
 ```sh
-./gradlew :server:installDist
-docker build -t sekund-server server
 docker run -d --name sekund-server -p 8080:8080 \
   -v sekund-data:/data \
   -e PUBLIC_URL=https://sekund.example.org \
-  sekund-server
+  ghcr.io/<owner>/sekund-server:latest
+```
+
+Or build the image from source:
+
+```sh
+./gradlew :server:installDist
+docker build -t sekund-server server
 ```
 
 `/data` holds the SQLite database and, optionally, `server.json`.

@@ -132,6 +132,9 @@ running cage there's nothing to open a `.deb` with, so for now install updates o
 
 ## Building the packages
 
+Each release has the Linux packages ready-made (`sekund_<version>_arm64.deb` and `_amd64.deb`, see
+[releasing.md](releasing.md)). macOS and Windows packages aren't released; build them yourself:
+
 ```sh
 ./gradlew :app:desktopApp:packageDeb       # on Linux: the .deb for this machine's CPU
 ./gradlew :app:desktopApp:packageDmg       # on macOS
