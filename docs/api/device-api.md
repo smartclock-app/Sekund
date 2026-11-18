@@ -228,10 +228,12 @@ provider's extra fields (e.g. `instance_url`). `reconnect` updates an existing a
 | `device.refresh` | Fetch fresh data for everything now |
 | `update.check` | Look for a new version of Sekund now (fails with the reason if the check fails) |
 | `update.install` | Download and install the new version, if there is one (fails if there's none) |
+| `display.on` / `display.off` | Turn the screen on or off. Only listed with the `DisplayControl` capability. On Android, `display.off` fails with a message until display control is enabled on the device (long-press menu → *Enable display control*) |
+| `kiosk.enter` / `kiosk.exit` | Lock the device to Sekund, or unlock it until the app restarts. Only listed with the `Kiosk` capability (Android device owner) |
 | `<instanceId>.refresh` | Fetch fresh data for one instance now |
 | `<instanceId>.<name>` | An action the instance's plugin offers, e.g. `photos.skip` (listed by `GET /v1/actions`) |
 
-Display, kiosk and update actions arrive with the platform phases.
+Display actions on desktop and the Raspberry Pi arrive with the desktop platform phase.
 
 ## Logs
 
@@ -292,5 +294,5 @@ is out of scope here.
 - The relay through the optional server (phase 9), and with it remote access and server-hosted OAuth.
 - Scoped (limited) tokens: every paired client can do everything.
 - `PUT /v1/theme` and theme tokens.
-- Plugin-defined actions, and display/kiosk/update actions.
+- Display control on desktop and the Raspberry Pi.
 - `sekund://` deep links on the device.
