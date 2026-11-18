@@ -13,6 +13,7 @@ import uk.dnpk.sekund.runtime.api.PlatformInfo
 import uk.dnpk.sekund.runtime.platform.PlatformServices
 import uk.dnpk.sekund.runtime.discovery.JmDnsAdvertiser
 import uk.dnpk.sekund.runtime.auth.secrets.DesktopSecretCipher
+import uk.dnpk.sekund.runtime.desktop.CommandDisplayControl
 
 /**
  * Desktop and Raspberry Pi entry point.
@@ -37,6 +38,8 @@ fun main(args: Array<String>) {
         platform = PlatformInfo(name = "desktop", appVersion = System.getProperty("jpackage.app-version") ?: "dev"),
         advertiser = JmDnsAdvertiser(),
         services = PlatformServices(
+            // Screen on/off with the commands in <config>/display.json, when there is one.
+            display = CommandDisplayControl.fromConfigFolder(paths.configDir),
             // Shows an "Offline" badge while this address doesn't answer.
             connectivityCheckUrl = PlatformServices.GOOGLE_CONNECTIVITY_CHECK,
             // Opens a verified update's installer for the user to confirm.
