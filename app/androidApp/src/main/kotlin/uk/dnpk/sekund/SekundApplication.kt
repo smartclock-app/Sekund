@@ -9,6 +9,7 @@ import uk.dnpk.sekund.runtime.android.AndroidDisplayControl
 import uk.dnpk.sekund.runtime.android.AndroidKiosk
 import uk.dnpk.sekund.runtime.android.AndroidNetworkWatcher
 import uk.dnpk.sekund.runtime.android.AndroidShortcuts
+import uk.dnpk.sekund.runtime.android.AndroidUpdateInstaller
 import uk.dnpk.sekund.runtime.android.AppScreen
 import uk.dnpk.sekund.runtime.android.DeviceOwner
 import uk.dnpk.sekund.runtime.api.PlatformInfo
@@ -50,6 +51,8 @@ class SekundApplication : Application() {
             connectivityCheckUrl = PlatformServices.GOOGLE_CONNECTIVITY_CHECK,
             openBrowser = shortcuts::openBrowser,
             openSystemSettings = shortcuts::openSystemSettings,
+            // Silent as device owner; otherwise Android asks on screen.
+            updateInstaller = AndroidUpdateInstaller(this),
         )
 
         graph = AppGraph(

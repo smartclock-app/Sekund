@@ -14,8 +14,9 @@ only holds a *public* key, and believes a manifest only if it was signed with th
 4. The download goes to `<cache>/updates/`, and its SHA-256 must match the manifest's, or it's deleted.
 5. The verified file goes to the platform's installer:
    - **Desktop**: the file is opened with the system, which shows its installer (`.deb`, `.dmg`, `.msi`).
-   - **Android**: not yet; PackageInstaller (silent as device owner) comes with the Android platform phase.
-     Until then the card says installing isn't supported, and the download is kept.
+   - **Android**: a PackageInstaller session. As device owner it installs silently, and Sekund restarts by
+     itself; otherwise Android shows its "update this app?" screen (and, the first time, asks to allow
+     installs from Sekund). Release APKs must be signed with the same key as the installed app.
 
 A new version appears as a card at the top of the sidebar with an **Install** button. It's installed when
 someone taps it, when the companion runs the `update.install` action, or straight away if
