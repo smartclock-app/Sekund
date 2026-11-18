@@ -1,0 +1,39 @@
+// Trakt: device-code sign-in (the user types a short code at trakt.tv/activate).
+// Trakt answers polls with HTTP status codes instead of the standard error bodies, wants JSON
+// instead of forms, and issues a new refresh token on every refresh.
+{
+  "id": "trakt",
+  "name": "Trakt",
+  "icon": "trakt",
+  "methods": [
+    {
+      "type": "oauth2.deviceCode",
+      "deviceCodeUrl": "https://api.trakt.tv/oauth/device/code",
+      "tokenUrl": "https://api.trakt.tv/oauth/device/token",
+      "revokeUrl": "https://api.trakt.tv/oauth/revoke",
+      "deviceCodeParam": "code",
+      "client": { "mode": "byo" },
+      "clientAuth": "body",
+      "bodyEncoding": "json",
+      "pollStatusMap": {
+        "400": "pending",
+        "404": "invalid",
+        "409": "invalid",
+        "410": "expired",
+        "418": "denied",
+        "429": "slowDown"
+      },
+      "refresh": {
+        "url": "https://api.trakt.tv/oauth/token",
+        "rotateRefreshToken": true,
+        "extraParams": { "redirect_uri": "urn:ietf:wg:oauth:2.0:oob" }
+      }
+    }
+  ],
+  "extraHeaders": {
+    "trakt-api-version": "2",
+    "trakt-api-key": "{client_id}"
+  },
+  "accountInfo": { "url": "https://api.trakt.tv/users/settings", "label": "$.user.username" },
+  "baseUrls": ["https://api.trakt.tv/"]
+}

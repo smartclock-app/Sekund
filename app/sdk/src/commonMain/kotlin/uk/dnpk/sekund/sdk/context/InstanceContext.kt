@@ -2,6 +2,7 @@ package uk.dnpk.sekund.sdk.context
 
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import uk.dnpk.sekund.sdk.auth.AuthAccess
 
 /**
  * Everything one plugin instance gets from Sekund. Passed to `Contribution.create`.
@@ -27,8 +28,11 @@ interface InstanceContext<S> {
      */
     val scope: CoroutineScope
 
-    /** An HTTP client with sensible timeouts and logging. For signed-in requests use the auth registry. */
+    /** An HTTP client with sensible timeouts and logging. For signed-in requests use [auth] instead. */
     val http: HttpClient
+
+    /** Signed-in HTTP clients for the accounts in this instance's settings. Tokens stay hidden. */
+    val auth: AuthAccess
 
     /** The current time, ticking in step with the wall clock, plus the user's time preferences. */
     val time: TimeService

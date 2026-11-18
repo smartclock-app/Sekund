@@ -1,0 +1,59 @@
+package uk.dnpk.sekund.runtime.auth
+
+import kotlinx.io.buffered
+import kotlinx.io.files.FileSystem
+import kotlinx.io.files.Path
+import kotlinx.io.files.SystemFileSystem
+import kotlinx.io.readString
+import uk.dnpk.sekund.protocol.auth.AuthDefinitionParser
+import uk.dnpk.sekund.protocol.auth.AuthProviderDefinition
+
+/**
+ * Reads every auth provider definition: the built-in ones, then the user's own `*.auth.json` files in
+ * `<config>/auth-providers/`. A user file with the same id as a built-in one replaces it, so a provider
+ * can be fixed without waiting for an app update.
+ *
+ * Broken files are skipped and reported in [LoadedProviders.problems].
+ */
+class AuthProviderLoader(
+    private val userFolder: Path,
+    private val fileSystem: FileSystem = SystemFileSystem,
+    private val readBuiltIn: suspend (String) -> String = { name -> BuiltInAuthProviders.read(name) },
+    private val builtInNames: List<String> = BuiltInAuthProviders.FILE_NAMES,
+) {
+    suspend fun load(): LoadedProviders {
+        val providers = linkedMapOf<String, AuthProviderDefinition>()
+        val problems = mutableListOf<String>()
+
+        for (name in builtInNames) {
+            add("built-in $name", readBuiltIn(name), providers, problems)
+        }
+
+        if (fileSystem.exists(userFolder)) {
+            for (file in fileSystem.list(userFolder)) {
+                if (!file.name.endsWith(".auth.json")) continue
+                val text = fileSystem.source(file).buffered().use { source -> source.readString() }
+                add(file.toString(), text, providers, problems)
+            }
+        }
+        return LoadedProviders(providers, problems)
+    }
+
+    private fun add(source: String, text: String, into: MutableMap<String, AuthProviderDefinition>, problems: MutableList<String>) {
+        val parsed = AuthDefinitionParser.parse(text)
+        val definition = parsed.definition
+        if (definition == null) {
+            for (issue in parsed.issues) {
+                problems.add("$source: ${issue.path} ${issue.message}".replace(":  ", ": "))
+            }
+            return
+        }
+        into[definition.id] = definition
+    }
+}
+
+/** Usable definitions by id, plus a readable line for each file or field that was wrong. */
+data class LoadedProviders(
+    val providers: Map<String, AuthProviderDefinition>,
+    val problems: List<String>,
+)

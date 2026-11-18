@@ -3,6 +3,7 @@ package uk.dnpk.sekund
 import android.app.Application
 import uk.dnpk.sekund.runtime.AndroidPaths
 import uk.dnpk.sekund.runtime.AppGraph
+import uk.dnpk.sekund.runtime.auth.secrets.AndroidKeystoreCipher
 
 /**
  * Created once when the app process starts, before any screen. It owns the [AppGraph], so the app
@@ -18,6 +19,7 @@ class SekundApplication : Application() {
             paths = AndroidPaths.resolve(this),
             plugins = BuiltInPlugins,
             defaultConfig = DefaultConfig.create(),
+            secretCipher = AndroidKeystoreCipher(),
         )
         graph.start()
     }

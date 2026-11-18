@@ -15,6 +15,13 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.io.files.Path
+import uk.dnpk.sekund.runtime.auth.AccountsFile
+import uk.dnpk.sekund.runtime.auth.AuthCodeSignIns
+import uk.dnpk.sekund.runtime.auth.AuthProviderLoader
+import uk.dnpk.sekund.runtime.auth.AuthRegistry
+import uk.dnpk.sekund.runtime.auth.secrets.EncryptedFileSecretStore
+import uk.dnpk.sekund.runtime.auth.secrets.SecretCipher
 import uk.dnpk.sekund.runtime.config.AppConfig
 import uk.dnpk.sekund.runtime.config.ConfigRepository
 import uk.dnpk.sekund.runtime.instances.InstanceManager
@@ -40,11 +47,14 @@ import uk.dnpk.sekund.sdk.plugin.SekundPlugin
  *
  * @param plugins the compiled-in plugins (BuiltInPlugins in :app:shared).
  * @param defaultConfig the config used when there's no config.json yet.
+ * @param secretCipher encrypts the secrets file. Platform-specific, so the entry point passes it in:
+ *   `DesktopSecretCipher` on desktop, `AndroidKeystoreCipher` on Android.
  */
 class AppGraph(
     val paths: AppPaths,
     plugins: List<SekundPlugin>,
     private val defaultConfig: AppConfig,
+    secretCipher: SecretCipher,
 ) {
     private val log = Logger.withTag("App")
 
@@ -67,6 +77,21 @@ class AppGraph(
         }
     }
 
+    /** Connected accounts and their (encrypted) credentials. */
+    val auth: AuthRegistry = AuthRegistry(
+        http = http,
+        secrets = EncryptedFileSecretStore(Path(paths.secretsDir, "secrets.bin"), secretCipher),
+        accountsFile = AccountsFile(paths.accountsFile),
+        alerts = alerts,
+        scope = scope,
+    )
+
+    /** Browser sign-ins in progress (completed through the companion app). */
+    val authCodeSignIns: AuthCodeSignIns = AuthCodeSignIns(auth)
+
+    /** Problems found in auth provider files, shown on the Accounts screen. Filled in by [start]. */
+    val authProblems: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
+
     /** Whether the screen is on. Platform display control (a later phase) will update this. */
     val displayIsOn: MutableStateFlow<Boolean> = MutableStateFlow(true)
 
@@ -85,6 +110,7 @@ class AppGraph(
             time = time,
             events = events,
             alerts = alerts,
+            auth = auth,
             wakeUps = wakeUpsFrom(events),
             displayIsOn = displayIsOn,
         ),
@@ -98,8 +124,24 @@ class AppGraph(
             log.w { "Plugin problem: $problem" }
         }
         scope.launch {
+            // Accounts first: instances check their required providers when they're created.
+            loadAuth()
             config.load { defaultConfig }
             instances.follow(config.config)
+        }
+    }
+
+    private suspend fun loadAuth() {
+        val loaded = AuthProviderLoader(paths.authProvidersDir).load()
+        for (problem in loaded.problems) {
+            log.w { "Auth provider problem: $problem" }
+        }
+        authProblems.value = loaded.problems
+        auth.setProviders(loaded.providers)
+        try {
+            auth.loadAccounts()
+        } catch (error: IllegalStateException) {
+            log.e(error) { "Couldn't read the connected accounts" }
         }
     }
 

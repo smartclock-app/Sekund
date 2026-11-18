@@ -92,6 +92,7 @@ object AuthDefinitionParser {
                 checkUrl("$path.tokenUrl", method.tokenUrl, known, issues)
                 checkOptionalUrl("$path.revokeUrl", method.revokeUrl, known, issues)
                 checkClient("$path.client", method.client, known, issues)
+                checkOptionalUrl("$path.refresh.url", method.refresh.url, known, issues)
                 for (status in method.pollStatusMap.keys) {
                     if (status.toIntOrNull() == null) {
                         issues.add(DefinitionIssue("$path.pollStatusMap.$status", "Keys must be HTTP status codes like \"400\""))
@@ -103,6 +104,7 @@ object AuthDefinitionParser {
                 checkUrl("$path.tokenUrl", method.tokenUrl, known, issues)
                 checkOptionalUrl("$path.revokeUrl", method.revokeUrl, known, issues)
                 checkClient("$path.client", method.client, known, issues)
+                checkOptionalUrl("$path.refresh.url", method.refresh.url, known, issues)
             }
         }
     }

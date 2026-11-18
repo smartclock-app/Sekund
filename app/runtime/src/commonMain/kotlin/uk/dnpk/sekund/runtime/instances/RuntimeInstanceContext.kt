@@ -2,6 +2,7 @@ package uk.dnpk.sekund.runtime.instances
 
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import uk.dnpk.sekund.sdk.auth.AuthAccess
 import uk.dnpk.sekund.sdk.context.Alerts
 import uk.dnpk.sekund.sdk.context.EventBus
 import uk.dnpk.sekund.sdk.context.InstanceContext
@@ -16,6 +17,7 @@ class RuntimeInstanceContext<S>(
     override val settings: S,
     override val scope: CoroutineScope,
     override val http: HttpClient,
+    override val auth: AuthAccess,
     override val time: TimeService,
     override val refresher: Refresher,
     override val storage: KeyValueStore,

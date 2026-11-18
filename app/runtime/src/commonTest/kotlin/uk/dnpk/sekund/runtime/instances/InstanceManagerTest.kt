@@ -32,6 +32,9 @@ import uk.dnpk.sekund.sdk.settings.SettingsSchema
 import uk.dnpk.sekund.sdk.settings.SettingsValues
 import uk.dnpk.sekund.sdk.widget.Widget
 import uk.dnpk.sekund.sdk.widget.WidgetLocation
+import uk.dnpk.sekund.runtime.auth.AccountsFile
+import uk.dnpk.sekund.runtime.auth.AuthRegistry
+import uk.dnpk.sekund.runtime.auth.InMemorySecretStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -96,6 +99,7 @@ class InstanceManagerTest {
             time = FakeTime,
             events = SharedEventBus(),
             alerts = alerts,
+            auth = AuthRegistry(HttpClient(MockEngine { respondOk() }), InMemorySecretStore(), AccountsFile(newTestPaths().accountsFile), alerts, backgroundScope),
             wakeUps = MutableSharedFlow(),
             displayIsOn = MutableStateFlow(true),
         ),

@@ -6,6 +6,13 @@ plugins {
 }
 
 kotlin {
+    android {
+        // Lets the built-in auth provider files (composeResources/files) be packaged on Android.
+        androidResources {
+            enable = true
+        }
+    }
+
     sourceSets {
         commonMain.dependencies {
             api(project(":app:sdk"))
@@ -20,4 +27,9 @@ kotlin {
             implementation(libs.ktor.client.mock)
         }
     }
+}
+
+// The generated `Res` class (used to read composeResources/files/auth-providers).
+compose.resources {
+    packageOfResClass = "uk.dnpk.sekund.runtime.resources"
 }

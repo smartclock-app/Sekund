@@ -1,0 +1,23 @@
+// Google (Calendar, Photos...). Google's device flow doesn't allow Calendar scopes, so this uses the
+// authorization-code flow, completed in a browser through the companion app.
+{
+  "id": "google",
+  "name": "Google",
+  "icon": "google",
+  "methods": [
+    {
+      "type": "oauth2.authorizationCode",
+      "authorizeUrl": "https://accounts.google.com/o/oauth2/v2/auth",
+      "tokenUrl": "https://oauth2.googleapis.com/token",
+      "revokeUrl": "https://oauth2.googleapis.com/revoke",
+      "scopes": ["openid", "email", "https://www.googleapis.com/auth/calendar.readonly"],
+      "pkce": true,
+      // Without these Google returns no refresh token, and the account would stop working after an hour.
+      "extraAuthorizeParams": { "access_type": "offline", "prompt": "consent" },
+      "client": { "mode": "byoOrServer" },
+      "clientAuth": "body"
+    }
+  ],
+  "accountInfo": { "url": "https://openidconnect.googleapis.com/v1/userinfo", "label": "$.email" },
+  "baseUrls": ["https://www.googleapis.com/", "https://openidconnect.googleapis.com/"]
+}

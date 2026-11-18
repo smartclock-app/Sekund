@@ -1,0 +1,15 @@
+// Immich (self-hosted photos): an API key created under Account Settings > API Keys.
+{
+  "id": "immich",
+  "name": "Immich",
+  "icon": "photo",
+  "fields": [
+    { "key": "instance_url", "label": "Server address", "placeholder": "http://immich.local:2283" }
+  ],
+  "methods": [
+    { "type": "apiKey", "help": "Create one in Immich under Account Settings > API Keys." }
+  ],
+  "inject": { "type": "header", "name": "x-api-key", "format": "{api_key}" },
+  "accountInfo": { "url": "{instance_url}/api/users/me", "label": "$.email" },
+  "baseUrls": ["{instance_url}/"]
+}

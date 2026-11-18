@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
+import uk.dnpk.sekund.protocol.plugin.PluginManifest
 import uk.dnpk.sekund.protocol.settings.SettingsIssue
+import uk.dnpk.sekund.runtime.auth.PluginAuthAccess
 import uk.dnpk.sekund.runtime.config.AppConfig
 import uk.dnpk.sekund.runtime.config.InstanceConfig
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
@@ -98,11 +100,31 @@ class InstanceManager(
         if (contribution == null) {
             return RunningInstance.Failed(config, "No installed plugin provides '${config.type}'")
         }
-        return createFrom(config, contribution)
+        val manifest = manifestFor(config.type)
+        val missingProvider = missingAuthProvider(manifest)
+        if (missingProvider != null) {
+            return RunningInstance.Failed(config, "Needs the '$missingProvider' sign-in provider, which isn't installed")
+        }
+        return createFrom(config, contribution, manifest)
+    }
+
+    private fun manifestFor(type: String): PluginManifest? {
+        val pluginId = registry.pluginIdOf(type) ?: return null
+        return registry.manifests.firstOrNull { manifest -> manifest.id == pluginId }
+    }
+
+    /** The first non-optional auth provider the plugin requires that isn't installed, or null if all are. */
+    private fun missingAuthProvider(manifest: PluginManifest?): String? {
+        if (manifest == null) return null
+        val installed = services.auth.providers.value
+        for (requirement in manifest.requires.auth) {
+            if (!requirement.optional && !installed.containsKey(requirement.provider)) return requirement.provider
+        }
+        return null
     }
 
     /** A separate function so the contribution's settings type `S` is known while building its context. */
-    private fun <T : Any, S> createFrom(config: InstanceConfig, contribution: Contribution<T, S>): RunningInstance {
+    private fun <T : Any, S> createFrom(config: InstanceConfig, contribution: Contribution<T, S>, manifest: PluginManifest?): RunningInstance {
         val decoded = contribution.settings.decode(config.settings)
         val issues = decoded.issues.toMutableList()
         val intervalOverride = parseInterval(config.refreshInterval, issues)
@@ -119,6 +141,11 @@ class InstanceManager(
             settings = decoded.value,
             scope = scope,
             http = services.http,
+            auth = PluginAuthAccess(
+                registry = services.auth,
+                pluginId = manifest?.id ?: config.type,
+                declaredProviders = declaredProviders(manifest),
+            ),
             time = services.time,
             refresher = InstanceRefresher(
                 scope = scope,
@@ -142,6 +169,11 @@ class InstanceManager(
             scope.cancel()
             return RunningInstance.Failed(config, error.message ?: "Couldn't start (${error::class.simpleName})")
         }
+    }
+
+    private fun declaredProviders(manifest: PluginManifest?): Set<String> {
+        if (manifest == null) return emptySet()
+        return manifest.requires.auth.map { requirement -> requirement.provider }.toSet()
     }
 
     private fun parseInterval(text: String?, issues: MutableList<SettingsIssue>): Duration? {

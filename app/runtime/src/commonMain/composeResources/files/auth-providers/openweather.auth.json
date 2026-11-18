@@ -1,0 +1,11 @@
+// OpenWeather: an API key, sent as the `appid` query parameter.
+{
+  "id": "openweather",
+  "name": "OpenWeather",
+  "icon": "weather",
+  "methods": [
+    { "type": "apiKey", "help": "Find it at home.openweathermap.org/api_keys." }
+  ],
+  "inject": { "type": "query", "name": "appid", "format": "{api_key}" },
+  "baseUrls": ["https://api.openweathermap.org/"]
+}

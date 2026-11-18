@@ -5,7 +5,9 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import uk.dnpk.sekund.runtime.AppGraph
+import kotlinx.io.files.Path
 import uk.dnpk.sekund.runtime.DesktopPaths
+import uk.dnpk.sekund.runtime.auth.secrets.DesktopSecretCipher
 
 /**
  * Desktop and Raspberry Pi entry point.
@@ -17,10 +19,13 @@ import uk.dnpk.sekund.runtime.DesktopPaths
 fun main(args: Array<String>) {
     val fullscreen = args.contains("--fullscreen")
 
+    val paths = DesktopPaths.resolve(args)
     val graph = AppGraph(
-        paths = DesktopPaths.resolve(args),
+        paths = paths,
         plugins = BuiltInPlugins,
         defaultConfig = DefaultConfig.create(),
+        // The key lives in the OS keychain, or in this owner-only file where there is no keychain.
+        secretCipher = DesktopSecretCipher(keyFile = Path(paths.secretsDir, "secrets.key")),
     )
     graph.start()
 

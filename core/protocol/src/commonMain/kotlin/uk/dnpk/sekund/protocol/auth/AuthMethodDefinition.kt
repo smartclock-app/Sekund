@@ -50,6 +50,8 @@ sealed class AuthMethodDefinition {
      *
      * @property pollStatusMap for services that answer polls with HTTP status codes instead of the standard
      *   `{"error": "authorization_pending"}` body, e.g. Trakt: `{"400": "pending", "429": "slowDown", ...}`.
+     * @property deviceCodeParam the name of the device code in poll requests. Standard is `device_code`;
+     *   Trakt uses `code`.
      */
     @Serializable
     @SerialName("oauth2.deviceCode")
@@ -64,6 +66,7 @@ sealed class AuthMethodDefinition {
         val bodyEncoding: BodyEncoding = BodyEncoding.Form,
         val refresh: RefreshSettings = RefreshSettings(),
         val pollStatusMap: Map<String, DevicePollStatus> = emptyMap(),
+        val deviceCodeParam: String = "device_code",
     ) : AuthMethodDefinition()
 
     /**
@@ -159,11 +162,15 @@ enum class BodyEncoding {
  * @property rotateRefreshToken true if the service issues a new refresh token on every refresh. Sekund
  *   always stores a new refresh token when one is returned; this flag only documents the behaviour.
  * @property skewSeconds refresh this many seconds *before* the token expires, so requests don't race expiry.
+ * @property url where to send refresh requests, if not the method's `tokenUrl` (Trakt uses a different one).
+ * @property extraParams added to every refresh request, e.g. Trakt's `redirect_uri`.
  */
 @Serializable
 data class RefreshSettings(
     val rotateRefreshToken: Boolean = false,
     val skewSeconds: Int = 60,
+    val url: String? = null,
+    val extraParams: Map<String, String> = emptyMap(),
 )
 
 /** What a device-code poll answer means. */

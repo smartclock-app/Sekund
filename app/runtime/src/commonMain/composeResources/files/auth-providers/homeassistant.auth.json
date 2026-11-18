@@ -1,0 +1,13 @@
+// Home Assistant: a long-lived access token, created on your profile page (Security tab).
+{
+  "id": "homeassistant",
+  "name": "Home Assistant",
+  "icon": "home",
+  "fields": [
+    { "key": "instance_url", "label": "Server address", "placeholder": "http://homeassistant.local:8123" }
+  ],
+  "methods": [
+    { "type": "bearer", "label": "Long-lived access token", "help": "Create one on your Home Assistant profile page, under Security." }
+  ],
+  "baseUrls": ["{instance_url}/"]
+}
