@@ -4,12 +4,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import kotlinx.io.files.Path
+import org.jetbrains.skia.Image
 import uk.dnpk.sekund.plugins.declarativebuiltins.BuiltInDefinitions
 import uk.dnpk.sekund.runtime.AppGraph
 import uk.dnpk.sekund.runtime.DesktopPaths
@@ -83,6 +88,7 @@ private fun ApplicationScope.SekundWindow(graph: AppGraph, kiosk: DesktopKiosk) 
         Window(
             onCloseRequest = ::exitApplication,
             title = "Sekund",
+            icon = remember { loadWindowIcon() },
             state = windowState,
             undecorated = locked,
             alwaysOnTop = locked,
@@ -90,4 +96,14 @@ private fun ApplicationScope.SekundWindow(graph: AppGraph, kiosk: DesktopKiosk) 
             App(graph = graph, onQuit = ::exitApplication)
         }
     }
+}
+
+/**
+ * The window's icon (taskbar, dock, title bar), from src/main/resources/sekund-icon.png.
+ * The packages get their own icon files (see build.gradle.kts); this one is for the running window.
+ */
+private fun loadWindowIcon(): Painter? {
+    val stream = Thread.currentThread().contextClassLoader.getResourceAsStream("sekund-icon.png") ?: return null
+    val bytes = stream.use { input -> input.readAllBytes() }
+    return BitmapPainter(Image.makeFromEncoded(bytes).toComposeImageBitmap())
 }
