@@ -1,38 +1,30 @@
-This is a Kotlin Multiplatform project targeting Android, Desktop (JVM), Server.
+# Sekund
 
-* [/app/shared](./app/shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./app/shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./app/shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./app/shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+An always-on clock and dashboard for wall displays: Android tablets and TV boxes, Raspberry Pi, and desktop.
+Built with Kotlin Multiplatform and Compose Multiplatform, with an optional Ktor relay server.
 
-* [/core](./core/src) is for the code that will be shared between all targets in the project.
-  The most important subfolder is [commonMain](./core/src/commonMain/kotlin). If preferred, you
-  can add code to the platform-specific folders here too.
+## Repository layout
 
-* [/server](./server/src/main/kotlin) is for the Ktor server application.
+| Path | What it is |
+|---|---|
+| `core/protocol` | Data types that cross the network (device API, relay frames, settings descriptors). Shared by the app **and** the server. |
+| `app/sdk` | The public API plugins are written against. Plugins depend on this module only. |
+| `app/ui` | Design system: theme tokens and reusable components. |
+| `app/runtime` | The engine: plugin registry, config, auth registry, scheduler, LAN API, platform services. |
+| `app/shared` | The root UI (shell, menus, settings) and `BuiltInPlugins.kt`. |
+| `app/androidApp`, `app/desktopApp` | Entry points per platform. |
+| `plugins/*` | One folder per plugin (clock, calendar, google, ...). Picked up automatically by `settings.gradle.kts`. |
+| `server` | Optional relay server (webhooks, OAuth callbacks, remote access). |
+| `build-logic` | Shared build configuration ("convention plugins"). See its README. |
 
-### Running the apps
+## Running
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
-
-- Android app: `./gradlew :app:androidApp:assembleDebug`
-- Desktop app:
-  - Hot reload: `./gradlew :app:desktopApp:hotRun --auto`
-  - Standard run: `./gradlew :app:desktopApp:run`
+- Desktop: `./gradlew :app:desktopApp:run` (hot reload: `./gradlew :app:desktopApp:hotRun --auto`)
+- Android: `./gradlew :app:androidApp:installDebug`
 - Server: `./gradlew :server:run`
 
-### Running tests
+## Tests
 
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
-
-- Android tests: `./gradlew :app:shared:testAndroidHostTest`
-- Desktop tests: `./gradlew :app:shared:jvmTest`
-- Server tests: `./gradlew :server:test`
-
----
-
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+- Everything: `./gradlew check`
+- One module, desktop tests: `./gradlew :app:sdk:jvmTest`
+- Server: `./gradlew :server:test`
