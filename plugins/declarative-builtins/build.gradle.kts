@@ -10,6 +10,13 @@ compose.resources {
 }
 
 kotlin {
+    android {
+        // Without this the JSON files aren't packaged into the Android app, and reading them crashes.
+        androidResources {
+            enable = true
+        }
+    }
+
     sourceSets {
         commonTest.dependencies {
             implementation(project(":plugins:declarative"))
