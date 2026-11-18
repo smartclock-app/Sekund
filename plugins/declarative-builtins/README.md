@@ -8,6 +8,7 @@ code as a user's own definitions (the entry points pass `BuiltInDefinitions.read
 | File | What it is |
 |---|---|
 | `weather.widget.json` | OpenWeather current weather (`stat`), with a 24-hour forecast as the tap-to-expand view. Units are picked separately for temperature and wind. |
+| `immich.photos.json` | A photo source for the slideshow clock face: an Immich album through Immich's search, page by page. |
 | `actualbudget.widget.json` | Balances of chosen Actual Budget accounts through [actual-http-api](https://github.com/jhonderson/actual-http-api), one request per account (`forEach`). |
 
 To add one: put the file in the folder and its name in `BuiltInDefinitions.FILE_NAMES`. The tests load

@@ -50,6 +50,8 @@ class LegacyImporterTest {
         assertEquals("g-refresh", google.credential.refreshToken)
         assertEquals("g-client", google.credential.clientId)
         assertEquals("http://immich.local:2283", plan.accounts.first { account -> account.provider == "immich" }.fields["instance_url"])
+        val immich = plan.config.instances.first { instance -> instance.id == "immich" }
+        assertEquals(JsonPrimitive("http://immich.local:2283"), immich.settings["serverUrl"])
 
         val weather = plan.config.instances.first { instance -> instance.id == "weather" }
         assertEquals(JsonPrimitive("acc_legacy_openweather"), weather.settings["account"])

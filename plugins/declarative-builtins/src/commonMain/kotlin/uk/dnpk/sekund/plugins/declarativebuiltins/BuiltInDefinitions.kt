@@ -15,6 +15,7 @@ object BuiltInDefinitions {
     val FILE_NAMES: List<String> = listOf(
         "weather.widget.json",
         "actualbudget.widget.json",
+        "immich.photos.json",
     )
 
     /** The text of one file. */

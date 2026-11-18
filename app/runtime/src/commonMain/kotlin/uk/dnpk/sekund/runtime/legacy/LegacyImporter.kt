@@ -226,11 +226,12 @@ object LegacyImporter {
                     type = Types.IMMICH_PHOTOS,
                     settings = settingsOf(
                         "account" to optional(account),
+                        "serverUrl" to text((server ?: "").trimEnd('/')),
                         "albumId" to text(LegacyJson.text(widget, "immichAlbumId") ?: ""),
-                        "shareKey" to text(LegacyJson.text(widget, "immichShareKey") ?: ""),
                     ),
                 ),
             )
+            // The account's API key is enough now; a share key isn't needed.
             if (LegacyJson.bool(widget, "useStaticLinks") == true) {
                 notes.add("The photo clock used a fixed list of image links; that option isn't carried over, so it now shows the Immich album")
             }

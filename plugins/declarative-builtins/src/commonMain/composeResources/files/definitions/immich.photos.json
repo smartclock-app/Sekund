@@ -1,0 +1,44 @@
+// Photos from an Immich album, for the slideshow clock face. Uses Immich's search (POST /api/search/metadata),
+// which pages through the album; each photo is shown at Immich's "preview" size, not the full original.
+{
+  "manifest": {
+    "id": "immich-photos",
+    "name": "Immich album",
+    "version": "1.0.0",
+    "description": "Photos from an Immich album, for the slideshow.",
+    "requires": { "auth": [{ "provider": "immich" }] }
+  },
+  "kind": "photoSource",
+  "hosts": ["{settings.serverUrl}/"],
+  "settings": {
+    "fields": [
+      { "kind": "account", "key": "account", "label": "Immich account", "provider": "immich", "required": true },
+      {
+        "kind": "text", "key": "serverUrl", "label": "Server address", "required": true, "default": "",
+        "placeholder": "http://immich.local:2283", "description": "The same address as the account's, without a trailing slash."
+      },
+      {
+        "kind": "text", "key": "albumId", "label": "Album ID", "required": true, "default": "",
+        "description": "The last part of the album's address in Immich."
+      }
+    ]
+  },
+  "source": {
+    "url": "{settings.serverUrl}/api/search/metadata",
+    "method": "POST",
+    "body": "{ \"albumIds\": [\"{settings.albumId}\"], \"type\": \"IMAGE\", \"page\": {page}, \"size\": 250 }",
+    "auth": "immich",
+    "refresh": "1h",
+    "paginate": { "start": 1, "maxPages": 20, "next": "$.assets.nextPage" },
+    "map": {
+      "rows": {
+        "path": "$.assets.items",
+        "fields": {
+          "id": "{$.id}",
+          "url": "{settings.serverUrl}/api/assets/{$.id}/thumbnail?size=preview",
+          "takenAt": "{$.fileCreatedAt}"
+        }
+      }
+    }
+  }
+}

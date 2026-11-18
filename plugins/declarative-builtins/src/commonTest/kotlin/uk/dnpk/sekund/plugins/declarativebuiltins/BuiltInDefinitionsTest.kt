@@ -6,6 +6,7 @@ import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.respondError
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import io.ktor.http.headersOf
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -107,5 +108,31 @@ class BuiltInDefinitionsTest {
 
         assertEquals(listOf(mapOf("name" to "Current", "balance" to "£1234.56"), mapOf("name" to "Savings", "balance" to "£-20.50")), data.rows)
         assertEquals("http://actual.local:5007/v1/budgets/budget-1/accounts/acc-a/balance", requested.first())
+    }
+
+    @Test
+    fun immichPagesThroughTheAlbumAndPointsAtPreviews() = runTest {
+        val immich = load("immich.photos.json")
+        val bodies = mutableListOf<String>()
+        val client = HttpClient(
+            MockEngine { request ->
+                bodies.add((request.body as TextContent).text)
+                val answer = if (bodies.size == 1) {
+                    """{ "assets": { "items": [{ "id": "p1", "fileCreatedAt": "2024-05-01T10:00:00.000Z" }], "nextPage": "2" } }"""
+                } else {
+                    """{ "assets": { "items": [{ "id": "p2", "fileCreatedAt": "2024-05-02T10:00:00.000Z" }], "nextPage": null } }"""
+                }
+                respond(answer, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+            },
+        )
+        val settings = DescriptorSettingsSchema(immich.settings)
+            .decode(SekundJson.parseToJsonElement("""{ "account": "acc_1", "serverUrl": "http://immich.local:2283", "albumId": "alb-1" }""") as JsonObject).value
+        val templates = TemplateEngine(immich.lookups, timeZone = { TimeZone.UTC }, preferences = { TimePreferences() })
+
+        val data = SourceRunner(immich, settings, client, PassThroughAuth(client), templates).run(immich.source)
+
+        assertEquals(listOf("p1", "p2"), data.rows.map { row -> row["id"] })
+        assertEquals("http://immich.local:2283/api/assets/p1/thumbnail?size=preview", data.rows[0]["url"])
+        assertEquals("""{ "albumIds": ["alb-1"], "type": "IMAGE", "page": 2, "size": 250 }""", bodies[1])
     }
 }
