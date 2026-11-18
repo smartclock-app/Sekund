@@ -27,6 +27,7 @@ private val AUTO_HIDE_AFTER = 8.seconds
 @Composable
 fun LongPressMenu(
     onReload: () -> Unit,
+    onAccounts: () -> Unit,
     onQuit: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
@@ -44,6 +45,7 @@ fun LongPressMenu(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(onClick = { onReload(); onDismiss() }) { Text("Reload") }
+            Button(onClick = { onAccounts(); onDismiss() }) { Text("Accounts") }
             if (onQuit != null) {
                 Button(onClick = onQuit) { Text("Quit") }
             }

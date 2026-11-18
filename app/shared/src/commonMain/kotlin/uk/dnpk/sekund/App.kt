@@ -3,7 +3,10 @@ package uk.dnpk.sekund
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
+import uk.dnpk.sekund.accounts.AccountsScreen
 import uk.dnpk.sekund.plugins.clock.DigitalClockFace
 import uk.dnpk.sekund.runtime.AppGraph
 import uk.dnpk.sekund.shell.Shell
@@ -24,6 +27,8 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
     val instances by graph.instances.instances.collectAsState()
     val alerts by graph.alerts.alerts.collectAsState()
     val configProblem by graph.config.loadProblem.collectAsState()
+    val authProblems by graph.authProblems.collectAsState()
+    var accountsOpen by remember { mutableStateOf(false) }
 
     // Shown if the configured clock face is missing or broken, so the main square is never empty.
     val fallbackClockFace = remember(graph) { DigitalClockFace(graph.time) }
@@ -41,7 +46,16 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
             state = state,
             fallbackClockFace = fallbackClockFace,
             onReload = { graph.instances.reloadAll() },
+            onAccounts = { accountsOpen = true },
             onQuit = onQuit,
         )
+        if (accountsOpen) {
+            AccountsScreen(
+                auth = graph.auth,
+                alerts = graph.alerts,
+                problems = authProblems,
+                onClose = { accountsOpen = false },
+            )
+        }
     }
 }
