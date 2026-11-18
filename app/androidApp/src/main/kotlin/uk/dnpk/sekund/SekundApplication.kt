@@ -18,6 +18,7 @@ class SekundApplication : Application() {
         graph = AppGraph(
             paths = AndroidPaths.resolve(this),
             plugins = BuiltInPlugins,
+            declarativePlugin = ::declarativePlugin,
             defaultConfig = DefaultConfig.create(),
             secretCipher = AndroidKeystoreCipher(),
         )

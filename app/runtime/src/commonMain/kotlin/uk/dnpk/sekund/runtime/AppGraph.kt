@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
+import uk.dnpk.sekund.protocol.declarative.DeclarativeDefinition
 import uk.dnpk.sekund.runtime.auth.AccountsFile
 import uk.dnpk.sekund.runtime.auth.AuthCodeSignIns
 import uk.dnpk.sekund.runtime.auth.AuthProviderLoader
@@ -24,6 +25,7 @@ import uk.dnpk.sekund.runtime.auth.secrets.EncryptedFileSecretStore
 import uk.dnpk.sekund.runtime.auth.secrets.SecretCipher
 import uk.dnpk.sekund.runtime.config.AppConfig
 import uk.dnpk.sekund.runtime.config.ConfigRepository
+import uk.dnpk.sekund.runtime.declarative.DeclarativeWidgets
 import uk.dnpk.sekund.runtime.instances.InstanceManager
 import uk.dnpk.sekund.runtime.instances.SharedServices
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
@@ -49,12 +51,17 @@ import uk.dnpk.sekund.sdk.plugin.SekundPlugin
  * @param defaultConfig the config used when there's no config.json yet.
  * @param secretCipher encrypts the secrets file. Platform-specific, so the entry point passes it in:
  *   `DesktopSecretCipher` on desktop, `AndroidKeystoreCipher` on Android.
+ * @param declarativePlugin turns a declarative widget definition into a plugin (`::DeclarativePlugin`
+ *   from plugins/declarative, which the runtime can't depend on directly).
+ * @param builtInDefinitions the declarative definitions shipped with the app, as JSON text.
  */
 class AppGraph(
     val paths: AppPaths,
     plugins: List<SekundPlugin>,
     private val defaultConfig: AppConfig,
     secretCipher: SecretCipher,
+    declarativePlugin: (DeclarativeDefinition) -> SekundPlugin,
+    builtInDefinitions: suspend () -> List<String> = { emptyList() },
 ) {
     private val log = Logger.withTag("App")
 
@@ -64,6 +71,9 @@ class AppGraph(
     val registry: PluginRegistry = PluginRegistry(plugins)
 
     val config: ConfigRepository = ConfigRepository(paths)
+
+    /** Declarative widgets and photo sources (JSON definitions), registered as extra plugins. */
+    val declarative: DeclarativeWidgets = DeclarativeWidgets(paths.widgetsDir, registry, declarativePlugin, builtInDefinitions)
 
     val events: SharedEventBus = SharedEventBus()
 
@@ -124,8 +134,9 @@ class AppGraph(
             log.w { "Plugin problem: $problem" }
         }
         scope.launch {
-            // Accounts first: instances check their required providers when they're created.
+            // Accounts and plugins first: instances check their providers and types when they're created.
             loadAuth()
+            declarative.load()
             config.load { defaultConfig }
             instances.follow(config.config)
         }

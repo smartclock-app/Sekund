@@ -114,12 +114,16 @@ private fun SettingsHome(
     val config by graph.config.config.collectAsState()
     val instances by graph.instances.instances.collectAsState()
     val loadProblem by graph.config.loadProblem.collectAsState()
+    val declarativeProblems by graph.declarative.problems.collectAsState()
 
     PageTitle("Settings")
     val problem = loadProblem
     if (problem != null) ErrorCard(title = "config.json has a problem", message = problem)
     for (registryProblem in graph.registry.problems) {
         ErrorCard(title = "Plugin problem", message = registryProblem)
+    }
+    for (definitionProblem in declarativeProblems) {
+        ErrorCard(title = "Widget definition problem", message = definitionProblem)
     }
 
     SectionTitle("General")
@@ -136,6 +140,7 @@ private fun SettingsHome(
 
     SectionTitle("Files")
     Text("Config folder: ${graph.paths.configDir}", color = Sekund.theme.colors.onBackground)
+    Text("Widget definitions: ${graph.paths.widgetsDir}", color = Sekund.theme.colors.onBackground)
     Text("Logs: ${graph.paths.logDir}", color = Sekund.theme.colors.onBackground)
 }
 

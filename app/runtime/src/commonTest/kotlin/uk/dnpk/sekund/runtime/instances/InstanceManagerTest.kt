@@ -91,8 +91,10 @@ private fun note(id: String, text: String) =
 class InstanceManagerTest {
     private val alerts = AlertCenter()
 
+    private val registry = PluginRegistry(listOf(NotePlugin))
+
     private fun TestScope.manager() = InstanceManager(
-        registry = PluginRegistry(listOf(NotePlugin)),
+        registry = registry,
         services = SharedServices(
             paths = newTestPaths(),
             http = HttpClient(MockEngine { respondOk() }),
@@ -169,5 +171,38 @@ class InstanceManagerTest {
 
         val ready = assertIs<RunningInstance.Ready>(manager.instances.value["a"])
         assertEquals(listOf("refreshInterval"), ready.issues.map { issue -> issue.path })
+    }
+
+    @Test
+    fun `a newly installed plugin brings its failed instances to life, and only those are recreated`() = runTest {
+        val manager = manager()
+        manager.apply(listOf(note("a", "one"), InstanceConfig(id = "later", type = "later-note")))
+        val a = manager.instances.value["a"].widget()
+        assertIs<RunningInstance.Failed>(manager.instances.value["later"])
+
+        // What DeclarativeWidgets does when a definition is installed.
+        registry.setExtraPlugins(listOf(renamedNotePlugin("later", "later-note")))
+        manager.apply(manager.instances.value.values.map { instance -> instance.config })
+
+        assertIs<RunningInstance.Ready>(manager.instances.value["later"])
+        assertSame(a, manager.instances.value["a"].widget())
+    }
+}
+
+/** The note plugin again, under another plugin id and type (as if loaded from a declarative file). */
+private fun renamedNotePlugin(pluginId: String, type: String) = object : SekundPlugin {
+    override val manifest = PluginManifest(id = pluginId, name = pluginId, version = "1")
+
+    override fun register(registrar: PluginRegistrar) {
+        registrar.contribute(
+            Contribution(
+                point = ExtensionPoints.Widgets,
+                type = type,
+                name = type,
+                settings = NoteSchema,
+                widgetLocations = setOf(WidgetLocation.Sidebar),
+                create = { context -> NoteWidget(context) },
+            ),
+        )
     }
 }

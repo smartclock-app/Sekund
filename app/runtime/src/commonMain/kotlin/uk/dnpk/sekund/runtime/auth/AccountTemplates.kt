@@ -1,5 +1,6 @@
 package uk.dnpk.sekund.runtime.auth
 
+import uk.dnpk.sekund.protocol.UrlPrefix
 import uk.dnpk.sekund.protocol.auth.AuthMethodDefinition
 import uk.dnpk.sekund.protocol.auth.AuthProviderDefinition
 import uk.dnpk.sekund.protocol.auth.ClientMode
@@ -89,17 +90,7 @@ class AccountTemplates(
             return result
         }
 
-        /**
-         * `url` starts with `base`, and if `base` doesn't end in `/` the match stops at a path, query or
-         * port boundary. So `https://api.trakt.tv` allows `https://api.trakt.tv/x` but not
-         * `https://api.trakt.tv.evil.com`.
-         */
-        fun startsWithUrl(url: String, base: String): Boolean {
-            if (!url.startsWith(base)) return false
-            if (base.endsWith("/")) return true
-            if (url.length == base.length) return true
-            val next = url[base.length]
-            return next == '/' || next == '?' || next == '#' || next == ':'
-        }
+        /** See [UrlPrefix.matches]. */
+        fun startsWithUrl(url: String, base: String): Boolean = UrlPrefix.matches(url, base)
     }
 }

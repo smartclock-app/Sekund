@@ -2,6 +2,7 @@ package uk.dnpk.sekund.sdk.settings
 
 import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.json.JsonObject
+import uk.dnpk.sekund.protocol.settings.ChoiceOption
 import uk.dnpk.sekund.protocol.settings.SettingsDescriptor
 import uk.dnpk.sekund.protocol.settings.SettingsIssue
 import kotlin.time.Duration
@@ -85,6 +86,15 @@ abstract class SettingsSchema<T> {
         description: String? = null,
         optionLabel: (E) -> String = { option -> option.name },
     ): Setting<E> = declare(ChoiceSetting(key, label, description, default, options, optionLabel))
+
+    /** A choice between text [options] known only at runtime. Compiled plugins should use [choice] with an enum. */
+    protected fun textChoice(
+        key: String,
+        label: String,
+        options: List<ChoiceOption>,
+        default: String,
+        description: String? = null,
+    ): Setting<String> = declare(TextChoiceSetting(key, label, description, default, options))
 
     protected fun duration(
         key: String,

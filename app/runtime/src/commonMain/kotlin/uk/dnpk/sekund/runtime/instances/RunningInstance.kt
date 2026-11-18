@@ -3,6 +3,7 @@ package uk.dnpk.sekund.runtime.instances
 import kotlinx.coroutines.CoroutineScope
 import uk.dnpk.sekund.protocol.settings.SettingsIssue
 import uk.dnpk.sekund.runtime.config.InstanceConfig
+import uk.dnpk.sekund.sdk.plugin.Contribution
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoint
 
 /**
@@ -12,6 +13,12 @@ import uk.dnpk.sekund.sdk.plugin.ExtensionPoint
 sealed class RunningInstance {
     /** The config this instance was created from. Used to tell whether it needs recreating. */
     abstract val config: InstanceConfig
+
+    /**
+     * The plugin contribution it was created from, or null if no plugin provided its type. When a
+     * declarative widget is reloaded its contribution is replaced, which tells InstanceManager to recreate it.
+     */
+    internal abstract val contribution: Contribution<*, *>?
 
     val id: String
         get() = config.id
@@ -29,12 +36,14 @@ sealed class RunningInstance {
         val value: Any,
         val issues: List<SettingsIssue>,
         internal val scope: CoroutineScope,
+        override val contribution: Contribution<*, *>?,
     ) : RunningInstance()
 
     /** Couldn't be created. [reason] says why, for the error card. */
     class Failed(
         override val config: InstanceConfig,
         val reason: String,
+        override val contribution: Contribution<*, *>? = null,
     ) : RunningInstance()
 }
 

@@ -146,6 +146,39 @@ class ChoiceSetting<E : Enum<E>>(
 }
 
 /**
+ * One of a fixed list of text values, for when the options aren't known at compile time (declarative
+ * widgets). Compiled plugins should prefer [ChoiceSetting] with an enum. Matching ignores case.
+ */
+class TextChoiceSetting(
+    key: String,
+    label: String,
+    description: String?,
+    default: String,
+    private val options: List<ChoiceOption>,
+) : Setting<String>(key, label, description, default, required = false) {
+
+    override fun decode(json: JsonElement, path: String, issues: MutableList<SettingsIssue>): String {
+        val text = json.stringOrNull() ?: return invalid(path, issues, "Expected one of: ${optionNames()}")
+        for (option in options) {
+            if (option.value.equals(text, ignoreCase = true)) return option.value
+        }
+        return invalid(path, issues, "'$text' isn't valid. Expected one of: ${optionNames()}")
+    }
+
+    override fun defaultJson(): JsonElement = JsonPrimitive(default)
+
+    override fun describe(): FieldDescriptor = FieldDescriptor.Choice(
+        key = key,
+        label = label,
+        description = description,
+        options = options,
+        default = default,
+    )
+
+    private fun optionNames(): String = options.joinToString(", ") { option -> option.value }
+}
+
+/**
  * A length of time. Accepts readable strings like `"15m"`, `"1h 30m"`, `"45s"`, or a plain number of seconds.
  * Always written back as a readable string.
  */

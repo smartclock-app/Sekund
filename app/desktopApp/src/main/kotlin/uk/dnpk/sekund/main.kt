@@ -23,6 +23,7 @@ fun main(args: Array<String>) {
     val graph = AppGraph(
         paths = paths,
         plugins = BuiltInPlugins,
+        declarativePlugin = ::declarativePlugin,
         defaultConfig = DefaultConfig.create(),
         // The key lives in the OS keychain, or in this owner-only file where there is no keychain.
         secretCipher = DesktopSecretCipher(keyFile = Path(paths.secretsDir, "secrets.key")),

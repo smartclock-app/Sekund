@@ -2,6 +2,9 @@
 
 This guide grows phase by phase. Right now it covers **signing in to services**.
 
+If all you need is "call an API and show the result", you may not need Kotlin at all: see
+[declarative widgets](declarative-widgets.md).
+
 ## Using accounts from a plugin
 
 1. Declare the provider in your manifest, so Sekund can check it's installed and show

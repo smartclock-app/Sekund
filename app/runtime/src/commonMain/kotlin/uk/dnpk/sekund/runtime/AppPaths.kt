@@ -35,6 +35,10 @@ data class AppPaths(
     val accountsFile: Path
         get() = Path(dataDir, "accounts.json")
 
+    /** Declarative widget and photo source definitions (`*.widget.json`, `*.photos.json`). */
+    val widgetsDir: Path
+        get() = Path(configDir, "widgets")
+
     /** User-added auth provider definitions (`*.auth.json`), which override the built-in ones. */
     val authProvidersDir: Path
         get() = Path(configDir, "auth-providers")

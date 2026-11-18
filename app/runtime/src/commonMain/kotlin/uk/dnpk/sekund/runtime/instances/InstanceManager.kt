@@ -8,6 +8,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
 import uk.dnpk.sekund.protocol.plugin.PluginManifest
@@ -23,11 +24,12 @@ import uk.dnpk.sekund.sdk.plugin.Contribution
 import kotlin.time.Duration
 
 /**
- * Keeps the running instances in step with config.json.
+ * Keeps the running instances in step with config.json and the installed plugins.
  *
- * Whenever the config changes it compares old and new:
- * - instances whose config is identical are kept as they are,
- * - new or changed instances are (re)created,
+ * Whenever the config, the plugins (e.g. a declarative widget was installed) or the auth providers
+ * change, it compares old and new:
+ * - instances whose config and plugin are unchanged are kept as they are,
+ * - new or changed instances are (re)created, and so are ones that failed last time (they may work now),
  * - removed instances are stopped (their coroutine scope is cancelled, their alert cleared).
  *
  * So editing one widget's settings only restarts that widget.
@@ -43,10 +45,15 @@ class InstanceManager(
     /** Every instance from config.json, by id. */
     val instances: StateFlow<Map<String, RunningInstance>> = current
 
-    /** Starts following [config]: creates instances now and updates them whenever it changes. */
+    /**
+     * Starts following [config]: creates instances now and updates them whenever the config, the plugin
+     * registry or the auth providers change.
+     */
     fun follow(config: StateFlow<AppConfig>) {
         appScope.launch {
-            config.collect { latest -> apply(latest.instances) }
+            // combine ≈ a React effect with three dependencies: runs again when any of them changes.
+            combine(config, registry.version, services.auth.providers) { latest, _, _ -> latest.instances }
+                .collect { instances -> apply(instances) }
         }
     }
 
@@ -68,7 +75,7 @@ class InstanceManager(
                 continue
             }
             val existing = before[config.id]
-            if (existing != null && existing.config == config) {
+            if (existing != null && isUnchanged(existing, config)) {
                 after[config.id] = existing // unchanged: keep it running
             } else {
                 if (existing != null) stop(existing)
@@ -81,6 +88,13 @@ class InstanceManager(
         }
 
         current.value = after
+    }
+
+    /** True if [existing] can keep running for [config]: same settings, same plugin, and it didn't fail. */
+    private fun isUnchanged(existing: RunningInstance, config: InstanceConfig): Boolean {
+        if (existing is RunningInstance.Failed) return false
+        if (existing.config != config) return false
+        return existing.contribution === registry.contribution(config.type)
     }
 
     private fun stopAll() {
@@ -102,7 +116,7 @@ class InstanceManager(
         }
         val unavailable = registry.unavailableReason(config.type, services.auth.providers.value.keys)
         if (unavailable != null) {
-            return RunningInstance.Failed(config, unavailable)
+            return RunningInstance.Failed(config, unavailable, contribution)
         }
         return createFrom(config, contribution, registry.manifestOf(config.type))
     }
@@ -147,11 +161,11 @@ class InstanceManager(
 
         try {
             val value = contribution.create(context)
-            return RunningInstance.Ready(config, contribution.point, value, issues, scope)
+            return RunningInstance.Ready(config, contribution.point, value, issues, scope, contribution)
         } catch (error: Exception) {
             log.e(error) { "Couldn't create '${config.id}'" }
             scope.cancel()
-            return RunningInstance.Failed(config, error.message ?: "Couldn't start (${error::class.simpleName})")
+            return RunningInstance.Failed(config, error.message ?: "Couldn't start (${error::class.simpleName})", contribution)
         }
     }
 

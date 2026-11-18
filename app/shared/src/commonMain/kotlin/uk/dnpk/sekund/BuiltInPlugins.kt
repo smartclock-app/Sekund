@@ -1,6 +1,8 @@
 package uk.dnpk.sekund
 
 import uk.dnpk.sekund.plugins.clock.ClockPlugin
+import uk.dnpk.sekund.plugins.declarative.DeclarativePlugin
+import uk.dnpk.sekund.protocol.declarative.DeclarativeDefinition
 import uk.dnpk.sekund.sdk.plugin.SekundPlugin
 
 /**
@@ -12,3 +14,9 @@ import uk.dnpk.sekund.sdk.plugin.SekundPlugin
 val BuiltInPlugins: List<SekundPlugin> = listOf(
     ClockPlugin,
 )
+
+/**
+ * Turns a declarative widget definition (a JSON file) into a plugin, using the engine in
+ * plugins/declarative. Passed to AppGraph by each platform's entry point.
+ */
+fun declarativePlugin(definition: DeclarativeDefinition): SekundPlugin = DeclarativePlugin(definition)
