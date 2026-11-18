@@ -208,4 +208,20 @@ class DeviceApiTest {
         assertEquals(listOf("note"), statuses.map { status -> status.config.id })
         assertTrue(statuses.single().running)
     }
+
+    @Test
+    fun pluginActionsAreListedAndRun() = testApplication {
+        application { deviceApiModule(graph.api) }
+        val pairing = pair(client, graph)
+
+        val listed = client.get("/v1/actions") { signedIn(pairing) }.bodyAsText()
+        val ping = client.post("/v1/actions/note.ping") { signedIn(pairing) }.bodyAsText()
+        val explode = client.post("/v1/actions/note.explode") { signedIn(pairing) }.bodyAsText()
+        val missing = client.post("/v1/actions/note.nope") { signedIn(pairing) }
+
+        assertTrue(listed.contains("\"note.ping\"") && listed.contains("\"note.explode\""), listed)
+        assertTrue(ping.contains("\"ok\":true"), ping)
+        assertTrue(explode.contains("\"ok\":false") && explode.contains("Kaboom"), explode)
+        assertEquals(404, missing.status.value)
+    }
 }

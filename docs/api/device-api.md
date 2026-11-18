@@ -227,6 +227,7 @@ provider's extra fields (e.g. `instance_url`). `reconnect` updates an existing a
 | `device.reload` | Restart every widget and source |
 | `device.refresh` | Fetch fresh data for everything now |
 | `<instanceId>.refresh` | Fetch fresh data for one instance now |
+| `<instanceId>.<name>` | An action the instance's plugin offers, e.g. `photos.skip` (listed by `GET /v1/actions`) |
 
 Display, kiosk and update actions arrive with the platform phases.
 

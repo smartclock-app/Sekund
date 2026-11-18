@@ -1,5 +1,7 @@
 package uk.dnpk.sekund.runtime.api
 
+import uk.dnpk.sekund.sdk.actions.HasActions
+import uk.dnpk.sekund.sdk.actions.PluginAction
 import androidx.compose.runtime.Composable
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
@@ -46,10 +48,16 @@ private object NoteSchema : SettingsSchema<Int>() {
     override fun build(values: SettingsValues) = values[size]
 }
 
-private object EmptyWidget : Widget {
+/** Draws nothing; offers two actions, one that works ("ping") and one that fails ("explode"). */
+private object EmptyWidget : Widget, HasActions {
     @Composable
     override fun Content(location: WidgetLocation) {
     }
+
+    override val actions = listOf(
+        PluginAction("ping", "Does nothing") {},
+        PluginAction("explode", "Always fails") { error("Kaboom") },
+    )
 }
 
 /** A plugin with one sidebar widget type, "note", that has a single number setting (1 to 5). */
