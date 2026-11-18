@@ -23,6 +23,8 @@ Built with Kotlin Multiplatform and Compose Multiplatform, with an optional Ktor
 - Android: `./gradlew :app:androidApp:installDebug`
 - Server: `./gradlew :server:run`
 
+Setting up a device: [Android](docs/android.md), [desktop and Raspberry Pi](docs/desktop.md).
+
 ## Tests
 
 - Everything: `./gradlew check`

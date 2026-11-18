@@ -228,12 +228,10 @@ provider's extra fields (e.g. `instance_url`). `reconnect` updates an existing a
 | `device.refresh` | Fetch fresh data for everything now |
 | `update.check` | Look for a new version of Sekund now (fails with the reason if the check fails) |
 | `update.install` | Download and install the new version, if there is one (fails if there's none) |
-| `display.on` / `display.off` | Turn the screen on or off. Only listed with the `DisplayControl` capability. On Android, `display.off` fails with a message until display control is enabled on the device (long-press menu → *Enable display control*) |
-| `kiosk.enter` / `kiosk.exit` | Lock the device to Sekund, or unlock it until the app restarts. Only listed with the `Kiosk` capability (Android device owner) |
+| `display.on` / `display.off` | Turn the screen on or off. Only listed with the `DisplayControl` capability. On Android, `display.off` fails with a message until display control is enabled on the device (long-press menu → *Enable display control*). On desktop and the Raspberry Pi it needs a `display.json` (see [desktop.md](../desktop.md#turning-the-screen-on-and-off)), and fails with the command's output if the command fails |
+| `kiosk.enter` / `kiosk.exit` | Lock the device to Sekund, or unlock it until the app restarts. Only listed with the `Kiosk` capability (Android device owner; on desktop, the full-screen kiosk window) |
 | `<instanceId>.refresh` | Fetch fresh data for one instance now |
 | `<instanceId>.<name>` | An action the instance's plugin offers, e.g. `photos.skip` (listed by `GET /v1/actions`) |
-
-Display actions on desktop and the Raspberry Pi arrive with the desktop platform phase.
 
 ## Logs
 
