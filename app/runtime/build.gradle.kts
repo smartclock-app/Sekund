@@ -27,6 +27,9 @@ kotlin {
             implementation(libs.ktor.embedded.contentNegotiation)
             implementation(libs.ktor.embedded.statusPages)
             implementation(libs.ktor.serialization.json)
+
+            // The relay client: an outbound WebSocket to the optional Sekund server.
+            implementation(libs.ktor.client.websockets)
         }
         jvmMain.dependencies {
             implementation(libs.java.keyring) // OS keychain access for the secrets key (DesktopSecretCipher)
@@ -38,7 +41,6 @@ kotlin {
         jvmTest.dependencies {
             implementation(libs.ktor.embedded.testHost)
             implementation(libs.ktor.client.contentNegotiation)
-            implementation(libs.ktor.client.websockets)
         }
     }
 }

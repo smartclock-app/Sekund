@@ -25,6 +25,10 @@ import uk.dnpk.sekund.runtime.auth.AuthProviderFiles
 import uk.dnpk.sekund.runtime.auth.AuthRegistry
 import uk.dnpk.sekund.runtime.auth.secrets.EncryptedFileSecretStore
 import uk.dnpk.sekund.runtime.auth.secrets.SecretCipher
+import uk.dnpk.sekund.runtime.auth.secrets.SecretStore
+import uk.dnpk.sekund.runtime.api.EventStream
+import uk.dnpk.sekund.runtime.relay.LocalApi
+import uk.dnpk.sekund.runtime.relay.RelayClient
 import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.runtime.config.ConfigRepository
 import uk.dnpk.sekund.runtime.api.DeviceApi
@@ -122,10 +126,13 @@ class AppGraph(
         }
     }
 
+    /** Tokens, keys and other secrets, encrypted (account credentials, the server's device token). */
+    private val secrets: SecretStore = EncryptedFileSecretStore(Path(paths.secretsDir, "secrets.bin"), secretCipher)
+
     /** Connected accounts and their (encrypted) credentials. */
     val auth: AuthRegistry = AuthRegistry(
         http = http,
-        secrets = EncryptedFileSecretStore(Path(paths.secretsDir, "secrets.bin"), secretCipher),
+        secrets = secrets,
         accountsFile = AccountsFile(paths.accountsFile),
         alerts = alerts,
         scope = scope,
@@ -192,6 +199,18 @@ class AppGraph(
     /** The device API's logic: pairing, catalog, config edits, accounts... (served by [startApi]). */
     val api: DeviceApi = DeviceApi(this, withPlatformCapabilities(platform))
 
+    /** The link to the optional Sekund server, set up in config.json's `server.url` (off without one). */
+    val relay: RelayClient = RelayClient(
+        deviceId = { api.identity.id },
+        deviceName = { config.config.value.api.deviceName },
+        appVersion = platform.appVersion,
+        secrets = secrets,
+        rpc = LocalApi(api, http),
+        events = { EventStream.of(api) },
+        alerts = alerts,
+        scope = scope,
+    )
+
     /**
      * Loads config.json and starts every instance and the device API. Returns straight away; loading
      * happens in the background. The returned job finishes when loading is done (tests wait for it).
@@ -214,6 +233,7 @@ class AppGraph(
             followNetwork()
             updater.start()
             startApi()
+            relay.follow(config.config.map { appConfig -> appConfig.server.url })
         }
     }
 

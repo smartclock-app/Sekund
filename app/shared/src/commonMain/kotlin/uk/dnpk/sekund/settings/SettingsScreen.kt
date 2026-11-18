@@ -129,6 +129,10 @@ private fun SettingsHome(
     SectionTitle("General")
     GeneralSection(config = config, instances = instances, registry = graph.registry, edit = edit)
 
+    SectionTitle("Sekund server")
+    val relayStatus by graph.relay.status.collectAsState()
+    ServerSection(config = config, status = relayStatus, edit = edit)
+
     SectionTitle("Layout")
     LayoutSection(config = config, instances = instances, registry = graph.registry, edit = edit)
 

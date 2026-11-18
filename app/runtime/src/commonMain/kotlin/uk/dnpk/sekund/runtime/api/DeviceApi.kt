@@ -25,6 +25,7 @@ import uk.dnpk.sekund.runtime.AppGraph
 import uk.dnpk.sekund.runtime.config.ConditionalUpdate
 import uk.dnpk.sekund.runtime.config.ConfigEdits
 import uk.dnpk.sekund.runtime.config.JsonMergePatch
+import uk.dnpk.sekund.runtime.auth.randomUrlSafe
 import uk.dnpk.sekund.runtime.instances.RunningInstance
 
 /**
@@ -42,6 +43,12 @@ class DeviceApi(
     val pairing = Pairing(clients, graph.alerts, deviceId = { identity.id })
     val accounts = AccountFlows(graph.auth, graph.authCodeSignIns, graph.alerts)
     val actions = DeviceActions(graph.instances, graph.updater, graph.services)
+
+    /**
+     * A token made up fresh at every start, accepted like a paired client's. Only the relay client
+     * knows it: it's how requests that came through the Sekund server reach the API (over loopback).
+     */
+    val localToken: String = randomUrlSafe(32)
 
     // ---- Device and catalog ---------------------------------------------------------------------
 

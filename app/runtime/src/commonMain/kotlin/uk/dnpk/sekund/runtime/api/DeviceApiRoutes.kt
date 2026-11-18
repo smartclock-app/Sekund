@@ -220,6 +220,8 @@ val TokenAuth = createRouteScopedPlugin("TokenAuth", ::TokenAuthConfig) {
     val api = pluginConfig.api
     onCall { call ->
         val token = tokenOf(call) ?: throw ApiProblem(401, "unauthorized", "Pair first, then send Authorization: Bearer <token>")
+        // A request that came through the Sekund server, which already checked it's from the device's owner.
+        if (token == api.localToken) return@onCall
         api.clients.authenticate(token) ?: throw ApiProblem(401, "unauthorized", "This token isn't valid (the pairing may have been removed)")
     }
 }

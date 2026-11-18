@@ -40,6 +40,19 @@ data class AppConfig(
     val api: ApiConfig = ApiConfig(),
     /** Checking for and installing new versions of Sekund. */
     val updates: UpdatesConfig = UpdatesConfig(),
+    /** The optional Sekund server (docs/server.md). */
+    val server: ServerLinkConfig = ServerLinkConfig(),
+)
+
+/**
+ * The optional Sekund server, which lets the companion reach this device from anywhere, relays
+ * webhooks (e.g. instant Google Calendar updates) and signs in to services with its own OAuth clients.
+ *
+ * @property url the server's address, e.g. `"https://sekund.example.org"`; null (the default) for no server.
+ */
+@Serializable
+data class ServerLinkConfig(
+    val url: String? = null,
 )
 
 /**

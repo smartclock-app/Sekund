@@ -14,12 +14,23 @@ import kotlinx.coroutines.Dispatchers
  * works on both Android and desktop. If the port is taken, the API is simply off and the rest of the
  * app carries on.
  *
+ * With [host] `127.0.0.1` and [port] 0 it runs privately on a free port instead, for the relay
+ * client's own requests (see LocalApi); [boundPort] then says which port that is.
+ *
  * Why the port is checked first: CIO binds the port in the background, so a taken port would otherwise
  * surface as an uncaught exception on a background thread (which on Android crashes the app).
  */
-class LanApiServer(private val api: DeviceApi, private val port: Int) {
+class LanApiServer(
+    private val api: DeviceApi,
+    private val port: Int,
+    private val host: String = "0.0.0.0",
+) {
     private val log = Logger.withTag("DeviceApi")
     private var server: EmbeddedServer<*, *>? = null
+
+    /** The port it's listening on, once started. */
+    var boundPort: Int? = null
+        private set
 
     /** Starts listening. Returns false if it couldn't (e.g. the port is in use). */
     suspend fun start(): Boolean {
@@ -28,11 +39,12 @@ class LanApiServer(private val api: DeviceApi, private val port: Int) {
             return false
         }
         try {
-            val created = embeddedServer(CIO, port = port, host = "0.0.0.0") { deviceApiModule(api) }
+            val created = embeddedServer(CIO, port = port, host = host) { deviceApiModule(api) }
             created.startSuspend(wait = false)
-            created.engine.resolvedConnectors() // waits until the port is really bound
+            val connectors = created.engine.resolvedConnectors() // waits until the port is really bound
             server = created
-            log.i { "Device API listening on port $port" }
+            boundPort = connectors.firstOrNull()?.port ?: port
+            log.i { "Device API listening on $host port $boundPort" }
             return true
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -46,7 +58,7 @@ class LanApiServer(private val api: DeviceApi, private val port: Int) {
     private suspend fun portIsFree(): Boolean {
         val selector = SelectorManager(Dispatchers.Default)
         try {
-            aSocket(selector).tcp().bind("0.0.0.0", port).close()
+            aSocket(selector).tcp().bind(host, port).close()
             return true
         } catch (cancelled: CancellationException) {
             throw cancelled
