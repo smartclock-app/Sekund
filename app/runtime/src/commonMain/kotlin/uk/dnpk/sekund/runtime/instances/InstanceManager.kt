@@ -162,6 +162,7 @@ class InstanceManager(
             events = services.events,
             log = TaggedPluginLog(config.id),
             instances = RuntimeInstanceLookup(running = current, scope = scope),
+            webhooks = services.webhooks.forInstance(config.id),
         )
 
         try {

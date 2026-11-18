@@ -13,6 +13,7 @@ import uk.dnpk.sekund.sdk.context.Overlays
 import uk.dnpk.sekund.sdk.context.PluginLog
 import uk.dnpk.sekund.sdk.context.Refresher
 import uk.dnpk.sekund.sdk.context.TimeService
+import uk.dnpk.sekund.sdk.context.Webhooks
 
 /** The real [InstanceContext]: just holds what InstanceManager prepared for one instance. */
 class RuntimeInstanceContext<S>(
@@ -30,4 +31,5 @@ class RuntimeInstanceContext<S>(
     override val events: EventBus,
     override val log: PluginLog,
     override val instances: InstanceLookup,
+    override val webhooks: Webhooks,
 ) : InstanceContext<S>

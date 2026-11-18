@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.serialization.json.JsonElement
@@ -38,6 +40,8 @@ import uk.dnpk.sekund.sdk.context.Refresher
 import uk.dnpk.sekund.sdk.context.SekundEvent
 import uk.dnpk.sekund.sdk.context.TimePreferences
 import uk.dnpk.sekund.sdk.context.TimeService
+import uk.dnpk.sekund.sdk.context.WebhookCall
+import uk.dnpk.sekund.sdk.context.Webhooks
 import uk.dnpk.sekund.sdk.context.now
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoint
 import uk.dnpk.sekund.sdk.settings.AccountRef
@@ -74,6 +78,7 @@ class FakeInstanceContext<S>(
     override val events: FakeEventBus = FakeEventBus()
     override val log: RecordingLog = RecordingLog()
     override val instances: FakeInstances = FakeInstances()
+    override val webhooks: FakeWebhooks = FakeWebhooks()
 }
 
 /**
@@ -291,6 +296,35 @@ class RecordingLog : PluginLog {
     override fun error(message: String, error: Throwable?) {
         lines.add("ERROR $message")
     }
+}
+
+/**
+ * Webhooks the test controls: no URL until [setUrl], and calls only when the test makes them with [call].
+ */
+class FakeWebhooks : Webhooks {
+    private val urls = mutableMapOf<String, MutableStateFlow<String?>>()
+    private val calls = MutableSharedFlow<Pair<String, WebhookCall>>(extraBufferCapacity = 16)
+
+    /** Pretends the server gave hook [name] this [url] (null = no server). */
+    fun setUrl(name: String, url: String?) {
+        urlFlow(name).value = url
+    }
+
+    /** Pretends someone called hook [name]. */
+    suspend fun call(name: String, headers: Map<String, String> = emptyMap(), body: String = "") {
+        calls.emit(Pair(name, WebhookCall(headers, body)))
+    }
+
+    /** Whether something is listening to hook [name]'s calls (wait for this before [call]). */
+    val listeners: StateFlow<Int>
+        get() = calls.subscriptionCount
+
+    override fun url(name: String): Flow<String?> = urlFlow(name)
+
+    override fun calls(name: String): Flow<WebhookCall> =
+        calls.filter { entry -> entry.first == name }.map { entry -> entry.second }
+
+    private fun urlFlow(name: String): MutableStateFlow<String?> = urls.getOrPut(name) { MutableStateFlow(null) }
 }
 
 /** Other instances, which the test puts in with [set]. Unknown ids are reported as missing. */

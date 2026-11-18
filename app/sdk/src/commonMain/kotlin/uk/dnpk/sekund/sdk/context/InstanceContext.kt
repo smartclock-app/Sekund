@@ -60,4 +60,7 @@ interface InstanceContext<S> {
 
     /** Other running instances, e.g. the calendar sources picked in a calendar widget's settings. */
     val instances: InstanceLookup
+
+    /** Public URLs that other services can call (only when a Sekund server is connected). */
+    val webhooks: Webhooks
 }

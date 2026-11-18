@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import uk.dnpk.sekund.runtime.AppPaths
 import uk.dnpk.sekund.runtime.auth.AuthRegistry
+import uk.dnpk.sekund.runtime.relay.RelayWebhooks
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.runtime.services.OverlayCenter
 import uk.dnpk.sekund.sdk.context.EventBus
@@ -18,6 +19,7 @@ import kotlin.time.Clock
  * @property wakeUps fires when instances should refresh early (network back, display on).
  * @property displayIsOn while false, instances stop refreshing.
  * @property auth connected accounts; each instance gets a [uk.dnpk.sekund.runtime.auth.PluginAuthAccess] view of it.
+ * @property webhooks webhook URLs through the Sekund server; each instance gets its own view of it.
  */
 class SharedServices(
     val paths: AppPaths,
@@ -29,5 +31,6 @@ class SharedServices(
     val auth: AuthRegistry,
     val wakeUps: Flow<Unit>,
     val displayIsOn: StateFlow<Boolean>,
+    val webhooks: RelayWebhooks = RelayWebhooks(),
     val clock: Clock = Clock.System,
 )

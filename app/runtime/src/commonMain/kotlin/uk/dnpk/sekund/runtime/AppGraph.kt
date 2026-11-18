@@ -29,6 +29,7 @@ import uk.dnpk.sekund.runtime.auth.secrets.SecretStore
 import uk.dnpk.sekund.runtime.api.EventStream
 import uk.dnpk.sekund.runtime.relay.LocalApi
 import uk.dnpk.sekund.runtime.relay.RelayClient
+import uk.dnpk.sekund.runtime.relay.RelayWebhooks
 import uk.dnpk.sekund.protocol.config.AppConfig
 import uk.dnpk.sekund.runtime.config.ConfigRepository
 import uk.dnpk.sekund.runtime.api.DeviceApi
@@ -177,6 +178,9 @@ class AppGraph(
     /** Keeps the app up to date on a schedule, and drives the sidebar's update card. */
     val updater: AppUpdater = AppUpdater(updateService, config.config, scope)
 
+    /** Webhook URLs through the Sekund server, for instances (uses [relay]). */
+    private val webhooks: RelayWebhooks = RelayWebhooks()
+
     val instances: InstanceManager = InstanceManager(
         registry = registry,
         services = SharedServices(
@@ -189,6 +193,7 @@ class AppGraph(
             auth = auth,
             wakeUps = wakeUpsFrom(events),
             displayIsOn = displayIsOn,
+            webhooks = webhooks,
         ),
         appScope = scope,
     )
@@ -209,6 +214,7 @@ class AppGraph(
         events = { EventStream.of(api) },
         alerts = alerts,
         scope = scope,
+        features = listOf(webhooks),
     )
 
     /**
