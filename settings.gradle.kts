@@ -39,6 +39,7 @@ include(":core:protocol")
 
 // The app.
 include(":app:sdk")         // public API that plugins are written against
+include(":app:sdk-testing") // fakes for plugin tests (test dependency only)
 include(":app:ui")          // design system: theme + reusable components
 include(":app:runtime")     // the engine that loads plugins, config, auth, API server...
 include(":app:shared")      // the root UI (shell, menus, settings screens)

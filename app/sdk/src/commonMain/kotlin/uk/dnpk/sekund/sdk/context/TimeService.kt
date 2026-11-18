@@ -3,6 +3,8 @@ package uk.dnpk.sekund.sdk.context
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlin.time.Instant
 
 /**
  * The time, as Sekund sees it. Use this instead of reading the system clock yourself: it ticks exactly
@@ -21,6 +23,12 @@ interface TimeService {
     /** How the person wants times shown (12/24 hour, seconds on/off). */
     val preferences: StateFlow<TimePreferences>
 }
+
+/**
+ * The current moment as an [Instant], according to this time service (so tests can control it).
+ * Use this instead of `Clock.System.now()` in plugins.
+ */
+fun TimeService.now(): Instant = everySecond.value.toInstant(timeZone.value)
 
 /** The person's time display preferences, set in Sekund's core settings. */
 data class TimePreferences(

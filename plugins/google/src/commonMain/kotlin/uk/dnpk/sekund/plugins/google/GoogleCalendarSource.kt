@@ -9,7 +9,7 @@ import uk.dnpk.sekund.sdk.calendar.CalendarSource
 import uk.dnpk.sekund.sdk.context.InstanceContext
 import uk.dnpk.sekund.sdk.context.Loadable
 import uk.dnpk.sekund.sdk.context.RefreshPolicy
-import kotlin.time.Clock
+import uk.dnpk.sekund.sdk.context.now
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -28,7 +28,7 @@ class GoogleCalendarSource(private val context: InstanceContext<GoogleCalendarSe
         val account = settings.account ?: throw IllegalStateException("Pick a Google account in this source's settings")
         val api = GoogleCalendarApi(context.auth.client(account))
         val timeZone = context.time.timeZone.value
-        val now = Clock.System.now()
+        val now = context.time.now()
 
         val calendars = chosenCalendars(api.calendars())
 
