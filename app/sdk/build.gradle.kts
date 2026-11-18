@@ -10,6 +10,8 @@ kotlin {
         commonMain.dependencies {
             api(project(":core:protocol"))
             api(project(":app:ui"))
+            // Every plugin instance gets a ready-made HTTP client (InstanceContext.http).
+            api(libs.ktor.client.core)
         }
     }
 }
