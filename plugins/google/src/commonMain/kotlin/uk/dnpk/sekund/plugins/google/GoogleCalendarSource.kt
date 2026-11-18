@@ -13,7 +13,8 @@ import uk.dnpk.sekund.sdk.context.now
 import kotlin.time.Duration.Companion.minutes
 
 /**
- * Upcoming events from every (or the chosen) calendar of a Google account, polled every 5 minutes.
+ * Upcoming events from every (or the chosen) calendar of a Google account, polled every 5 minutes, and
+ * refreshed straight away when Google says something changed (with a Sekund server; see [GoogleCalendarPush]).
  *
  * Calendars are fetched in parallel. Token refreshes are handled by the signed-in client, so unlike the
  * old app nothing here touches credentials.
@@ -23,6 +24,10 @@ class GoogleCalendarSource(private val context: InstanceContext<GoogleCalendarSe
 
     override val events: StateFlow<Loadable<List<CalendarEvent>>> =
         context.refresher.poll(RefreshPolicy(every = 5.minutes)) { fetchAll() }
+
+    init {
+        GoogleCalendarPush(context) { api -> chosenCalendars(api.calendars()) }.start()
+    }
 
     private suspend fun fetchAll(): List<CalendarEvent> {
         val account = settings.account ?: throw IllegalStateException("Pick a Google account in this source's settings")

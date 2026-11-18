@@ -3,8 +3,12 @@ package uk.dnpk.sekund.plugins.google
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.content.TextContent
 import io.ktor.http.encodeURLPathPart
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -52,6 +56,35 @@ data class GoogleEventTime(val date: String? = null, val dateTime: String? = nul
 private data class EventsPage(val items: List<GoogleEvent> = emptyList())
 
 /**
+ * A push notification channel: Google calls [WatchRequest.address] whenever the calendar changes, until
+ * [expiration] (epoch milliseconds, as text).
+ * Docs: https://developers.google.com/workspace/calendar/api/guides/push
+ */
+@Serializable
+data class GoogleChannel(
+    val id: String,
+    val resourceId: String = "",
+    val expiration: String? = null,
+)
+
+/**
+ * @property token sent back to us with every notification (`X-Goog-Channel-Token`), so we can tell real
+ *   ones from anything else that reaches the URL.
+ * @property params `ttl` is the channel's lifetime in seconds; Google caps it (a week for events).
+ */
+@Serializable
+private data class WatchRequest(
+    val id: String,
+    val type: String,
+    val address: String,
+    val token: String,
+    val params: Map<String, String>,
+)
+
+@Serializable
+private data class StopRequest(val id: String, val resourceId: String)
+
+/**
  * Talks to Google Calendar. [client] must be signed in as the account (from `context.auth.client(...)`),
  * so this class never sees a token.
  */
@@ -86,6 +119,23 @@ class GoogleCalendarApi(private val client: HttpClient) {
         return json.decodeFromString<EventsPage>(textOf(response, "calendar '$calendarId'")).items
     }
 
+    /** Asks Google to call [address] whenever calendar [calendarId]'s events change. */
+    suspend fun watch(calendarId: String, channelId: String, address: String, token: String): GoogleChannel {
+        val request = WatchRequest(channelId, "web_hook", address, token, mapOf("ttl" to WEEK_SECONDS.toString()))
+        val response = client.post("$BASE/calendars/${calendarId.encodeURLPathPart()}/events/watch") {
+            setBody(TextContent(json.encodeToString(WatchRequest.serializer(), request), ContentType.Application.Json))
+        }
+        return json.decodeFromString<GoogleChannel>(textOf(response, "watching calendar '$calendarId'"))
+    }
+
+    /** Stops a channel from [watch] (best effort: it expires by itself anyway). */
+    suspend fun stop(channel: GoogleChannel) {
+        val request = StopRequest(channel.id, channel.resourceId)
+        client.post("$BASE/channels/stop") {
+            setBody(TextContent(json.encodeToString(StopRequest.serializer(), request), ContentType.Application.Json))
+        }
+    }
+
     private suspend fun textOf(response: HttpResponse, what: String): String {
         val text = response.bodyAsText()
         if (response.status.value !in 200..299) {
@@ -96,5 +146,6 @@ class GoogleCalendarApi(private val client: HttpClient) {
 
     companion object {
         const val BASE = "https://www.googleapis.com/calendar/v3"
+        const val WEEK_SECONDS = 7 * 24 * 60 * 60
     }
 }
