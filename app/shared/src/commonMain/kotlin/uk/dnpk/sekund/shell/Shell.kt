@@ -43,6 +43,7 @@ fun Shell(
     state: ShellState,
     fallbackClockFace: ClockFace,
     onReload: () -> Unit,
+    onSettings: () -> Unit,
     onAccounts: () -> Unit,
     onQuit: (() -> Unit)?,
 ) {
@@ -90,6 +91,7 @@ fun Shell(
         if (menuOpen) {
             LongPressMenu(
                 onReload = onReload,
+                onSettings = onSettings,
                 onAccounts = onAccounts,
                 onQuit = onQuit,
                 onDismiss = { menuOpen = false },

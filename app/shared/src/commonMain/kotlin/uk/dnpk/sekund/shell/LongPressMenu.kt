@@ -22,11 +22,12 @@ private val AUTO_HIDE_AFTER = 8.seconds
 
 /**
  * The menu opened by long-pressing the screen. Tapping outside the buttons closes it, and it closes
- * by itself after a few seconds. More entries (Settings, display control, kiosk) arrive in later phases.
+ * by itself after a few seconds. More entries (display control, kiosk) arrive in later phases.
  */
 @Composable
 fun LongPressMenu(
     onReload: () -> Unit,
+    onSettings: () -> Unit,
     onAccounts: () -> Unit,
     onQuit: (() -> Unit)?,
     onDismiss: () -> Unit,
@@ -45,6 +46,7 @@ fun LongPressMenu(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Button(onClick = { onReload(); onDismiss() }) { Text("Reload") }
+            Button(onClick = { onSettings(); onDismiss() }) { Text("Settings") }
             Button(onClick = { onAccounts(); onDismiss() }) { Text("Accounts") }
             if (onQuit != null) {
                 Button(onClick = onQuit) { Text("Quit") }

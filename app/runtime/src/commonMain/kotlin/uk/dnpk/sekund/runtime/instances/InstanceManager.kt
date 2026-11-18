@@ -100,27 +100,11 @@ class InstanceManager(
         if (contribution == null) {
             return RunningInstance.Failed(config, "No installed plugin provides '${config.type}'")
         }
-        val manifest = manifestFor(config.type)
-        val missingProvider = missingAuthProvider(manifest)
-        if (missingProvider != null) {
-            return RunningInstance.Failed(config, "Needs the '$missingProvider' sign-in provider, which isn't installed")
+        val unavailable = registry.unavailableReason(config.type, services.auth.providers.value.keys)
+        if (unavailable != null) {
+            return RunningInstance.Failed(config, unavailable)
         }
-        return createFrom(config, contribution, manifest)
-    }
-
-    private fun manifestFor(type: String): PluginManifest? {
-        val pluginId = registry.pluginIdOf(type) ?: return null
-        return registry.manifests.firstOrNull { manifest -> manifest.id == pluginId }
-    }
-
-    /** The first non-optional auth provider the plugin requires that isn't installed, or null if all are. */
-    private fun missingAuthProvider(manifest: PluginManifest?): String? {
-        if (manifest == null) return null
-        val installed = services.auth.providers.value
-        for (requirement in manifest.requires.auth) {
-            if (!requirement.optional && !installed.containsKey(requirement.provider)) return requirement.provider
-        }
-        return null
+        return createFrom(config, contribution, registry.manifestOf(config.type))
     }
 
     /** A separate function so the contribution's settings type `S` is known while building its context. */

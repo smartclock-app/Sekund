@@ -42,6 +42,29 @@ class PluginRegistry(plugins: List<SekundPlugin>) {
     /** The id of the plugin that provides [type]. */
     fun pluginIdOf(type: String): String? = pluginIdByType[type]
 
+    /** The manifest of the plugin that provides [type], or null if no plugin provides it. */
+    fun manifestOf(type: String): PluginManifest? {
+        val pluginId = pluginIdByType[type] ?: return null
+        return loadedManifests.firstOrNull { manifest -> manifest.id == pluginId }
+    }
+
+    /** Every contribution of every plugin, in registration order. */
+    fun allContributions(): List<Contribution<*, *>> = contributionsByType.values.toList()
+
+    /**
+     * Why instances of [type] can't run right now, or null if they can. Currently: the plugin needs a
+     * sign-in provider that isn't in [installedProviders].
+     */
+    fun unavailableReason(type: String, installedProviders: Set<String>): String? {
+        val manifest = manifestOf(type) ?: return "No installed plugin provides '$type'"
+        for (requirement in manifest.requires.auth) {
+            if (!requirement.optional && requirement.provider !in installedProviders) {
+                return "Needs the '${requirement.provider}' sign-in provider, which isn't installed"
+            }
+        }
+        return null
+    }
+
     /** Every contribution to [point], e.g. all widget types. */
     fun <T : Any> contributionsTo(point: ExtensionPoint<T>): List<Contribution<T, *>> {
         val result = mutableListOf<Contribution<T, *>>()
