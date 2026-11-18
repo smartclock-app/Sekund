@@ -15,6 +15,7 @@ kotlin {
             implementation(project(":plugins:google"))
             implementation(project(":plugins:trakt"))
             implementation(project(":plugins:slideshow"))
+            implementation(project(":plugins:alexa"))
             implementation(project(":plugins:declarative")) // the engine for JSON-defined widgets
             api(project(":plugins:declarative-builtins")) // the JSON widgets shipped with the app (read by the entry points)
 

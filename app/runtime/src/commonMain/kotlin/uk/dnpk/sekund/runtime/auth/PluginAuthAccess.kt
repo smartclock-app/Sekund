@@ -40,4 +40,11 @@ class PluginAuthAccess(
         clients[account.accountId] = created
         return created
     }
+
+    override fun fields(account: AccountRef): Map<String, String> {
+        if (!declaredProviders.contains(account.provider)) return emptyMap()
+        val saved = registry.account(account.accountId) ?: return emptyMap()
+        if (saved.provider != account.provider) return emptyMap()
+        return saved.fields
+    }
 }

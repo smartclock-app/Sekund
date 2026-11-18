@@ -168,6 +168,11 @@ class FakeAuth(private val client: HttpClient) : AuthAccess {
     val requestedAccounts = mutableListOf<AccountRef>()
     val states = MutableStateFlow<AuthState>(AuthState.Valid)
 
+    /** What [fields] returns for every account, e.g. `mapOf("domain" to "amazon.co.uk")`. */
+    val accountFields = mutableMapOf<String, String>()
+
+    override fun fields(account: AccountRef): Map<String, String> = accountFields
+
     override fun state(account: AccountRef): Flow<AuthState> = states
 
     override fun client(account: AccountRef): HttpClient {

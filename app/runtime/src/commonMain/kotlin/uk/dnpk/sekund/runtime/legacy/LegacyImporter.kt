@@ -296,8 +296,8 @@ object LegacyImporter {
 
         private fun alexa() {
             val widget = LegacyJson.obj(widgets, "alexa") ?: return
-            val userId = LegacyJson.text(widget, "userId")
-            val fields = if (userId == null) emptyMap() else mapOf("user_id" to userId)
+            // The old app only ever used amazon.co.uk.
+            val fields = mapOf("domain" to "amazon.co.uk")
             // The old app kept Amazon's refresh token as "token"; its cookies are made again from it.
             val account = account("amazon", "custom", "Amazon (imported)", fields, Credential(refreshToken = LegacyJson.text(widget, "token")))
             if ("alexa" !in inUse) return
@@ -312,6 +312,7 @@ object LegacyImporter {
                         "showAlarms" to bool(LegacyJson.bool(features, "alarms") ?: true),
                         "showTimers" to bool(LegacyJson.bool(features, "timers") ?: true),
                         "devices" to texts(LegacyJson.texts(widget, "devices")),
+                        "radioProviders" to texts(LegacyJson.texts(widget, "radioProviders")),
                     ),
                 ),
             )

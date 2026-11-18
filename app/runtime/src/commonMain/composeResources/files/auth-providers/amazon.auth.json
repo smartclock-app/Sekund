@@ -1,0 +1,20 @@
+// Amazon, for Alexa. Amazon has no public API for this, so it signs in like the Alexa website: a long-lived
+// refresh token is swapped for browser cookies plus a CSRF token. That swap is Kotlin code in the Alexa
+// plugin (the "amazon-cookie" handler); without that plugin this provider can't be used.
+{
+  "id": "amazon",
+  "name": "Amazon (Alexa)",
+  "icon": "speaker",
+  "fields": [
+    { "key": "domain", "label": "Amazon site", "description": "The site your Alexa account is on.", "placeholder": "amazon.co.uk" }
+  ],
+  "methods": [
+    {
+      "type": "custom",
+      "handler": "amazon-cookie",
+      "label": "Amazon refresh token",
+      "help": "Starts with Atnr|. Get one with a tool such as alexa-cookie2 (alexa-remote-control)."
+    }
+  ],
+  "baseUrls": ["https://alexa.{domain}/"]
+}

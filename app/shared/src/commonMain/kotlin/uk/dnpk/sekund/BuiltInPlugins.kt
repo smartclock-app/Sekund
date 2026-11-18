@@ -2,6 +2,7 @@ package uk.dnpk.sekund
 
 import uk.dnpk.sekund.plugins.calendar.CalendarPlugin
 import uk.dnpk.sekund.plugins.clock.ClockPlugin
+import uk.dnpk.sekund.plugins.alexa.AlexaPlugin
 import uk.dnpk.sekund.plugins.slideshow.SlideshowPlugin
 import uk.dnpk.sekund.plugins.trakt.TraktPlugin
 import uk.dnpk.sekund.plugins.google.GooglePlugin
@@ -21,6 +22,7 @@ val BuiltInPlugins: List<SekundPlugin> = listOf(
     GooglePlugin,
     TraktPlugin,
     SlideshowPlugin,
+    AlexaPlugin,
 )
 
 /**

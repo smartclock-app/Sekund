@@ -34,6 +34,13 @@ interface AuthAccess {
      * @throws ProviderNotDeclaredException if the plugin's manifest doesn't require [AccountRef.provider].
      */
     fun client(account: AccountRef): HttpClient
+
+    /**
+     * The account's non-secret details from its provider definition's `fields`, e.g. a self-hosted
+     * server's `instance_url` or Amazon's `domain`. Empty if the account doesn't exist (or isn't the
+     * plugin's to use). Never contains credentials.
+     */
+    fun fields(account: AccountRef): Map<String, String>
 }
 
 /** The plugin asked for an account of a provider it didn't declare in its manifest's `requires.auth`. */
