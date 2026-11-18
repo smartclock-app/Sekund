@@ -1,29 +1,40 @@
 package uk.dnpk.sekund
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import uk.dnpk.sekund.plugins.declarativebuiltins.BuiltInDefinitions
-import uk.dnpk.sekund.runtime.updates.DesktopUpdateInstaller
-import uk.dnpk.sekund.runtime.AppGraph
 import kotlinx.io.files.Path
+import uk.dnpk.sekund.plugins.declarativebuiltins.BuiltInDefinitions
+import uk.dnpk.sekund.runtime.AppGraph
 import uk.dnpk.sekund.runtime.DesktopPaths
 import uk.dnpk.sekund.runtime.api.PlatformInfo
-import uk.dnpk.sekund.runtime.platform.PlatformServices
-import uk.dnpk.sekund.runtime.discovery.JmDnsAdvertiser
 import uk.dnpk.sekund.runtime.auth.secrets.DesktopSecretCipher
 import uk.dnpk.sekund.runtime.desktop.CommandDisplayControl
+import uk.dnpk.sekund.runtime.desktop.DesktopKiosk
+import uk.dnpk.sekund.runtime.desktop.DesktopShortcuts
+import uk.dnpk.sekund.runtime.discovery.JmDnsAdvertiser
+import uk.dnpk.sekund.runtime.platform.PlatformServices
+import uk.dnpk.sekund.runtime.updates.DesktopUpdateInstaller
 
 /**
  * Desktop and Raspberry Pi entry point.
  *
  * Options:
- * - `--fullscreen` fills the screen with no window frame (for a dedicated display).
+ * - `--kiosk` starts in kiosk mode: the window fills the screen with no frame, above other windows.
+ *   The long-press menu can leave it and enter it again. (`--fullscreen` is the old name and still works.)
  * - `--data-dir=<folder>` keeps all files in one folder (see DesktopPaths).
+ *
+ * See docs/desktop.md for running it on a Raspberry Pi.
  */
 fun main(args: Array<String>) {
-    val fullscreen = args.contains("--fullscreen")
+    val kiosk = DesktopKiosk(startLocked = args.contains("--kiosk") || args.contains("--fullscreen"))
+    val shortcuts = DesktopShortcuts(kiosk)
 
     val paths = DesktopPaths.resolve(args)
     val graph = AppGraph(
@@ -40,23 +51,41 @@ fun main(args: Array<String>) {
         services = PlatformServices(
             // Screen on/off with the commands in <config>/display.json, when there is one.
             display = CommandDisplayControl.fromConfigFolder(paths.configDir),
+            kiosk = kiosk,
             // Shows an "Offline" badge while this address doesn't answer.
             connectivityCheckUrl = PlatformServices.GOOGLE_CONNECTIVITY_CHECK,
             // Opens a verified update's installer for the user to confirm.
             updateInstaller = DesktopUpdateInstaller(),
+            openBrowser = if (shortcuts.canOpenBrowser()) shortcuts::openBrowser else null,
         ),
     )
     graph.start()
 
     application {
+        SekundWindow(graph, kiosk)
+    }
+}
+
+/**
+ * The app's one window, shaped by kiosk mode.
+ *
+ * A window's frame can't be added or removed once it's shown, so switching kiosk mode builds a new
+ * window: `key(locked)` throws the old one away when `locked` changes (≈ a React `key` prop). The app's
+ * state lives in the AppGraph, so nothing is lost but what's open on screen (e.g. the settings).
+ */
+@Composable
+private fun ApplicationScope.SekundWindow(graph: AppGraph, kiosk: DesktopKiosk) {
+    val locked by kiosk.locked.collectAsState()
+    key(locked) {
         val windowState = rememberWindowState(
-            placement = if (fullscreen) WindowPlacement.Fullscreen else WindowPlacement.Floating,
+            placement = if (locked) WindowPlacement.Fullscreen else WindowPlacement.Floating,
         )
         Window(
             onCloseRequest = ::exitApplication,
             title = "Sekund",
             state = windowState,
-            undecorated = fullscreen,
+            undecorated = locked,
+            alwaysOnTop = locked,
         ) {
             App(graph = graph, onQuit = ::exitApplication)
         }
