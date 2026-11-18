@@ -30,6 +30,8 @@ import uk.dnpk.sekund.sdk.context.InstanceLookup
 import uk.dnpk.sekund.sdk.context.KeyValueStore
 import uk.dnpk.sekund.sdk.context.LinkedInstance
 import uk.dnpk.sekund.sdk.context.Loadable
+import uk.dnpk.sekund.sdk.context.Overlay
+import uk.dnpk.sekund.sdk.context.Overlays
 import uk.dnpk.sekund.sdk.context.PluginLog
 import uk.dnpk.sekund.sdk.context.RefreshPolicy
 import uk.dnpk.sekund.sdk.context.Refresher
@@ -68,6 +70,7 @@ class FakeInstanceContext<S>(
     override val storage: MemoryStore = MemoryStore()
     override val files: MemoryFileCache = MemoryFileCache()
     override val alerts: RecordingAlerts = RecordingAlerts()
+    override val overlays: RecordingOverlays = RecordingOverlays()
     override val events: FakeEventBus = FakeEventBus()
     override val log: RecordingLog = RecordingLog()
     override val instances: FakeInstances = FakeInstances()
@@ -224,6 +227,26 @@ class RecordingAlerts : Alerts {
 
     override fun clear() {
         current = null
+    }
+}
+
+/** Remembers the overlay currently shown (null = none). [tapAway] pretends the user tapped it away. */
+class RecordingOverlays : Overlays {
+    var current: Overlay? = null
+        private set
+
+    override fun show(overlay: Overlay) {
+        current = overlay
+    }
+
+    override fun clear() {
+        current = null
+    }
+
+    fun tapAway() {
+        val overlay = current ?: return
+        current = null
+        overlay.onDismissed()
     }
 }
 

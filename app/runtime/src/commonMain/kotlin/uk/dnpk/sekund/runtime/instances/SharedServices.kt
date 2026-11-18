@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import uk.dnpk.sekund.runtime.AppPaths
 import uk.dnpk.sekund.runtime.auth.AuthRegistry
 import uk.dnpk.sekund.runtime.services.AlertCenter
+import uk.dnpk.sekund.runtime.services.OverlayCenter
 import uk.dnpk.sekund.sdk.context.EventBus
 import uk.dnpk.sekund.sdk.context.TimeService
 import kotlin.time.Clock
@@ -24,6 +25,7 @@ class SharedServices(
     val time: TimeService,
     val events: EventBus,
     val alerts: AlertCenter,
+    val overlays: OverlayCenter,
     val auth: AuthRegistry,
     val wakeUps: Flow<Unit>,
     val displayIsOn: StateFlow<Boolean>,

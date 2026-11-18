@@ -10,6 +10,7 @@ import uk.dnpk.sekund.accounts.AccountsScreen
 import uk.dnpk.sekund.plugins.clock.DigitalClockFace
 import uk.dnpk.sekund.runtime.AppGraph
 import uk.dnpk.sekund.settings.SettingsScreen
+import uk.dnpk.sekund.shell.OverlayLayer
 import uk.dnpk.sekund.shell.Shell
 import uk.dnpk.sekund.shell.ShellState
 import uk.dnpk.sekund.ui.theme.SekundTheme
@@ -27,6 +28,7 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
     val config by graph.config.config.collectAsState()
     val instances by graph.instances.instances.collectAsState()
     val alerts by graph.alerts.alerts.collectAsState()
+    val overlays by graph.overlays.entries.collectAsState()
     val configProblem by graph.config.loadProblem.collectAsState()
     val authProblems by graph.authProblems.collectAsState()
     var accountsOpen by remember { mutableStateOf(false) }
@@ -63,5 +65,7 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
                 onClose = { accountsOpen = false },
             )
         }
+        // Last, so it covers everything: overlays are interruptions such as a doorbell camera.
+        OverlayLayer(entries = overlays, onDismiss = { owner -> graph.overlays.dismiss(owner) })
     }
 }

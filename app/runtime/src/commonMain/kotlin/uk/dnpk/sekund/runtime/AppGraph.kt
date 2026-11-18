@@ -40,6 +40,7 @@ import uk.dnpk.sekund.runtime.instances.InstanceManager
 import uk.dnpk.sekund.runtime.instances.SharedServices
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.runtime.services.AlertCenter
+import uk.dnpk.sekund.runtime.services.OverlayCenter
 import uk.dnpk.sekund.runtime.services.SharedEventBus
 import uk.dnpk.sekund.runtime.services.SystemTimeService
 import uk.dnpk.sekund.sdk.context.DisplayChanged
@@ -96,6 +97,9 @@ class AppGraph(
 
     val alerts: AlertCenter = AlertCenter()
 
+    /** Full-screen overlays from instances (e.g. a doorbell camera). The shell draws the top one. */
+    val overlays: OverlayCenter = OverlayCenter()
+
     /** One HTTP client for the whole app (it pools connections). */
     val http: HttpClient = HttpClient(CIO) {
         install(HttpTimeout) {
@@ -142,6 +146,7 @@ class AppGraph(
             time = time,
             events = events,
             alerts = alerts,
+            overlays = overlays,
             auth = auth,
             wakeUps = wakeUpsFrom(events),
             displayIsOn = displayIsOn,

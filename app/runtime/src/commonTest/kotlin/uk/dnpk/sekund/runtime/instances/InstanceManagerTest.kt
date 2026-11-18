@@ -19,6 +19,7 @@ import uk.dnpk.sekund.protocol.config.InstanceConfig
 import uk.dnpk.sekund.runtime.newTestPaths
 import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.runtime.services.AlertCenter
+import uk.dnpk.sekund.runtime.services.OverlayCenter
 import uk.dnpk.sekund.runtime.services.SharedEventBus
 import uk.dnpk.sekund.sdk.context.Alert
 import uk.dnpk.sekund.sdk.context.InstanceContext
@@ -102,6 +103,7 @@ class InstanceManagerTest {
             time = FakeTime,
             events = SharedEventBus(),
             alerts = alerts,
+            overlays = OverlayCenter(),
             auth = AuthRegistry(HttpClient(MockEngine { respondOk() }), InMemorySecretStore(), AccountsFile(newTestPaths().accountsFile), alerts, backgroundScope),
             wakeUps = MutableSharedFlow(),
             displayIsOn = MutableStateFlow(true),

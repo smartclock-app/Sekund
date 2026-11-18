@@ -108,6 +108,7 @@ class InstanceManager(
             instance.scope.cancel()
         }
         services.alerts.clear(instance.id)
+        services.overlays.clear(instance.id)
     }
 
     private fun create(config: InstanceConfig): RunningInstance {
@@ -157,6 +158,7 @@ class InstanceManager(
             storage = JsonFileStore(Path(services.paths.storageDir, "${config.id}.json")),
             files = FolderFileCache(Path(services.paths.cacheDir, "instances", config.id)),
             alerts = services.alerts.forOwner(config.id),
+            overlays = services.overlays.forOwner(config.id),
             events = services.events,
             log = TaggedPluginLog(config.id),
             instances = RuntimeInstanceLookup(running = current, scope = scope),

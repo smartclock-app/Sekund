@@ -49,6 +49,9 @@ interface InstanceContext<S> {
     /** Shows or clears this instance's alert card at the top of the sidebar. */
     val alerts: Alerts
 
+    /** Shows or clears this instance's full-screen overlay (e.g. a doorbell camera). */
+    val overlays: Overlays
+
     /** Messages between plugins, and events from Sekund itself (display on/off, network...). */
     val events: EventBus
 

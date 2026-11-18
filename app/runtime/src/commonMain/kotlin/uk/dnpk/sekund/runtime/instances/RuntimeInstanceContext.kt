@@ -9,6 +9,7 @@ import uk.dnpk.sekund.sdk.context.FileCache
 import uk.dnpk.sekund.sdk.context.InstanceContext
 import uk.dnpk.sekund.sdk.context.InstanceLookup
 import uk.dnpk.sekund.sdk.context.KeyValueStore
+import uk.dnpk.sekund.sdk.context.Overlays
 import uk.dnpk.sekund.sdk.context.PluginLog
 import uk.dnpk.sekund.sdk.context.Refresher
 import uk.dnpk.sekund.sdk.context.TimeService
@@ -25,6 +26,7 @@ class RuntimeInstanceContext<S>(
     override val storage: KeyValueStore,
     override val files: FileCache,
     override val alerts: Alerts,
+    override val overlays: Overlays,
     override val events: EventBus,
     override val log: PluginLog,
     override val instances: InstanceLookup,
