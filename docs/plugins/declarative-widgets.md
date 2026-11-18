@@ -113,6 +113,10 @@ A placeholder is `{value|filter|filter:argument}`.
 | `date` | A date or time as `Mon 3 Mar`. Accepts ISO dates and times, and Unix timestamps. |
 | `time` | A time as `14:05` or `2:05 PM`, following the 12/24-hour setting. |
 | `urlencode` | Make a value safe to put in a URL. |
+| `convert:A:B` | Convert a number from unit A to unit B. Units: `C`, `F`, `K` (temperature); `m/s`, `km/h`, `mph`, `kn` (speed); `mm`, `in` (length). Units of different kinds leave the value unchanged. |
+
+Any filter argument written as `settings.key` is replaced by that setting's value, so units can follow
+the person's choice: `{$.wind.speed|convert:m/s:settings.windUnit|round} {settings.windUnit}`.
 
 A missing value shows as empty text in views. In `url`, `headers` and `body` it stops the request
 instead, so a half-filled request is never sent.

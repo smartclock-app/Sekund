@@ -19,7 +19,7 @@ class DefinitionValidationTest {
                 "url": "https://api.example.com/{settings.missing}",
                 "auth": "example",
                 "refresh": "10s",
-                "map": { "fields": { "a": "{$.a|shout}" } },
+                "map": { "fields": { "a": "{$.a|shout}", "b": "{$.b|convert:C:parsecs}", "c": "{$.c|convert:C:settings.nope}" } },
               },
             }
             """,
@@ -28,7 +28,7 @@ class DefinitionValidationTest {
         assertNull(parsed.definition)
         val paths = parsed.issues.map { issue -> issue.path }.toSet()
         assertEquals(
-            setOf("manifest.id", "hosts[0]", "view", "source.url", "source.refresh", "source.auth", "source.map.fields.a"),
+            setOf("manifest.id", "hosts[0]", "view", "source.url", "source.refresh", "source.auth", "source.map.fields.a", "source.map.fields.b", "source.map.fields.c"),
             paths,
         )
     }

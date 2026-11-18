@@ -26,7 +26,7 @@ object DeclarativeParser {
 
     /** The filters the engine understands. Anything else is reported as a typo. */
     val KNOWN_FILTERS: Set<String> = setOf(
-        "number", "round", "divide", "multiply", "lookup", "upper", "lower", "default", "date", "time", "urlencode",
+        "number", "round", "divide", "multiply", "lookup", "upper", "lower", "default", "date", "time", "urlencode", "convert",
     )
 
     private val LOCATIONS = setOf("main", "sidebar")
@@ -237,6 +237,13 @@ object DeclarativeParser {
                 if (key !in settingKeys) issues.add(DefinitionIssue(path, "Unknown setting {$value}"))
             }
             for (filter in placeholder.filters) {
+                // Any filter argument may be a setting (`|convert:C:settings.units`): check it exists.
+                for (argument in filter.arguments) {
+                    if (argument.startsWith("settings.") && argument.removePrefix("settings.") !in settingKeys) {
+                        issues.add(DefinitionIssue(path, "Unknown setting '$argument' in filter '${filter.name}'"))
+                    }
+                }
+                if (filter.name == "convert") checkConvert(path, filter, issues)
                 if (filter.name !in KNOWN_FILTERS) {
                     issues.add(DefinitionIssue(path, "Unknown filter '${filter.name}'. Known: ${KNOWN_FILTERS.joinToString()}"))
                 }
@@ -246,6 +253,19 @@ object DeclarativeParser {
                         issues.add(DefinitionIssue(path, "No lookup table called '${table ?: ""}' in \"lookups\""))
                     }
                 }
+            }
+        }
+    }
+
+    /** `convert` needs two units of the same kind; units taken from settings can only be checked when used. */
+    private fun checkConvert(path: String, filter: Filter, issues: MutableList<DefinitionIssue>) {
+        if (filter.arguments.size != 2) {
+            issues.add(DefinitionIssue(path, "'convert' needs two units, e.g. convert:m/s:mph"))
+            return
+        }
+        for (unit in filter.arguments) {
+            if (!unit.startsWith("settings.") && unit !in UnitConversion.NAMES) {
+                issues.add(DefinitionIssue(path, "Unknown unit '$unit'. Known: ${UnitConversion.NAMES.joinToString()}"))
             }
         }
     }

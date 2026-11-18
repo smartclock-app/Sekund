@@ -11,6 +11,7 @@ import kotlinx.serialization.json.doubleOrNull
 import uk.dnpk.sekund.protocol.declarative.Filter
 import uk.dnpk.sekund.protocol.declarative.Placeholder
 import uk.dnpk.sekund.protocol.declarative.TemplateSyntax
+import uk.dnpk.sekund.protocol.declarative.UnitConversion
 import uk.dnpk.sekund.sdk.context.TimePreferences
 
 /**
@@ -30,6 +31,9 @@ import uk.dnpk.sekund.sdk.context.TimePreferences
  * | `date`          | a date/time as `Mon 3 Mar`                                    |                                 |
  * | `time`          | a date/time as `14:05` or `2:05 PM` (the person's preference) |                                 |
  * | `urlencode`     | make safe for a URL query                                     | `{settings.postcode|urlencode}` |
+ * | `convert:A:B`   | convert a number from unit A to B (°C/F/K, m/s, km/h, mph...) | `{$.wind|convert:m/s:mph}`      |
+ *
+ * Any filter argument written as `settings.key` is replaced by that setting, e.g. `convert:C:settings.units`.
  *
  * @param lookups the definition's lookup tables.
  * @param timeZone used to show dates and times.
@@ -72,15 +76,19 @@ class TemplateEngine(
         var value: JsonElement? = scope.resolve(placeholder.value)
         if (value is JsonNull) value = null
         for (filter in placeholder.filters) {
-            value = apply(filter, value)
+            value = apply(filter, value, scope)
         }
         return value
     }
 
-    private fun apply(filter: Filter, value: JsonElement?): JsonElement? {
-        val argument = filter.arguments.firstOrNull()
+    private fun apply(filter: Filter, value: JsonElement?, scope: TemplateScope): JsonElement? {
+        // An argument written as `settings.key` means "that setting's value", e.g. `|convert:C:settings.units`.
+        val arguments = filter.arguments.map { argument ->
+            if (argument.startsWith("settings.")) textOf(scope.resolve(argument)) else argument
+        }
+        val argument = arguments.firstOrNull()
         if (filter.name == "default") {
-            if (value == null || textOf(value).isEmpty()) return JsonPrimitive(filter.arguments.joinToString(":"))
+            if (value == null || textOf(value).isEmpty()) return JsonPrimitive(arguments.joinToString(":"))
             return value
         }
         if (value == null) return null // every other filter leaves a missing value missing
@@ -97,6 +105,7 @@ class TemplateEngine(
             "date" -> dateText(text) { dateTime -> ValueFormat.shortDate(dateTime) }
             "time" -> dateText(text) { dateTime -> ValueFormat.time(dateTime, preferences()) }
             "urlencode" -> JsonPrimitive(text.encodeURLParameter())
+            "convert" -> convert(value, arguments)
             else -> value // unknown filters are reported when the definition loads; ignore them here
         }
     }
@@ -111,6 +120,14 @@ class TemplateEngine(
         val other = argument?.toDoubleOrNull() ?: return value
         val result = operation(number, other) ?: return null
         return JsonPrimitive(result)
+    }
+
+    /** `convert:<from>:<to>`. Leaves the value as it is if it isn't a number or the units don't fit. */
+    private fun convert(value: JsonElement, arguments: List<String>): JsonElement {
+        if (arguments.size != 2) return value
+        val number = numberOf(value) ?: return value
+        val converted = UnitConversion.convert(number, from = arguments[0], to = arguments[1]) ?: return value
+        return JsonPrimitive(converted)
     }
 
     private fun lookup(text: String, tableName: String?): JsonElement {

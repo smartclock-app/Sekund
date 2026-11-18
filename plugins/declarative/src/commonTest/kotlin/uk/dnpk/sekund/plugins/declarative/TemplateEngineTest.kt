@@ -20,7 +20,7 @@ class TemplateEngineTest {
         """{ "temp": 7.25, "when": "2025-03-03T14:05:00Z", "wind": "N", "list": [1, 2, 3], "empty": "" }""",
     )
     private val scope = TemplateScope(
-        settings = JsonObject(mapOf("city" to JsonPrimitive("Leeds"))),
+        settings = JsonObject(mapOf("city" to JsonPrimitive("Leeds"), "windUnit" to JsonPrimitive("mph"))),
         node = answer,
         named = mapOf("greeting" to "Hi"),
     )
@@ -56,5 +56,14 @@ class TemplateEngineTest {
     fun singlePlaceholdersKeepTheirRawValue() {
         assertEquals(7.25, engine.number("{$.temp}", scope))
         assertNull(engine.value("{$.nope}", scope))
+    }
+
+    @Test
+    fun convertsUnitsIncludingOnesChosenInSettings() {
+        assertEquals("45", engine.fill("{$.temp|convert:C:F|round}", scope)) // 7.25 °C = 45.05 °F
+        assertEquals("16", engine.fill("{$.temp|convert:m/s:settings.windUnit|round}", scope)) // 7.25 m/s = 16.2 mph
+        assertEquals("26", engine.fill("{$.temp|convert:m/s:km/h|round}", scope))
+        // Units that don't fit together leave the value unchanged rather than inventing a number.
+        assertEquals("7.25", engine.fill("{$.temp|convert:C:mph}", scope))
     }
 }
