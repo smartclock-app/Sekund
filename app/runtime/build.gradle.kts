@@ -9,6 +9,12 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(project(":app:sdk"))
+            api(libs.kotlinx.io.core)       // multiplatform file access (config.json, storage, logs)
+            implementation(libs.kermit)     // logging
+            implementation(libs.ktor.client.cio)
+        }
+        commonTest.dependencies {
+            implementation(libs.ktor.client.mock)
         }
     }
 }
