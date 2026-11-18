@@ -41,7 +41,7 @@ class DeviceApi(
     val identity = DeviceIdentity(graph.paths.deviceFile)
     val pairing = Pairing(clients, graph.alerts, deviceId = { identity.id })
     val accounts = AccountFlows(graph.auth, graph.authCodeSignIns, graph.alerts)
-    val actions = DeviceActions(graph.instances, graph.updater)
+    val actions = DeviceActions(graph.instances, graph.updater, graph.services)
 
     // ---- Device and catalog ---------------------------------------------------------------------
 

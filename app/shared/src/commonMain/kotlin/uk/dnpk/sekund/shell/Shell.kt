@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import uk.dnpk.sekund.protocol.config.Orientation
@@ -36,17 +38,15 @@ import uk.dnpk.sekund.ui.theme.Sekund
  * +-----------+--------+          +-----------+
  * ```
  *
- * Long-press anywhere opens the menu. Tapping a widget that has an expanded view opens it full screen.
+ * Long-press anywhere opens the menu ([menuItems] gives its buttons). Tapping a widget that has an
+ * expanded view opens it full screen. An "Offline" badge sits in the bottom corner while the internet is down.
  */
 @Composable
 fun Shell(
     state: ShellState,
     fallbackClockFace: ClockFace,
-    onReload: () -> Unit,
-    onSettings: () -> Unit,
-    onAccounts: () -> Unit,
+    menuItems: () -> List<MenuItem>,
     onInstallUpdate: () -> Unit,
-    onQuit: (() -> Unit)?,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
     var expandedInstanceId by remember { mutableStateOf<String?>(null) }
@@ -84,19 +84,17 @@ fun Shell(
             }
         }
 
+        if (!state.isOnline) {
+            OfflineBadge(modifier = Modifier.align(Alignment.BottomEnd).padding(Sekund.theme.spacing))
+        }
+
         val expandedId = expandedInstanceId
         if (expandedId != null) {
             ExpandedView(state, instanceId = expandedId, onClose = { expandedInstanceId = null })
         }
 
         if (menuOpen) {
-            LongPressMenu(
-                onReload = onReload,
-                onSettings = onSettings,
-                onAccounts = onAccounts,
-                onQuit = onQuit,
-                onDismiss = { menuOpen = false },
-            )
+            LongPressMenu(items = menuItems(), onDismiss = { menuOpen = false })
         }
     }
 }

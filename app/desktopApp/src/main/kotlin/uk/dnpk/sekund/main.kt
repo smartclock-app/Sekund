@@ -10,6 +10,7 @@ import uk.dnpk.sekund.runtime.AppGraph
 import kotlinx.io.files.Path
 import uk.dnpk.sekund.runtime.DesktopPaths
 import uk.dnpk.sekund.runtime.api.PlatformInfo
+import uk.dnpk.sekund.runtime.platform.PlatformServices
 import uk.dnpk.sekund.runtime.discovery.JmDnsAdvertiser
 import uk.dnpk.sekund.runtime.auth.secrets.DesktopSecretCipher
 
@@ -35,8 +36,12 @@ fun main(args: Array<String>) {
         // Packaged apps get their version from jpackage; `gradlew run` doesn't have one.
         platform = PlatformInfo(name = "desktop", appVersion = System.getProperty("jpackage.app-version") ?: "dev"),
         advertiser = JmDnsAdvertiser(),
-        // Opens a verified update's installer for the user to confirm.
-        updateInstaller = DesktopUpdateInstaller(),
+        services = PlatformServices(
+            // Shows an "Offline" badge while this address doesn't answer.
+            connectivityCheckUrl = PlatformServices.GOOGLE_CONNECTIVITY_CHECK,
+            // Opens a verified update's installer for the user to confirm.
+            updateInstaller = DesktopUpdateInstaller(),
+        ),
     )
     graph.start()
 

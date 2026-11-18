@@ -10,6 +10,7 @@ import uk.dnpk.sekund.accounts.AccountsScreen
 import uk.dnpk.sekund.plugins.clock.DigitalClockFace
 import uk.dnpk.sekund.runtime.AppGraph
 import uk.dnpk.sekund.settings.SettingsScreen
+import uk.dnpk.sekund.shell.MenuItem
 import uk.dnpk.sekund.shell.OverlayLayer
 import uk.dnpk.sekund.shell.Shell
 import uk.dnpk.sekund.shell.ShellState
@@ -32,6 +33,7 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
     val update by graph.updater.status.collectAsState()
     val configProblem by graph.config.loadProblem.collectAsState()
     val authProblems by graph.authProblems.collectAsState()
+    val isOnline by graph.isOnline.collectAsState()
     var accountsOpen by remember { mutableStateOf(false) }
     var settingsOpen by remember { mutableStateOf(false) }
 
@@ -45,17 +47,22 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
         configProblem = configProblem,
         registry = graph.registry,
         update = update,
+        isOnline = isOnline,
     )
 
     SekundTheme {
         Shell(
             state = state,
             fallbackClockFace = fallbackClockFace,
-            onReload = { graph.instances.reloadAll() },
-            onSettings = { settingsOpen = true },
-            onAccounts = { accountsOpen = true },
+            menuItems = {
+                menuItems(
+                    graph = graph,
+                    openSettings = { settingsOpen = true },
+                    openAccounts = { accountsOpen = true },
+                    onQuit = onQuit,
+                )
+            },
             onInstallUpdate = { graph.updater.installNow() },
-            onQuit = onQuit,
         )
         if (settingsOpen) {
             SettingsScreen(graph = graph, onClose = { settingsOpen = false })
@@ -71,4 +78,40 @@ fun App(graph: AppGraph, onQuit: (() -> Unit)? = null) {
         // Last, so it covers everything: overlays are interruptions such as a doorbell camera.
         OverlayLayer(entries = overlays, onDismiss = { owner -> graph.overlays.dismiss(owner) })
     }
+}
+
+/**
+ * The long-press menu's buttons. Platform buttons (browser, display, kiosk) only appear where
+ * the platform provides them (see PlatformServices).
+ */
+private fun menuItems(
+    graph: AppGraph,
+    openSettings: () -> Unit,
+    openAccounts: () -> Unit,
+    onQuit: (() -> Unit)?,
+): List<MenuItem> {
+    val services = graph.services
+    val items = mutableListOf(
+        MenuItem("Reload") { graph.instances.reloadAll() },
+        MenuItem("Settings", openSettings),
+        MenuItem("Accounts", openAccounts),
+    )
+    val openBrowser = services.openBrowser
+    if (openBrowser != null) items.add(MenuItem("Browser", openBrowser))
+    val openSystemSettings = services.openSystemSettings
+    if (openSystemSettings != null) items.add(MenuItem("System settings", openSystemSettings))
+    val display = services.display
+    if (display != null && !display.isReady()) {
+        items.add(MenuItem("Enable display control") { display.requestSetup() })
+    }
+    val kiosk = services.kiosk
+    if (kiosk != null) {
+        if (kiosk.isLocked()) {
+            items.add(MenuItem("Exit kiosk") { kiosk.exit() })
+        } else {
+            items.add(MenuItem("Enter kiosk") { kiosk.enter() })
+        }
+    }
+    if (onQuit != null) items.add(MenuItem("Quit", onQuit))
+    return items
 }

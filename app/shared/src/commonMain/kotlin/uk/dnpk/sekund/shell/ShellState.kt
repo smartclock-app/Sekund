@@ -13,6 +13,7 @@ import uk.dnpk.sekund.sdk.context.Alert
  * @property alerts alert cards for the top of the sidebar, by owner.
  * @property configProblem why config.json couldn't be read, if it couldn't.
  * @property update app updates; a card appears at the top of the sidebar while one is available.
+ * @property isOnline false shows the offline badge.
  */
 data class ShellState(
     val config: AppConfig,
@@ -21,6 +22,7 @@ data class ShellState(
     val configProblem: String?,
     val registry: PluginRegistry,
     val update: UpdateStatus = UpdateStatus(),
+    val isOnline: Boolean = true,
 ) {
     /** The sidebar is hidden when it has nothing to show, and the main zone takes the whole screen. */
     val hasSidebar: Boolean

@@ -4,7 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -21,17 +23,12 @@ import kotlin.time.Duration.Companion.seconds
 private val AUTO_HIDE_AFTER = 8.seconds
 
 /**
- * The menu opened by long-pressing the screen. Tapping outside the buttons closes it, and it closes
- * by itself after a few seconds. More entries (display control, kiosk) arrive in later phases.
+ * The menu opened by long-pressing the screen: one button per [items] entry. Tapping outside the
+ * buttons closes it, and it closes by itself after a few seconds.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun LongPressMenu(
-    onReload: () -> Unit,
-    onSettings: () -> Unit,
-    onAccounts: () -> Unit,
-    onQuit: (() -> Unit)?,
-    onDismiss: () -> Unit,
-) {
+fun LongPressMenu(items: List<MenuItem>, onDismiss: () -> Unit) {
     LaunchedEffect(Unit) {
         delay(AUTO_HIDE_AFTER)
         onDismiss()
@@ -44,12 +41,14 @@ fun LongPressMenu(
             .clickable(onClick = onDismiss),
         contentAlignment = Alignment.Center,
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Button(onClick = { onReload(); onDismiss() }) { Text("Reload") }
-            Button(onClick = { onSettings(); onDismiss() }) { Text("Settings") }
-            Button(onClick = { onAccounts(); onDismiss() }) { Text("Accounts") }
-            if (onQuit != null) {
-                Button(onClick = onQuit) { Text("Quit") }
+        // FlowRow wraps onto a new line when the buttons don't fit across (e.g. a portrait tablet).
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.padding(32.dp),
+        ) {
+            for (item in items) {
+                Button(onClick = { item.onClick(); onDismiss() }) { Text(item.label) }
             }
         }
     }

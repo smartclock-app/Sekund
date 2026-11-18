@@ -1,5 +1,6 @@
 package uk.dnpk.sekund.runtime.api
 
+import uk.dnpk.sekund.runtime.platform.PlatformServices
 import uk.dnpk.sekund.sdk.actions.HasActions
 import uk.dnpk.sekund.sdk.actions.PluginAction
 import androidx.compose.runtime.Composable
@@ -101,7 +102,7 @@ private fun fakeDeclarativePlugin(definition: DeclarativeDefinition): SekundPlug
  * put files in place first (e.g. an old config.json). The API server
  * itself isn't started: tests install [deviceApiModule] in Ktor's test engine instead.
  */
-fun startedTestGraph(beforeStart: (AppPaths) -> Unit = {}): AppGraph {
+fun startedTestGraph(services: PlatformServices = PlatformServices(), beforeStart: (AppPaths) -> Unit = {}): AppGraph {
     val paths = newTestPaths()
     beforeStart(paths)
     val graph = AppGraph(
@@ -116,6 +117,7 @@ fun startedTestGraph(beforeStart: (AppPaths) -> Unit = {}): AppGraph {
         secretCipher = PlainCipher,
         declarativePlugin = ::fakeDeclarativePlugin,
         platform = PlatformInfo(name = "test", appVersion = "0.0.1"),
+        services = services,
     )
     runBlocking {
         graph.start().join()

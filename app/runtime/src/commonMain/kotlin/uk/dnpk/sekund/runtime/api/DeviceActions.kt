@@ -7,6 +7,7 @@ import uk.dnpk.sekund.protocol.api.ActionInfo
 import uk.dnpk.sekund.protocol.api.ActionResult
 import uk.dnpk.sekund.runtime.instances.InstanceManager
 import uk.dnpk.sekund.runtime.instances.RunningInstance
+import uk.dnpk.sekund.runtime.platform.PlatformServices
 import uk.dnpk.sekund.runtime.updates.AppUpdater
 import uk.dnpk.sekund.sdk.actions.HasActions
 import uk.dnpk.sekund.sdk.actions.PluginAction
@@ -18,12 +19,16 @@ import uk.dnpk.sekund.sdk.actions.PluginAction
  * - `device.refresh`: ask every instance to fetch its data again,
  * - `update.check`: look for a new version of Sekund now,
  * - `update.install`: download and install the new version, if there is one,
+ * - `display.on` / `display.off`: turn the screen on or off (where the platform can),
+ * - `kiosk.enter` / `kiosk.exit`: lock the device to Sekund, or step out of that (where the platform can),
  * - `<instanceId>.refresh`: ask one instance to fetch its data again,
  * - `<instanceId>.<name>`: an action the instance's plugin offers (see [HasActions]), e.g. `photos.skip`.
- *
- * Display and kiosk actions arrive with the platform phases.
  */
-class DeviceActions(private val instances: InstanceManager, private val updater: AppUpdater) {
+class DeviceActions(
+    private val instances: InstanceManager,
+    private val updater: AppUpdater,
+    private val platform: PlatformServices,
+) {
     private val finished = MutableSharedFlow<ActionResult>(extraBufferCapacity = 16)
 
     /** Every action result, for the events stream. */
@@ -36,6 +41,14 @@ class DeviceActions(private val instances: InstanceManager, private val updater:
             ActionInfo("update.check", "Look for a new version of Sekund now"),
             ActionInfo("update.install", "Download and install the new version of Sekund, if there is one"),
         )
+        if (platform.display != null) {
+            result.add(ActionInfo("display.on", "Turn the screen on"))
+            result.add(ActionInfo("display.off", "Turn the screen off"))
+        }
+        if (platform.kiosk != null) {
+            result.add(ActionInfo("kiosk.enter", "Lock the device to Sekund"))
+            result.add(ActionInfo("kiosk.exit", "Unlock the device from Sekund until it restarts"))
+        }
         for (instance in instances.instances.value.values) {
             if (instance is RunningInstance.Ready) {
                 result.add(ActionInfo("${instance.id}.refresh", "Fetch fresh data for '${instance.id}' now"))
@@ -68,11 +81,29 @@ class DeviceActions(private val instances: InstanceManager, private val updater:
                 val started = updater.installNow()
                 ActionResult(name, ok = started, message = if (started) null else "No update is available")
             }
+            name == "display.on" || name == "display.off" -> switchDisplay(name, turnOn = name == "display.on")
+            name == "kiosk.enter" || name == "kiosk.exit" -> switchKiosk(name, enter = name == "kiosk.enter")
             name.endsWith(".refresh") -> refreshOne(name, name.removeSuffix(".refresh"))
             else -> runPluginAction(name)
         }
         finished.tryEmit(result)
         return result
+    }
+
+    private suspend fun switchDisplay(name: String, turnOn: Boolean): ActionResult {
+        val display = platform.display ?: throw ApiProblem.notFound("This device can't turn its screen on and off")
+        try {
+            if (turnOn) display.turnOn() else display.turnOff()
+            return ActionResult(name, ok = true)
+        } catch (error: IllegalStateException) {
+            return ActionResult(name, ok = false, message = error.message ?: "Failed")
+        }
+    }
+
+    private fun switchKiosk(name: String, enter: Boolean): ActionResult {
+        val kiosk = platform.kiosk ?: throw ApiProblem.notFound("This device has no kiosk mode")
+        if (enter) kiosk.enter() else kiosk.exit()
+        return ActionResult(name, ok = true)
     }
 
     /** Runs `<instanceId>.<action>`. Instance ids may contain dots, so the action name is after the last one. */

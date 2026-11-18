@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
-import uk.dnpk.sekund.protocol.plugin.Capability
 import uk.dnpk.sekund.protocol.declarative.DeclarativeDefinition
 import uk.dnpk.sekund.runtime.auth.AccountsFile
 import uk.dnpk.sekund.runtime.auth.AuthCodeSignIns
@@ -43,11 +43,16 @@ import uk.dnpk.sekund.runtime.plugins.PluginRegistry
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.runtime.services.OverlayCenter
 import uk.dnpk.sekund.runtime.updates.AppUpdater
-import uk.dnpk.sekund.runtime.updates.UpdateInstaller
 import uk.dnpk.sekund.runtime.updates.UpdateService
 import uk.dnpk.sekund.runtime.updates.UpdateSources
 import uk.dnpk.sekund.runtime.platform.updatePlatformKey
 import uk.dnpk.sekund.runtime.services.SharedEventBus
+import uk.dnpk.sekund.runtime.services.ConnectivityMonitor
+import uk.dnpk.sekund.runtime.services.InternetCheck
+import uk.dnpk.sekund.runtime.platform.DisplayControl
+import uk.dnpk.sekund.runtime.platform.PlatformServices
+import uk.dnpk.sekund.sdk.context.PresenceDetected
+import uk.dnpk.sekund.sdk.context.on
 import uk.dnpk.sekund.runtime.services.SystemTimeService
 import uk.dnpk.sekund.sdk.context.DisplayChanged
 import uk.dnpk.sekund.sdk.context.NetworkChanged
@@ -73,7 +78,8 @@ import uk.dnpk.sekund.sdk.plugin.SekundPlugin
  * @param builtInDefinitions the declarative definitions shipped with the app, as JSON text.
  * @param platform the platform's name, the app version and what the device can do.
  * @param advertiser announces the device API on the network (mDNS); null to not announce.
- * @param updateInstaller installs verified app updates; null where the platform can't yet.
+ * @param services what this platform can do: display and kiosk control, network help, updates...
+ *   Anything left out is simply not offered.
  */
 class AppGraph(
     val paths: AppPaths,
@@ -84,7 +90,7 @@ class AppGraph(
     builtInDefinitions: suspend () -> List<String> = { emptyList() },
     platform: PlatformInfo,
     private val advertiser: ServiceAdvertiser? = null,
-    updateInstaller: UpdateInstaller? = null,
+    val services: PlatformServices = PlatformServices(),
 ) {
     private val log = Logger.withTag("App")
 
@@ -136,8 +142,13 @@ class AppGraph(
     /** Problems found in auth provider files, shown on the Accounts screen. */
     val authProblems: StateFlow<List<String>> = authProviderFiles.problems
 
-    /** Whether the screen is on. Platform display control (a later phase) will update this. */
+    /** Whether the screen is on. Follows the platform's display control, where there is one. */
     val displayIsOn: MutableStateFlow<Boolean> = MutableStateFlow(true)
+
+    /** Whether the internet works, for the offline indicator. Always true if the platform doesn't check. */
+    val connectivity: ConnectivityMonitor? = connectivityMonitorFor(services)
+
+    val isOnline: StateFlow<Boolean> = connectivity?.isOnline ?: MutableStateFlow(true)
 
     /** The user's time preferences, kept in step with config.json. */
     private val timePreferences: StateFlow<TimePreferences> = config.config
@@ -152,7 +163,7 @@ class AppGraph(
         currentVersion = platform.appVersion,
         platformKey = updatePlatformKey(),
         downloadDir = Path(paths.cacheDir, "updates"),
-        installer = updateInstaller,
+        installer = services.updateInstaller,
         source = { UpdateSources.builtIn() },
     )
 
@@ -179,7 +190,7 @@ class AppGraph(
     val legacyImport: LegacyImport = LegacyImport(paths, config, auth)
 
     /** The device API's logic: pairing, catalog, config edits, accounts... (served by [startApi]). */
-    val api: DeviceApi = DeviceApi(this, withUpdateCapability(platform, updateInstaller))
+    val api: DeviceApi = DeviceApi(this, withPlatformCapabilities(platform))
 
     /**
      * Loads config.json and starts every instance and the device API. Returns straight away; loading
@@ -199,15 +210,69 @@ class AppGraph(
             val imported = legacyImport.importFileIfLegacy()
             config.load { imported ?: defaultConfig }
             instances.follow(config.config)
+            followDisplay()
+            followNetwork()
             updater.start()
             startApi()
         }
     }
 
-    /** The device API tells companions this device can update itself when the platform has an installer. */
-    private fun withUpdateCapability(platform: PlatformInfo, installer: UpdateInstaller?): PlatformInfo {
-        if (installer == null || Capability.SelfUpdate in platform.capabilities) return platform
-        return platform.copy(capabilities = platform.capabilities + Capability.SelfUpdate)
+    /** The device API tells companions what this device can do: what [services] provides, plus anything listed in [platform]. */
+    private fun withPlatformCapabilities(platform: PlatformInfo): PlatformInfo {
+        val all = (platform.capabilities + services.capabilities()).distinct()
+        return platform.copy(capabilities = all)
+    }
+
+    private fun connectivityMonitorFor(services: PlatformServices): ConnectivityMonitor? {
+        val checkUrl = services.connectivityCheckUrl ?: return null
+        val network = services.network
+        return ConnectivityMonitor(
+            internetWorks = InternetCheck(http, checkUrl)::works,
+            scope = scope,
+            networkChanges = network?.changes,
+            tryToReconnect = { network?.tryToReconnect() ?: false },
+        )
+    }
+
+    /**
+     * Keeps [displayIsOn] in step with the real screen, tells plugins when it changes (instances refresh
+     * when it comes back on), and turns the screen on when a plugin reports someone nearby.
+     */
+    private fun followDisplay() {
+        val display = services.display ?: return
+        scope.launch {
+            display.isOn.collect { isOn ->
+                val changed = displayIsOn.value != isOn
+                displayIsOn.value = isOn
+                if (changed) events.publish(DisplayChanged(isOn))
+            }
+        }
+        scope.launch {
+            events.on<PresenceDetected>().collect { event ->
+                if (!display.isOn.value) {
+                    log.i { "Someone's nearby (${event.source}): turning the screen on" }
+                    turnDisplayOn(display)
+                }
+            }
+        }
+    }
+
+    private suspend fun turnDisplayOn(display: DisplayControl) {
+        try {
+            display.turnOn()
+        } catch (error: IllegalStateException) {
+            log.w(error) { "Couldn't turn the screen on" }
+        }
+    }
+
+    /** Starts the offline check, and tells plugins when the internet comes back or goes (instances refresh when it's back). */
+    private fun followNetwork() {
+        val monitor = connectivity ?: return
+        monitor.start()
+        scope.launch {
+            // drop(1): the first value is the starting guess, not a change.
+            monitor.isOnline.drop(1).collect { isOnline -> events.publish(NetworkChanged(isOnline)) }
+        }
     }
 
     private suspend fun loadAuth() {
