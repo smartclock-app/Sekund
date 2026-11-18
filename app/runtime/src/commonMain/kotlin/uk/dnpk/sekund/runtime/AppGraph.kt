@@ -111,6 +111,8 @@ class AppGraph(
         accountsFile = AccountsFile(paths.accountsFile),
         alerts = alerts,
         scope = scope,
+        // Custom sign-ins (e.g. Amazon) are code that plugins provide.
+        customHandlers = { name -> registry.authHandler(name) },
     )
 
     /** Browser sign-ins in progress (completed through the companion app). */

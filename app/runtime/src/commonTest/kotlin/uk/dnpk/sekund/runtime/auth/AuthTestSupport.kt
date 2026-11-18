@@ -1,5 +1,6 @@
 package uk.dnpk.sekund.runtime.auth
 
+import uk.dnpk.sekund.sdk.auth.CustomAuthHandler
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
@@ -44,13 +45,14 @@ class FakeClock(var epochSeconds: Long = 1_000_000) : Clock {
 /** Everything an auth test needs, wired the way AppGraph wires it but with fakes. */
 class AuthTestRig(
     scope: CoroutineScope,
+    customHandlers: Map<String, CustomAuthHandler> = emptyMap(),
     handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
 ) {
     val secrets = InMemorySecretStore()
     val alerts = AlertCenter()
     val clock = FakeClock()
     val accountsFile = AccountsFile(newTestPaths().accountsFile)
-    val registry = AuthRegistry(HttpClient(MockEngine(handler)), secrets, accountsFile, alerts, scope, clock)
+    val registry = AuthRegistry(HttpClient(MockEngine(handler)), secrets, accountsFile, alerts, scope, clock, customHandlers = { name -> customHandlers[name] })
 
     fun addProvider(json: String): AuthProviderDefinition {
         val parsed = AuthDefinitionParser.parse(json)

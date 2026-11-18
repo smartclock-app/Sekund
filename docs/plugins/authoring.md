@@ -81,7 +81,7 @@ Unknown placeholders are rejected when the file loads. Trailing `/` is removed f
 | `bearer` | `label`, `help` | Pasted long-lived token, stored as `{access_token}`. |
 | `oauth2.deviceCode` | `deviceCodeUrl`, `tokenUrl`, `revokeUrl`, `scopes`, `scopeSeparator`, `client`, `clientAuth`, `bodyEncoding`, `refresh`, `pollStatusMap`, `deviceCodeParam` | RFC 8628. **Preferred** (see below). |
 | `oauth2.authorizationCode` | `authorizeUrl`, `tokenUrl`, `revokeUrl`, `scopes`, `scopeSeparator`, `pkce` (default true), `extraAuthorizeParams`, `client`, `clientAuth`, `bodyEncoding`, `refresh`, `companion` | Needs a browser: done through the companion app. |
-| `custom` | `handler` | Kotlin code a plugin registers (e.g. Alexa). Not wired up yet. |
+| `custom` | `handler`, optional `label`, `help` | Kotlin code a plugin registers (e.g. Amazon for Alexa). See below. |
 
 Shared OAuth options:
 - `client`: `{"mode": "byo"}` (user enters their own client id/secret), `{"mode": "fixed", "id": "...", "secret": "..."}`
@@ -94,6 +94,22 @@ Shared OAuth options:
 - `pollStatusMap` (device code): for services that answer polls with status codes rather than the standard
   `{"error": "authorization_pending"}` body. Values: `pending`, `slowDown`, `expired`, `denied`, `invalid`.
 - `deviceCodeParam`: the name of the device code in poll requests (`device_code`; Trakt uses `code`).
+
+### Custom sign-in code
+
+When a service can't be described in JSON (Amazon swaps a refresh token for cookies and a CSRF token),
+its definition uses `{"type": "custom", "handler": "amazon-cookie"}` and a plugin registers the code:
+
+```kotlin
+override fun register(registrar: PluginRegistrar) {
+    registrar.authHandler("amazon-cookie", AmazonCookieHandler)
+}
+```
+
+A `CustomAuthHandler` has two functions: `refresh` turns the pasted secret into a session (throw
+`CustomAuthRejectedException` if the secret itself is refused), and `sign` puts the session on a request
+(with `headers.set`, as it runs again before a retry). Storage, encryption, one refresh at a time, the
+retry after `401` and the reconnect alert are shared with every other method.
 
 ### Which method to choose
 

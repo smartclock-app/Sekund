@@ -22,8 +22,12 @@ import uk.dnpk.sekund.runtime.auth.secrets.SecretStore
 import uk.dnpk.sekund.runtime.services.AlertCenter
 import uk.dnpk.sekund.sdk.auth.AccountUnavailableException
 import uk.dnpk.sekund.sdk.auth.AuthState
+import uk.dnpk.sekund.sdk.auth.CustomAuthHandler
+import uk.dnpk.sekund.sdk.auth.CustomAuthRejectedException
+import uk.dnpk.sekund.sdk.auth.CustomSession
 import uk.dnpk.sekund.sdk.context.Alert
 import kotlin.time.Clock
+import kotlin.time.Instant
 
 /**
  * The one place that knows about accounts, credentials and how to sign in. Plugins reach it only
@@ -37,6 +41,7 @@ import kotlin.time.Clock
  * - one central "reconnect your account" alert when a credential stops working.
  *
  * @param scope where background work (device-code polling) runs; the app scope in production.
+ * @param customHandlers finds the plugin code for `custom` sign-in methods by name (see [CustomAuthHandler]).
  */
 class AuthRegistry(
     http: HttpClient,
@@ -45,6 +50,7 @@ class AuthRegistry(
     private val alerts: AlertCenter,
     internal val scope: CoroutineScope,
     internal val clock: Clock = Clock.System,
+    private val customHandlers: (String) -> CustomAuthHandler? = { null },
 ) {
     private val log = Logger.withTag("Auth")
 
@@ -125,6 +131,11 @@ class AuthRegistry(
         val credential = when (method) {
             is AuthMethodDefinition.ApiKey -> Credential(apiKey = key.trim())
             is AuthMethodDefinition.Bearer -> Credential(accessToken = key.trim())
+            // Make the first session straight away, so a wrong secret is reported while connecting.
+            is AuthMethodDefinition.Custom -> {
+                val session = handlerFor(method).refresh(baseHttp, fields, CustomSession(secret = key.trim()))
+                credentialOf(session)
+            }
             else -> error("Method $methodIndex of $providerId doesn't take a pasted key")
         }
         return saveSignIn(definition, methodIndex, fields, credential, reconnect)
@@ -242,6 +253,12 @@ class AuthRegistry(
     internal suspend fun credentialForRequest(accountId: String): SigningDetails {
         val details = signingDetails(accountId)
         val credential = details.credential
+        if (isCustom(details) && credential.extra.isEmpty()) {
+            // A custom sign-in without a session yet (e.g. imported from the old app): make one first.
+            val fresh = refreshIfStill(accountId) { stored -> stored.extra.isEmpty() }
+                ?: throw AccountUnavailableException(accountId, "${details.definition.name} asked you to sign in again")
+            return details.copy(credential = fresh)
+        }
         if (!expiresSoon(details.definition, details.account, credential)) return details
 
         val fresh = refreshIfStill(accountId) { stored -> expiresSoon(details.definition, details.account, stored) }
@@ -255,7 +272,9 @@ class AuthRegistry(
      * If another request already refreshed in the meantime, its new token is returned without refreshing again.
      */
     internal suspend fun credentialAfterRejection(accountId: String, rejected: Credential): Credential? {
-        return refreshIfStill(accountId) { stored -> stored.accessToken == rejected.accessToken && stored.apiKey == rejected.apiKey }
+        return refreshIfStill(accountId) { stored ->
+            stored.accessToken == rejected.accessToken && stored.apiKey == rejected.apiKey && stored.extra == rejected.extra
+        }
     }
 
     /**
@@ -268,6 +287,9 @@ class AuthRegistry(
             val details = signingDetails(accountId)
             val stored = details.credential
             if (!stillNeeded(stored)) return stored // someone else refreshed while we waited
+
+            val method = details.definition.methods[details.account.methodIndex]
+            if (method is AuthMethodDefinition.Custom) return refreshCustom(details, method)
 
             val refreshToken = stored.refreshToken
             val oauth = OAuthSettings.of(details.definition.methods[details.account.methodIndex])
@@ -321,6 +343,62 @@ class AuthRegistry(
             refreshing.update { ids -> ids - account.id }
         }
     }
+
+    /** Makes a new session for a custom sign-in with the plugin's handler. Null if the secret was refused. */
+    private suspend fun refreshCustom(details: SigningDetails, method: AuthMethodDefinition.Custom): Credential? {
+        val account = details.account
+        val secret = details.credential.refreshToken
+        if (secret == null) {
+            markNeedsReauth(account.id, "${details.definition.name} needs connecting again")
+            return null
+        }
+        val handler = handlerFor(method)
+
+        refreshing.update { ids -> ids + account.id }
+        try {
+            val session = handler.refresh(baseHttp, account.fields, sessionOf(details.credential))
+            val updated = credentialOf(session)
+            writeCredential(account, updated)
+            log.i { "Made a new ${details.definition.name} session for ${account.id}" }
+            return updated
+        } catch (rejected: CustomAuthRejectedException) {
+            log.w { "${details.definition.name} refused ${account.id}: ${rejected.message}" }
+            markNeedsReauth(account.id, rejected.message ?: "${details.definition.name} asked you to sign in again")
+            return null
+        } finally {
+            refreshing.update { ids -> ids - account.id }
+        }
+    }
+
+    /** The plugin code for a custom method. Throws (without disconnecting the account) if no plugin provides it. */
+    private fun handlerFor(method: AuthMethodDefinition.Custom): CustomAuthHandler =
+        customHandlers(method.handler) ?: throw IllegalStateException("No installed plugin provides the '${method.handler}' sign-in")
+
+    /** For [SignedInClient]: the handler that signs this account's requests, or null for standard methods. */
+    internal fun customHandlerOf(details: SigningDetails): CustomAuthHandler? {
+        val method = details.definition.methods.getOrNull(details.account.methodIndex)
+        if (method !is AuthMethodDefinition.Custom) return null
+        return handlerFor(method)
+    }
+
+    private fun isCustom(details: SigningDetails): Boolean =
+        details.definition.methods.getOrNull(details.account.methodIndex) is AuthMethodDefinition.Custom
+
+    // A custom session is stored in the normal Credential: secret = refreshToken, session = extra.
+    internal fun sessionOf(credential: Credential): CustomSession {
+        val expiresAt = credential.expiresAtEpochSeconds
+        return CustomSession(
+            secret = credential.refreshToken ?: "",
+            values = credential.extra,
+            expiresAt = if (expiresAt == null) null else Instant.fromEpochSeconds(expiresAt),
+        )
+    }
+
+    private fun credentialOf(session: CustomSession): Credential = Credential(
+        refreshToken = session.secret,
+        extra = session.values,
+        expiresAtEpochSeconds = session.expiresAt?.epochSeconds,
+    )
 
     /** Everything needed to sign a request for one account. */
     internal data class SigningDetails(

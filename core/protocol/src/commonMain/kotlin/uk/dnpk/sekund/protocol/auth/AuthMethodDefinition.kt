@@ -101,6 +101,9 @@ sealed class AuthMethodDefinition {
     @SerialName("custom")
     data class Custom(
         val handler: String,
+        /** What the pasted secret is called in the connect form, e.g. "Amazon refresh token". */
+        val label: String = "Token",
+        val help: String? = null,
     ) : AuthMethodDefinition()
 }
 

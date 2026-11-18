@@ -19,4 +19,6 @@ data class Credential(
     val apiKey: String? = null,
     val clientId: String? = null,
     val clientSecret: String? = null,
+    /** A custom sign-in's session values (e.g. Amazon's cookies and CSRF token). */
+    val extra: Map<String, String> = emptyMap(),
 )

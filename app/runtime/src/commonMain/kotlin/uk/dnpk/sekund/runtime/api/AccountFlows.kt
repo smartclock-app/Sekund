@@ -47,7 +47,7 @@ class AccountFlows(
         if (reconnect != null && auth.account(reconnect) == null) throw ApiProblem.notFound("No account called '$reconnect'")
 
         when (method) {
-            is AuthMethodDefinition.ApiKey, is AuthMethodDefinition.Bearer -> {
+            is AuthMethodDefinition.ApiKey, is AuthMethodDefinition.Bearer, is AuthMethodDefinition.Custom -> {
                 val key = request.key ?: throw ApiProblem.badRequest("Send the key or token in \"key\"")
                 val account = auth.connectWithKey(request.provider, request.method, request.fields, key, reconnect)
                 return AccountFlow.Connected(summary(account))
@@ -65,7 +65,6 @@ class AccountFlows(
                 lock.withLock { authCodeFlows[started.flowId] = flow }
                 return flow
             }
-            is AuthMethodDefinition.Custom -> throw ApiProblem(501, "unavailable", "Custom sign-in handlers aren't available yet")
         }
     }
 

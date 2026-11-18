@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import uk.dnpk.sekund.protocol.plugin.PluginManifest
+import uk.dnpk.sekund.sdk.auth.CustomAuthHandler
 import uk.dnpk.sekund.sdk.plugin.Contribution
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoint
 import uk.dnpk.sekund.sdk.plugin.ExtensionPoints
@@ -33,6 +34,7 @@ class PluginRegistry(compiled: List<SekundPlugin>) {
         val pluginIdByType: Map<String, String>,
         val extraPluginIds: Set<String>,
         val problems: List<String>,
+        val authHandlers: Map<String, CustomAuthHandler>,
     )
 
     /**
@@ -54,6 +56,9 @@ class PluginRegistry(compiled: List<SekundPlugin>) {
     /** Everything that was left out, and why. Shown in settings and the device API. */
     val problems: List<String>
         get() = current.value.problems
+
+    /** The custom sign-in handler registered under [name], or null if no plugin provides it. */
+    fun authHandler(name: String): CustomAuthHandler? = current.value.authHandlers[name]
 
     /** Replaces the extra (declarative) plugins. */
     fun setExtraPlugins(extra: List<SekundPlugin>) {
@@ -117,6 +122,7 @@ class PluginRegistry(compiled: List<SekundPlugin>) {
         val pluginIdByType = mutableMapOf<String, String>()
         val extraPluginIds = mutableSetOf<String>()
         val problems = mutableListOf<String>()
+        val authHandlers = mutableMapOf<String, CustomAuthHandler>()
     }
 
     /** Registers [plugins] on top of [base] (or from nothing if [base] is null). */
@@ -128,11 +134,12 @@ class PluginRegistry(compiled: List<SekundPlugin>) {
             builder.pluginIdByType.putAll(base.pluginIdByType)
             builder.extraPluginIds.addAll(base.extraPluginIds)
             builder.problems.addAll(base.problems)
+            builder.authHandlers.putAll(base.authHandlers)
         }
         for (plugin in plugins) {
             load(plugin, builder, isExtra)
         }
-        return Index(builder.manifests, builder.contributionsByType, builder.pluginIdByType, builder.extraPluginIds, builder.problems)
+        return Index(builder.manifests, builder.contributionsByType, builder.pluginIdByType, builder.extraPluginIds, builder.problems, builder.authHandlers)
     }
 
     private fun load(plugin: SekundPlugin, builder: Builder, isExtra: Boolean) {
@@ -148,9 +155,14 @@ class PluginRegistry(compiled: List<SekundPlugin>) {
 
         // Collect the plugin's contributions first, so a crash halfway leaves nothing half-registered.
         val collected = mutableListOf<Contribution<*, *>>()
+        val handlers = mutableMapOf<String, CustomAuthHandler>()
         val registrar = object : PluginRegistrar {
             override fun <T : Any, S> contribute(contribution: Contribution<T, S>) {
                 collected.add(contribution)
+            }
+
+            override fun authHandler(name: String, handler: CustomAuthHandler) {
+                handlers[name] = handler
             }
         }
         try {
@@ -164,6 +176,13 @@ class PluginRegistry(compiled: List<SekundPlugin>) {
         if (isExtra) builder.extraPluginIds.add(manifest.id)
         for (contribution in collected) {
             addContribution(builder, manifest.id, contribution)
+        }
+        for ((name, handler) in handlers) {
+            if (builder.authHandlers.containsKey(name)) {
+                problem(builder, "Two plugins provide the sign-in handler '$name'; the one from '${manifest.id}' was skipped")
+            } else {
+                builder.authHandlers[name] = handler
+            }
         }
     }
 

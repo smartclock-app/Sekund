@@ -1,5 +1,6 @@
 package uk.dnpk.sekund.sdk.plugin
 
+import uk.dnpk.sekund.sdk.auth.CustomAuthHandler
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +72,8 @@ private object HelloPlugin : SekundPlugin {
 
 /** A registrar that just remembers what it was given, like the runtime does. */
 private class RecordingRegistrar : PluginRegistrar {
+    override fun authHandler(name: String, handler: CustomAuthHandler) {}
+
     val contributions = mutableListOf<Contribution<*, *>>()
 
     override fun <T : Any, S> contribute(contribution: Contribution<T, S>) {

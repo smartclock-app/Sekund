@@ -3,6 +3,7 @@ package uk.dnpk.sekund.runtime.auth
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.plugin
+import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.http.HttpStatusCode
 import uk.dnpk.sekund.sdk.auth.CredentialHostException
 
@@ -27,14 +28,24 @@ object SignedInClient {
             val url = request.url.buildString()
             if (!templates.isAllowedUrl(url)) throw CredentialHostException(url, details.definition.id)
 
-            CredentialInjector.apply(request, details.definition, templates)
+            sign(registry, request, details, details.credential)
             val firstCall = execute(request)
             if (firstCall.response.status != HttpStatusCode.Unauthorized) return@intercept firstCall
 
             val fresh = registry.credentialAfterRejection(accountId, details.credential) ?: return@intercept firstCall
-            CredentialInjector.apply(request, details.definition, AccountTemplates(details.definition, details.account.fields, fresh))
+            sign(registry, request, details, fresh)
             execute(request)
         }
         return client
+    }
+
+    /** Standard methods follow the definition's `inject`; custom ones let the plugin's handler sign. */
+    private fun sign(registry: AuthRegistry, request: HttpRequestBuilder, details: AuthRegistry.SigningDetails, credential: Credential) {
+        val handler = registry.customHandlerOf(details)
+        if (handler != null) {
+            handler.sign(request, details.account.fields, registry.sessionOf(credential))
+            return
+        }
+        CredentialInjector.apply(request, details.definition, AccountTemplates(details.definition, details.account.fields, credential))
     }
 }

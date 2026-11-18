@@ -112,7 +112,7 @@ fun ConnectForm(
 
         val method = definition.methods[methodIndex]
         when (method) {
-            is AuthMethodDefinition.ApiKey, is AuthMethodDefinition.Bearer -> {
+            is AuthMethodDefinition.ApiKey, is AuthMethodDefinition.Bearer, is AuthMethodDefinition.Custom -> {
                 val help = keyHelp(method)
                 if (help != null) Text(help, color = colors.onBackground)
                 OutlinedTextField(
@@ -167,10 +167,6 @@ fun ConnectForm(
                     color = colors.onBackground,
                 )
             }
-
-            is AuthMethodDefinition.Custom -> {
-                Text("${definition.name} is connected from its plugin's own settings.", color = colors.onBackground)
-            }
         }
 
         val shownError = error
@@ -209,6 +205,7 @@ private fun startingFields(reconnect: ConnectedAccount?): SnapshotStateMap<Strin
 private fun keyHelp(method: AuthMethodDefinition): String? = when (method) {
     is AuthMethodDefinition.ApiKey -> method.help
     is AuthMethodDefinition.Bearer -> method.help
+    is AuthMethodDefinition.Custom -> method.help
     else -> null
 }
 
@@ -217,5 +214,5 @@ private fun methodName(method: AuthMethodDefinition): String = when (method) {
     is AuthMethodDefinition.Bearer -> method.label
     is AuthMethodDefinition.OAuthDeviceCode -> "Sign in with a code"
     is AuthMethodDefinition.OAuthAuthorizationCode -> "Sign in with a browser"
-    is AuthMethodDefinition.Custom -> "Plugin sign-in"
+    is AuthMethodDefinition.Custom -> method.label
 }
