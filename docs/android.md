@@ -64,7 +64,14 @@ the Android Keystore, and are never backed up.
 
 ## Network
 
-The **Offline** badge (bottom corner) appears when `connectivitycheck.gstatic.com` stops answering, which is
-the same check Android itself uses. It's checked every minute, more often while offline, and straight away
-when Android reports a network change. Everything refreshes when the connection comes back. As device owner,
-Sekund asks Wi-Fi to reconnect while it's offline (unless Wi-Fi was switched off).
+The **Offline** badge (bottom corner) follows Android's own view of the network. Android checks every network
+it connects to and marks it *validated* when the internet works, so Sekund doesn't have to keep checking:
+
+- **No network:** offline straight away.
+- **Validated:** online, with no extra requests from Sekund.
+- **Connected but not validated:** Sekund checks `connectivitycheck.gstatic.com` itself, more often while it
+  fails. This covers a router with no internet or a captive portal (offline), and places or devices where
+  Android can't validate, e.g. where Google is blocked (online if the internet works).
+
+Everything refreshes when the connection comes back. As device owner, Sekund asks Wi-Fi to reconnect while
+it's offline (unless Wi-Fi was switched off). On desktop, Sekund always does the check itself, once a minute.

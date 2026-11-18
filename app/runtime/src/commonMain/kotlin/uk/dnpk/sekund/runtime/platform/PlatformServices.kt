@@ -12,9 +12,11 @@ import uk.dnpk.sekund.runtime.updates.UpdateInstaller
  *
  * @property display turns the screen on and off.
  * @property kiosk locks the device to Sekund (Android device owner).
- * @property network tells the app when the network changes, and can try to reconnect.
- * @property connectivityCheckUrl an address that answers `204 No Content` when the internet works.
- *   The offline indicator probes it. Null turns the indicator off (tests do this).
+ * @property network the system's view of the network (trusted when it has verified the internet), and
+ *   a way to reconnect.
+ * @property connectivityCheckUrl an address that answers `204 No Content` when the internet works. The
+ *   offline indicator asks it when the system can't say for sure (or always, without [network]).
+ *   Null turns the indicator off (tests do this).
  * @property updateInstaller installs verified app updates.
  * @property openBrowser opens a web browser (a long-press menu button).
  * @property openSystemSettings opens the system's settings app (a long-press menu button).

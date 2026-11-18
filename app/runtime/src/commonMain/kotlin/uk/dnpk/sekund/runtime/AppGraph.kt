@@ -229,7 +229,7 @@ class AppGraph(
         return ConnectivityMonitor(
             internetWorks = InternetCheck(http, checkUrl)::works,
             scope = scope,
-            networkChanges = network?.changes,
+            network = network?.state,
             tryToReconnect = { network?.tryToReconnect() ?: false },
         )
     }

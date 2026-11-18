@@ -3,36 +3,42 @@ package uk.dnpk.sekund.runtime.android
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import uk.dnpk.sekund.runtime.platform.NetworkState
 import uk.dnpk.sekund.runtime.platform.NetworkWatcher
 
 /**
- * Tells the offline check when Android's network changes, and reconnects Wi-Fi when it's stuck.
+ * Android's own view of the network, so Sekund doesn't have to keep checking the internet itself.
  *
- * Reconnecting only works as device owner (Android stopped letting ordinary apps do it in Android 10),
+ * Android checks every network it connects to (the same `generate_204` request Sekund would make) and
+ * marks it `VALIDATED` when the internet works. That flag on the default network gives [state]:
+ * no network → None, validated → Verified, anything else → Connected (Sekund then checks for itself).
+ *
+ * [tryToReconnect] only works as device owner (Android stopped letting ordinary apps do it in Android 10),
  * and only while Wi-Fi is switched on: if someone turned Wi-Fi off on purpose, it stays off.
  */
 class AndroidNetworkWatcher(context: Context, private val owner: DeviceOwner) : NetworkWatcher {
     private val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private val wifi = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
-    // A shared flow fed by one callback registered for the app's lifetime. (Registering per listener would
-    // report the current network straight away each time, which looks like a change.)
-    private val changed = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    private val current = MutableStateFlow(stateNow())
 
-    override val changes: Flow<Unit> = changed
+    override val state: StateFlow<NetworkState> = current
 
     init {
+        // Called for the default network: when one appears, when its flags change (e.g. it becomes
+        // validated), and when it's lost. Registered once, for the app's lifetime.
         connectivity.registerDefaultNetworkCallback(
             object : ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: Network) {
-                    changed.tryEmit(Unit)
+                override fun onCapabilitiesChanged(network: Network, capabilities: NetworkCapabilities) {
+                    current.value = stateOf(capabilities)
                 }
 
                 override fun onLost(network: Network) {
-                    changed.tryEmit(Unit)
+                    current.value = NetworkState.None
                 }
             },
         )
@@ -43,5 +49,17 @@ class AndroidNetworkWatcher(context: Context, private val owner: DeviceOwner) : 
         if (!owner.isDeviceOwner()) return false
         if (!wifi.isWifiEnabled) return false
         return wifi.reconnect()
+    }
+
+    /** The state before the first callback arrives. */
+    private fun stateNow(): NetworkState {
+        val network = connectivity.activeNetwork ?: return NetworkState.None
+        val capabilities = connectivity.getNetworkCapabilities(network) ?: return NetworkState.None
+        return stateOf(capabilities)
+    }
+
+    private fun stateOf(capabilities: NetworkCapabilities): NetworkState {
+        if (capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) return NetworkState.Verified
+        return NetworkState.Connected
     }
 }

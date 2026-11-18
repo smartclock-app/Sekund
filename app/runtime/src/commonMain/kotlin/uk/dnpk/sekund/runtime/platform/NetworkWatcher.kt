@@ -1,11 +1,24 @@
 package uk.dnpk.sekund.runtime.platform
 
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 
-/** The platform's view of the network, which helps the offline check react quickly. */
+/** What the operating system knows about the current network. */
+enum class NetworkState {
+    /** No network at all (Wi-Fi off or out of range, cable unplugged...). */
+    None,
+
+    /** Connected, but the system hasn't confirmed the internet works (no internet, a captive portal, or a
+     * system that can't check, e.g. where Google is blocked). The app checks for itself. */
+    Connected,
+
+    /** Connected, and the system has checked that the internet works. */
+    Verified,
+}
+
+/** The platform's view of the network, so the app doesn't have to keep checking for itself. */
 interface NetworkWatcher {
-    /** Emits whenever the system reports a network change (connected, lost, switched Wi-Fi). */
-    val changes: Flow<Unit>
+    /** The current network's state. Updates live. */
+    val state: StateFlow<NetworkState>
 
     /**
      * Tries to get back online, e.g. by asking Wi-Fi to reconnect to a saved network.
