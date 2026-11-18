@@ -31,6 +31,7 @@ import uk.dnpk.sekund.runtime.api.LanApiServer
 import uk.dnpk.sekund.runtime.api.PlatformInfo
 import uk.dnpk.sekund.runtime.discovery.AdvertisedService
 import uk.dnpk.sekund.runtime.discovery.ServiceAdvertiser
+import uk.dnpk.sekund.runtime.legacy.LegacyImport
 import uk.dnpk.sekund.runtime.logging.LogBuffer
 import uk.dnpk.sekund.runtime.logging.LogFile
 import uk.dnpk.sekund.protocol.API_VERSION
@@ -146,6 +147,9 @@ class AppGraph(
         appScope = scope,
     )
 
+    /** Imports the old Tauri app's config.json (at startup, or from the device API). */
+    val legacyImport: LegacyImport = LegacyImport(paths, config, auth)
+
     /** The device API's logic: pairing, catalog, config edits, accounts... (served by [startApi]). */
     val api: DeviceApi = DeviceApi(this, platform)
 
@@ -164,7 +168,8 @@ class AppGraph(
             // Accounts and plugins first: instances check their providers and types when they're created.
             loadAuth()
             declarative.load()
-            config.load { defaultConfig }
+            val imported = legacyImport.importFileIfLegacy()
+            config.load { imported ?: defaultConfig }
             instances.follow(config.config)
             startApi()
         }

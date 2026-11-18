@@ -171,6 +171,9 @@ private fun Route.authenticatedRoutes(api: DeviceApi) {
         call.respond(api.graph.logBuffer.tail(tail.coerceIn(1, 500)))
     }
 
+    // The old Tauri app's config.json, imported as a whole (the current config is backed up first).
+    post("/import/legacy") { call.respond(api.importLegacy(call.receiveText())) }
+
     get("/clients") { call.respond(api.clients.clients.value) }
     delete("/clients/{id}") {
         if (!api.clients.revoke(pathParameter(call, "id"))) throw ApiProblem.notFound("No client called '${pathParameter(call, "id")}'")

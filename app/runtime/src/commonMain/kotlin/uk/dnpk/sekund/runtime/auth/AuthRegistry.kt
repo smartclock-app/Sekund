@@ -162,6 +162,36 @@ class AuthRegistry(
         return account
     }
 
+    /**
+     * Adds an account brought over from somewhere else (the old Tauri app's config), with a credential
+     * that's already been obtained. Unlike a sign-in this works even if the provider's definition isn't
+     * installed yet: the account then shows "provider isn't installed" until it is, and nothing is lost.
+     *
+     * @param id the account id to use; an existing account with this id is replaced.
+     */
+    suspend fun importAccount(
+        id: String,
+        provider: String,
+        methodIndex: Int,
+        label: String,
+        fields: Map<String, String>,
+        credential: Credential,
+    ): ConnectedAccount {
+        val account = ConnectedAccount(
+            id = id,
+            provider = provider,
+            label = label,
+            methodIndex = methodIndex,
+            fields = AccountTemplates.cleanFields(fields),
+        )
+        writeCredential(account, credential)
+        accountsLock.withLock {
+            saveAccounts(currentAccounts.value.filter { other -> other.id != id } + account)
+        }
+        log.i { "Imported $provider account $id" }
+        return account
+    }
+
     /** Removes an account: tells the service to revoke the token (if it can), then forgets it. */
     suspend fun remove(accountId: String) {
         val account = account(accountId) ?: return

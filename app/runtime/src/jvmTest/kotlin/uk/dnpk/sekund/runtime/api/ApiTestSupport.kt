@@ -20,6 +20,7 @@ import uk.dnpk.sekund.protocol.config.LayoutConfig
 import uk.dnpk.sekund.protocol.declarative.DeclarativeDefinition
 import uk.dnpk.sekund.protocol.plugin.PluginManifest
 import uk.dnpk.sekund.runtime.AppGraph
+import uk.dnpk.sekund.runtime.AppPaths
 import uk.dnpk.sekund.runtime.auth.secrets.SecretCipher
 import uk.dnpk.sekund.runtime.newTestPaths
 import uk.dnpk.sekund.sdk.plugin.Contribution
@@ -88,12 +89,15 @@ private fun fakeDeclarativePlugin(definition: DeclarativeDefinition): SekundPlug
 }
 
 /**
- * A real AppGraph in a temporary folder, with one note instance, started and ready. The API server
+ * A real AppGraph in a temporary folder, with one note instance, started and ready. [beforeStart] can
+ * put files in place first (e.g. an old config.json). The API server
  * itself isn't started: tests install [deviceApiModule] in Ktor's test engine instead.
  */
-fun startedTestGraph(): AppGraph {
+fun startedTestGraph(beforeStart: (AppPaths) -> Unit = {}): AppGraph {
+    val paths = newTestPaths()
+    beforeStart(paths)
     val graph = AppGraph(
-        paths = newTestPaths(),
+        paths = paths,
         plugins = listOf(NotePlugin),
         defaultConfig = AppConfig(
             clockFace = "none",

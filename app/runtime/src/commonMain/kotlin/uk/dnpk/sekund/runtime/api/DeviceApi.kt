@@ -13,6 +13,7 @@ import uk.dnpk.sekund.protocol.api.DeviceInfo
 import uk.dnpk.sekund.protocol.api.DevicePaths
 import uk.dnpk.sekund.protocol.api.InstanceStatus
 import uk.dnpk.sekund.protocol.api.InstanceUpdate
+import uk.dnpk.sekund.protocol.api.LegacyImportReport
 import uk.dnpk.sekund.protocol.api.NewInstance
 import uk.dnpk.sekund.protocol.auth.AuthProviderDefinition
 import uk.dnpk.sekund.protocol.auth.DefinitionIssue
@@ -132,6 +133,17 @@ class DeviceApi(
                 is RunningInstance.Ready -> InstanceStatus(config, running = true, issues = instance.issues)
                 is RunningInstance.Failed -> InstanceStatus(config, running = false, problem = instance.reason)
             }
+        }
+    }
+
+    /** Replaces the config with one imported from the old app's config.json ([text]). */
+    suspend fun importLegacy(text: String): LegacyImportReport {
+        try {
+            return graph.legacyImport.importText(text)
+        } catch (notLegacy: IllegalArgumentException) {
+            throw ApiProblem(422, "invalid", notLegacy.message ?: "Not an old Sekund config")
+        } catch (broken: IllegalStateException) {
+            throw ApiProblem(409, "conflict", broken.message ?: "config.json can't be read")
         }
     }
 
